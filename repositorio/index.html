@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Repositorio de radiografias territoriales de Consultora Diagonales." />
+    <title>Radiografias | Consultora Diagonales</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body class="bg-[#080d14] text-white antialiased" data-page="repo">
+    <header class="site-header is-solid" data-header>
+      <a class="brand" href="../index.html" aria-label="Consultora Diagonales">
+        <img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
+        <img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo />
+        <span class="brand-fallback">Consultora Diagonales</span>
+      </a>
+      <nav class="desktop-nav" aria-label="Navegacion principal">
+        <a href="../index.html">Inicio</a>
+        <a href="../index.html#servicios">Servicios</a>
+        <a href="index.html">Radiografias</a>
+        <a href="../index.html#contacto">Contacto</a>
+      </nav>
+      <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" data-menu-toggle>
+        <span></span>
+        <span></span>
+      </button>
+    </header>
+
+    <div class="mobile-menu" data-mobile-menu aria-hidden="true">
+      <a href="../index.html">Inicio</a>
+      <a href="../index.html#servicios">Servicios</a>
+      <a href="index.html">Radiografias</a>
+      <a href="../index.html#contacto">Contacto</a>
+    </div>
+
+    <main class="subpage">
+      <section class="repository-hero">
+        <div class="mx-auto max-w-7xl px-6 pb-14 pt-36 md:px-10 lg:px-12">
+          <p class="eyebrow">Repositorio estrategico</p>
+          <div class="mt-5 grid gap-8 lg:grid-cols-[1.05fr_.95fr] lg:items-end">
+            <h1 class="page-title">Radiografias territoriales para leer el poder en movimiento.</h1>
+            <p class="max-w-2xl text-base leading-8 text-slate-300">
+              Informes PDF ordenados por fecha, provincia y tema. El repositorio se actualiza automaticamente desde
+              Supabase cuando el panel administrativo publica una nueva radiografia.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-7xl px-6 pb-24 md:px-10 lg:px-12">
+        <div class="repo-toolbar">
+          <span data-count>Radiografias</span>
+          <a class="secondary-link" href="../admin/index.html">Admin</a>
+        </div>
+        <div class="repo-grid" data-reports>
+          <article class="skeleton-card"></article>
+          <article class="skeleton-card"></article>
+          <article class="skeleton-card"></article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <img src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
+      <span>Repositorio de inteligencia territorial.</span>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>

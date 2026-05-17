@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Consultora Diagonales: inteligencia territorial, analisis politico y radiografias estrategicas para la toma de decisiones."
+    />
+    <title>Consultora Diagonales | Inteligencia territorial</title>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Georgia", "Cambria", "Times New Roman", "serif"],
+              sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-[#080d14] text-white antialiased" data-page="home">
+    <header class="site-header" data-header>
+      <a class="brand" href="index.html" aria-label="Consultora Diagonales">
+        <img class="brand-full" src="assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
+        <img class="brand-mark" src="assets/img/isotipo.png" alt="" aria-hidden="true" data-logo />
+        <span class="brand-fallback">Consultora Diagonales</span>
+      </a>
+      <nav class="desktop-nav" aria-label="Navegacion principal">
+        <a href="index.html">Inicio</a>
+        <a href="#servicios">Servicios</a>
+        <a href="repositorio/index.html">Radiografias</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" data-menu-toggle>
+        <span></span>
+        <span></span>
+      </button>
+    </header>
+
+    <div class="mobile-menu" data-mobile-menu aria-hidden="true">
+      <a href="index.html">Inicio</a>
+      <a href="#servicios">Servicios</a>
+      <a href="repositorio/index.html">Radiografias</a>
+      <a href="#contacto">Contacto</a>
+    </div>
+
+    <main>
+      <section class="hero-shell min-h-screen">
+        <div class="hero-bg" aria-hidden="true"></div>
+        <div class="hero-overlay" aria-hidden="true"></div>
+
+        <div class="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-end px-6 pb-8 pt-32 md:px-10 lg:px-12">
+          <div class="max-w-4xl pb-10 md:pb-16">
+            <p class="eyebrow">Observatorio estrategico</p>
+            <h1 class="hero-title">
+              Inteligencia territorial<br />
+              aplicada a la toma<br />
+              de decisiones.
+            </h1>
+            <p class="hero-copy">
+              Analizamos el presente para anticipar el futuro y brindar herramientas estrategicas que transformen
+              informacion en decisiones.
+            </p>
+            <div class="mt-9 flex flex-wrap gap-4">
+              <a class="primary-link" href="repositorio/index.html">Radiografias</a>
+              <a class="secondary-link" href="#servicios">Servicios</a>
+            </div>
+          </div>
+
+          <div id="servicios" class="home-card-grid">
+            <article class="institutional-card">
+              <span class="line-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+              </span>
+              <h2>Inteligencia territorial</h2>
+            </article>
+            <article class="institutional-card">
+              <span class="line-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16l3-5 3 3 5-8"/></svg>
+              </span>
+              <h2>Escenarios electorales</h2>
+            </article>
+            <article class="institutional-card">
+              <span class="line-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 13a8 8 0 0 1 16 0"/><path d="M6 13h12"/><path d="M9 17h6"/><path d="M12 4v4"/></svg>
+              </span>
+              <h2>Opinion publica</h2>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-band">
+        <div class="mx-auto grid max-w-7xl gap-10 px-6 py-24 md:px-10 lg:grid-cols-[1.1fr_.9fr] lg:px-12">
+          <div>
+            <p class="eyebrow">Metodo</p>
+            <h2 class="section-title">Lecturas politicas con densidad territorial.</h2>
+          </div>
+          <div class="space-y-6 text-base leading-8 text-slate-300">
+            <p>
+              Integramos datos, contexto institucional y analisis cualitativo para construir radiografias precisas
+              sobre provincias, municipios, actores y escenarios.
+            </p>
+            <p>
+              Cada informe esta pensado para equipos que necesitan decidir con criterio, oportunidad y una lectura
+              estrategica del territorio.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="contacto" class="contact-band">
+        <div class="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-20 md:px-10 lg:flex-row lg:items-end lg:justify-between lg:px-12">
+          <div>
+            <p class="eyebrow">Contacto</p>
+            <h2 class="section-title max-w-3xl">Informes, observatorio y consultoria estrategica.</h2>
+          </div>
+          <a class="primary-link w-fit" href="mailto:contacto@consultoradiagonales.com">Escribir</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <img src="assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
+      <span>Inteligencia territorial y analisis politico.</span>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>

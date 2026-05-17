@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Admin | Consultora Diagonales</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body class="bg-[#080d14] text-white antialiased" data-page="admin">
+    <header class="site-header is-solid" data-header>
+      <a class="brand" href="../index.html" aria-label="Consultora Diagonales">
+        <img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
+        <img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo />
+        <span class="brand-fallback">Consultora Diagonales</span>
+      </a>
+      <nav class="desktop-nav" aria-label="Navegacion principal">
+        <a href="../index.html">Inicio</a>
+        <a href="../index.html#servicios">Servicios</a>
+        <a href="../repositorio/index.html">Radiografias</a>
+        <a href="../index.html#contacto">Contacto</a>
+      </nav>
+      <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" data-menu-toggle>
+        <span></span>
+        <span></span>
+      </button>
+    </header>
+
+    <div class="mobile-menu" data-mobile-menu aria-hidden="true">
+      <a href="../index.html">Inicio</a>
+      <a href="../index.html#servicios">Servicios</a>
+      <a href="../repositorio/index.html">Radiografias</a>
+      <a href="../index.html#contacto">Contacto</a>
+    </div>
+
+    <main class="subpage">
+      <section class="mx-auto grid min-h-screen max-w-7xl gap-10 px-6 pb-24 pt-36 md:px-10 lg:grid-cols-[.85fr_1.15fr] lg:px-12">
+        <div>
+          <p class="eyebrow">Panel admin</p>
+          <h1 class="page-title">Carga de radiografias PDF.</h1>
+          <p class="mt-6 max-w-xl text-base leading-8 text-slate-300">
+            Subi el archivo, completa la metadata y publica el informe. El PDF queda guardado en el bucket publico
+            <span class="font-semibold text-white">radiografias</span> y aparece en el repositorio.
+          </p>
+          <div class="admin-note">
+            Configura <span>SUPABASE_URL</span> y <span>SUPABASE_ANON_KEY</span> en
+            <span>assets/js/main.js</span> antes de publicar.
+          </div>
+        </div>
+
+        <form class="admin-form" data-admin-form>
+          <label>
+            <span>Titulo</span>
+            <input name="titulo" type="text" placeholder="Radiografia politica de..." required />
+          </label>
+          <div class="grid gap-5 md:grid-cols-2">
+            <label>
+              <span>Provincia</span>
+              <input name="provincia" type="text" placeholder="Buenos Aires" required />
+            </label>
+            <label>
+              <span>Fecha</span>
+              <input name="fecha" type="date" required />
+            </label>
+          </div>
+          <label>
+            <span>PDF</span>
+            <input name="pdf" type="file" accept="application/pdf" required />
+          </label>
+          <button class="primary-link justify-center" type="submit" data-submit>Guardar radiografia</button>
+          <p class="form-status" data-form-status role="status"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
