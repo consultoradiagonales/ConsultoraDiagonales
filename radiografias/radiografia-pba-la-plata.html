@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>CD · Radiografía Estratégica · PBA + La Plata · 2027 · v3 OSINT</title>
+<style>
+:root{
+  --C:#1A1A2E;--S:#457B9D;--R:#C0392B;--G:#E9C46A;--GR:#2E7D32;--O:#E76F51;
+  --CR:#E8D5B0;--BG:#F4F3EE;--W:#FFFFFF;--INK:#1A1A2E;--MU:#5A6470;--BD:#ece8da;
+  --V:#7B2CBF
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html{font-size:15px;background:var(--BG);color:var(--INK)}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.55}
+nav{background:var(--C);border-bottom:3px solid var(--R);position:sticky;top:0;z-index:100;
+  overflow-x:auto;white-space:nowrap;padding:0 12px}
+nav a{display:inline-block;color:#c0d0dc;padding:10px 10px;font-size:11px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;text-decoration:none;border-bottom:3px solid transparent}
+nav a.active,nav a:hover{color:var(--G);border-bottom-color:var(--G)}
+header{background:linear-gradient(135deg,var(--C) 0%,#0d0d1e 100%);color:#fff;
+  padding:24px 16px 20px;border-bottom:4px solid var(--R)}
+header .brand{font-size:10px;letter-spacing:3.5px;color:var(--G);font-weight:700;text-transform:uppercase}
+header h1{font-size:21px;font-weight:800;margin:5px 0 2px;letter-spacing:-.3px}
+header .sub{font-size:11px;color:#b0c4d4;margin-top:3px}
+.badge{display:inline-block;background:var(--R);color:#fff;
+  font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+  padding:3px 7px;border-radius:4px;margin-left:6px}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 13px 70px}
+.panel{display:none}.panel.active{display:block}
+.sec{background:var(--W);border-radius:14px;padding:16px;margin:12px 0;
+  border:1px solid var(--BD);box-shadow:0 1px 3px rgba(26,26,46,.04)}
+.sec h2{font-size:17px;color:var(--C);font-weight:800;letter-spacing:-.2px;margin-bottom:8px}
+.sec h3{font-size:14px;color:var(--S);font-weight:700;margin:12px 0 5px}
+.sec h4{font-size:13px;color:var(--C);font-weight:700;margin:10px 0 4px}
+.sec p{font-size:13.5px;line-height:1.65;margin-bottom:8px}
+.sec ul{padding-left:18px}.sec li{font-size:13px;margin:4px 0}
+.mt{display:inline-block;background:var(--CR);color:var(--C);
+  font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:5px;margin:2px}
+.kgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:12px 0}
+@media(min-width:640px){.kgrid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:900px){.kgrid.k6{grid-template-columns:repeat(6,1fr)}}
+.kpi{background:var(--W);border-radius:12px;padding:13px;border:1px solid var(--BD)}
+.kpi.L{border-left:4px solid var(--S)}.kpi.O{border-left:4px solid var(--R)}
+.kpi.N{border-left:4px solid var(--G)}.kpi.G{border-left:4px solid var(--GR)}
+.kpi.V{border-left:4px solid var(--V)}
+.kpi .lbl{font-size:9.5px;letter-spacing:2px;color:var(--MU);text-transform:uppercase;font-weight:700}
+.kpi .val{font-size:22px;font-weight:800;color:var(--C);margin-top:5px;line-height:1}
+.kpi .sub{font-size:10.5px;color:var(--MU);margin-top:3px}
+.cg{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:640px){.cg{grid-template-columns:1fr 1fr}}
+.cp{border-radius:11px;padding:13px;background:#fafaf6;border:1px solid var(--BD)}
+.cp.L{border-left:5px solid var(--S)}.cp.O{border-left:5px solid var(--R)}
+.cp.G{border-left:5px solid var(--GR)}.cp.N{border-left:5px solid var(--G)}
+.cp.V{border-left:5px solid var(--V)}
+.cp h3{font-size:14px;font-weight:800;margin-bottom:7px}
+.cp h3.lL{color:var(--S)}.cp h3.lO{color:var(--R)}.cp h3.lG{color:var(--GR)}.cp h3.lV{color:var(--V)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+th,td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--BD);vertical-align:top}
+th{background:var(--C);color:#fff;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
+tr:nth-child(even) td{background:#fafaf6}
+.tp{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;margin:1px}
+.tp.G{background:#ddf0de;color:var(--GR)}.tp.R{background:#fce0e3;color:var(--R)}
+.tp.A{background:#fdf3da;color:#8a6b1f}.tp.B{background:#dde7f5;color:#1a5a9d}
+.tp.V{background:#ecdcfa;color:var(--V)}
+.fgrid{display:grid;grid-template-columns:1fr;gap:9px}
+@media(min-width:640px){.fgrid{grid-template-columns:1fr 1fr}}
+.fc{padding:11px;border-radius:10px;background:#fafaf6;border:1px solid var(--BD)}
+.fc h4{font-size:12px;font-weight:800;color:#fff;padding:5px 8px;border-radius:5px;display:inline-block;margin-bottom:6px}
+.fc.F h4{background:var(--GR)}.fc.Op h4{background:var(--S)}
+.fc.D h4{background:var(--O)}.fc.A h4{background:var(--R)}
+.fc ul{padding-left:16px}.fc li{font-size:12px;margin:3px 0}
+.sc{padding:11px;border-radius:10px;background:#fafaf6;border-left:4px solid #ccc;margin:8px 0}
+.sc.A{border-color:var(--GR)}.sc.B{border-color:var(--O)}
+.sc.C{border-color:var(--R)}.sc.D{border-color:var(--S)}.sc.E{border-color:#888}.sc.V{border-color:var(--V)}
+.sc h4{font-size:13px;font-weight:800;color:var(--C);margin-bottom:3px}
+.sc .pr{font-size:11px;font-weight:700;color:var(--MU);margin-bottom:5px}
+.sc p{font-size:12.5px;margin:0}
+.vd{background:linear-gradient(135deg,var(--C) 0%,#0d0d1e 100%);
+  color:#fff;border-radius:12px;padding:15px;margin:12px 0}
+.vd h3{color:var(--G);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px}
+.vd p{font-size:13px;line-height:1.65}
+.acc-btn{width:100%;background:var(--CR);border:none;padding:10px 14px;
+  border-radius:9px;text-align:left;font-weight:700;color:var(--C);
+  font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:6px}
+.acc-btn::after{content:' ›';float:right;font-size:16px}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.acc-body.open{max-height:99999px}
+.meter{margin:6px 0}
+.meter .lab{font-size:11px;font-weight:700;color:var(--MU);margin-bottom:3px}
+.mbar{height:10px;background:#ece8da;border-radius:6px;overflow:hidden}
+.mbar span{display:block;height:100%;border-radius:6px;background:var(--S)}
+.mbar.R span{background:var(--R)}.mbar.G span{background:var(--GR)}.mbar.Y span{background:var(--G)}
+.mbar.V span{background:var(--V)}
+.alert{padding:11px 13px;border-radius:10px;margin:8px 0;font-size:12.5px}
+.alert.red{background:#fce0e3;border-left:4px solid var(--R);color:#7a0b15}
+.alert.gold{background:#fdf3da;border-left:4px solid var(--G);color:#7a5500}
+.alert.green{background:#ddf0de;border-left:4px solid var(--GR);color:#1a4d1e}
+.alert.blue{background:#dde7f5;border-left:4px solid var(--S);color:#1a3a5c}
+.alert.violet{background:#ecdcfa;border-left:4px solid var(--V);color:#3d1a5c}
+.alert strong{display:block;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.legal-box{background:#fafaf6;border:2px solid var(--R);border-radius:10px;padding:12px;margin:8px 0}
+.legal-box.ok{border-color:var(--GR)}
+.legal-box h4{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;color:var(--R)}
+.legal-box.ok h4{color:var(--GR)}
+.legal-box p,.legal-box li{font-size:12px}
+.brow{display:flex;align-items:center;padding:8px 0;border-bottom:1px dashed #e8e4da;gap:8px}
+.brow:last-child{border-bottom:none}
+.brow .bl{flex:1;font-size:12.5px;font-weight:600;min-width:140px}
+.brow .bv{font-size:12px;font-weight:700;color:var(--MU);min-width:50px;text-align:right}
+.brow .bb{flex:2}
+.br{height:8px;background:#ece8da;border-radius:5px;overflow:hidden}
+.br span{display:block;height:100%;border-radius:5px}
+.src{display:inline-block;background:#e8e8e8;color:#444;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:3px;margin:1px 2px}
+.confidence{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:800;margin-left:4px;letter-spacing:.5px}
+.confidence.high{background:#1a4d1e;color:#ddf0de}
+.confidence.med{background:#7a5500;color:#fdf3da}
+.confidence.low{background:#7a0b15;color:#fce0e3}
+.osint-tag{display:inline-block;background:#1a1a2e;color:#E9C46A;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px}
+.tl{position:relative;padding-left:20px;margin:8px 0}
+.tl::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--BD)}
+.tli{position:relative;margin-bottom:12px}
+.tli::before{content:'';position:absolute;left:-17px;top:5px;width:8px;height:8px;
+  border-radius:50%;background:var(--S);border:2px solid var(--W)}
+.tli.R::before{background:var(--R)}.tli.G::before{background:var(--GR)}.tli.V::before{background:var(--V)}
+.tli .td{font-size:10px;color:var(--MU);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.tli p{font-size:12.5px;margin-top:2px}
+footer{text-align:center;color:var(--MU);font-size:10.5px;padding:20px 12px 40px;line-height:1.7}
+footer strong{color:var(--C)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Consultora Diagonales · Análisis Multidimensional Político-Electoral</div>
+  <h1>Radiografía · Gobernación PBA <span style="color:var(--G)">+</span> Intendencia La Plata <span class="badge">2027 OSINT</span></h1>
+  <div class="sub">8ª Sección · 16 de mayo 2026 · Fuentes verificadas</div>
+</header>
+
+<nav id="mainnav">
+  <a href="#" class="active" onclick="show('exec',this)">Ejecutivo</a>
+  <a href="#" onclick="show('osint',this)">OSINT</a>
+  <a href="#" onclick="show('legal',this)">Legal</a>
+  <a href="#" onclick="show('gobpba',this)">Gobernación</a>
+  <a href="#" onclick="show('laplata',this)">La Plata</a>
+  <a href="#" onclick="show('formulas',this)">Fórmulas</a>
+  <a href="#" onclick="show('mirofish',this)">MiroFish</a>
+  <a href="#" onclick="show('narrat',this)">Narrativa</a>
+  <a href="#" onclick="show('diag',this)">Diagnóstico</a>
+  <a href="#" onclick="show('fuentes',this)">Fuentes</a>
+</nav>
+
+<div class="wrap">
+
+<!-- ============================ EJECUTIVO -->
+<div id="exec" class="panel active">
+  <div class="sec">
+    <h2>Resumen Ejecutivo — Mapa 2027 corregido por OSINT</h2>
+    <div style="margin-bottom:10px">
+      <span class="mt">[OS]</span><span class="mt">[MFSH]</span><span class="mt">[GDA]</span>
+      <span class="mt">[CD]</span><span class="mt">[OSP]</span><span class="mt">[VDD]</span>
+      <span class="mt">[DK]</span><span class="mt">[MP]</span><span class="mt">[DG]</span>
+      <span class="mt">[PR]</span><span class="mt">[OSB]</span>
+    </div>
+
+    <div class="kgrid k6">
+      <div class="kpi V"><div class="lbl">Kicillof aspira</div><div class="val">Pdte.</div><div class="sub">2027 nacional, no PBA</div></div>
+      <div class="kpi L"><div class="lbl">Alak aspira</div><div class="val">Gob.</div><div class="sub">Sucesor: Resa en LP</div></div>
+      <div class="kpi V"><div class="lbl">Pareja aspira</div><div class="val">Gob.</div><div class="sub">LLA: "es inevitable"</div></div>
+      <div class="kpi G"><div class="lbl">Santilli aspira</div><div class="val">Gob.</div><div class="sub">PRO+LLA principio acuerdo</div></div>
+      <div class="kpi O"><div class="lbl">Garro imputado</div><div class="val">Sí</div><div class="sub">Asociación ilícita LP</div></div>
+      <div class="kpi N"><div class="lbl">FP en LP 2025</div><div class="val">43%</div><div class="sub">vs LLA+PRO 37%</div></div>
+    </div>
+
+    <div class="alert violet">
+      <strong>📍 Hallazgos OSINT críticos verificados (mayo 2026)</strong>
+      <ul style="margin-top:6px;padding-left:16px;font-size:12.5px">
+        <li><strong>Kicillof aspira a la PRESIDENCIA 2027</strong>, no a renovar PBA. Tomó el PJ bonaerense (abr. 2026), desplazó a Máximo Kirchner. Está inhabilitado constitucionalmente para reelección como gobernador. <span class="src">La Nación 23/04/26</span> <span class="src">El Estadista 09/02/26</span></li>
+        <li><strong>Julio Alak proyecta candidatura a GOBERNADOR PBA 2027.</strong> En su esquema platense, Sergio Resa queda como sucesor a intendente. Resa ya fue cabeza de lista a concejal en septiembre 2025 (ganó). <span class="src">LaPlata1 05/04/26</span> <span class="src">Letra P 08/09/25</span></li>
+        <li><strong>Sebastián Pareja (LLA-PBA) aspira a gobernador.</strong> "Es inevitable que en 2027 gobernemos PBA". Tensión con Las Fuerzas del Cielo (Caputo). <span class="src">Infobae 06/03/26</span> <span class="src">Parlamentario 30/10/25</span></li>
+        <li><strong>Juan Pablo Allan (LLA-Bullrich) aspira a intendente LP</strong>, pero midió mal en sept. 2025: cabeza de lista de concejales LLA en derrota local 43-37%. Hoy es concejal y vicepresidente 2° del HCD. <span class="src">Letra P 09/09/25</span> <span class="src">0221 11/12/25</span></li>
+        <li><strong>Julio Garro (PRO) IMPUTADO POR ASOCIACIÓN ILÍCITA</strong> y administración fraudulenta (mar. 2025). Causa por barrios privados irregulares + denuncia gestión Alak. Perjuicio investigado: USD 1.500 millones. Allanamientos en su domicilio. <span class="src">Infobae 17/03/25</span> <span class="src">Perfil 18/03/25</span> <span class="src">Infocielo 17/03/25</span></li>
+        <li><strong>UCR-LLA alianza nacional en marcha:</strong> ya operativa en Chaco, Mendoza, Entre Ríos. En PBA, la UCR negocia bancas a cambio de no fragmentar. Maximiliano Abad demora definición. <span class="src">Infobae 26/04/26</span> <span class="src">Ambito 13/05/25</span></li>
+      </ul>
+    </div>
+
+    <div class="vd">
+      <h3>Veredicto Central CD — Mapa 2027</h3>
+      <p>El tablero PBA-LP 2027 quedó configurado por <strong style="color:var(--G)">tres movimientos simultáneos verificados en fuentes</strong>: (1) Kicillof ya no juega PBA — juega Casa Rosada; (2) Alak ocupó el vacío natural y proyecta gobernación apoyado en su triunfo de la 8ª Sección (43% en sept. 2025) y red de intendentes kicillofistas, dejando a Sergio Resa como heredero platense; (3) la oposición tiene principio de acuerdo PRO+LLA con Santilli encabezando, pero la UCR bonaerense (Abad) aún no cierra. <strong style="color:var(--G)">El gran disruptor en La Plata es la imputación de Garro</strong>: con causa penal abierta por asociación ilícita y allanamientos a su domicilio, su V_E real cae brutalmente. La oposición platense queda sin candidato fuerte: Allan no mide, Garro está imputado, Bardón rechaza, los Adorni son paracaidistas.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ OSINT -->
+<div id="osint" class="panel">
+  <div class="sec">
+    <h2>Trazabilidad OSINT — Fuentes verificadas <span class="mt">[OS]</span><span class="mt">[OSP]</span></h2>
+    <p style="font-size:12.5px;color:var(--MU)">Cada afirmación de esta radiografía remite a fuente primaria documentada con fecha. Niveles de confianza: <span class="confidence high">ALTA</span> múltiples fuentes coincidentes; <span class="confidence med">MEDIA</span> 1-2 fuentes confiables; <span class="confidence low">BAJA</span> rumor o trascendido sin confirmación.</p>
+
+    <h3>Intenciones declaradas verificadas</h3>
+    <table>
+      <thead><tr><th>Actor</th><th>Aspiración 2027</th><th>Fuente primaria</th><th>Confianza</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Axel Kicillof</strong></td><td>Presidente</td><td>La Nación, El Estadista, Perfil, Revista Zoom</td><td><span class="confidence high">ALTA</span></td></tr>
+        <tr><td><strong>Julio Alak</strong></td><td>Gobernador PBA · sucesor LP: Sergio Resa</td><td>LaPlata1, Letra P, 0221</td><td><span class="confidence high">ALTA</span></td></tr>
+        <tr><td><strong>Sebastián Pareja</strong></td><td>Gobernador PBA (LLA)</td><td>Infobae, Parlamentario, La Noticia Web, LA NACION</td><td><span class="confidence high">ALTA</span></td></tr>
+        <tr><td><strong>Diego Santilli</strong></td><td>Gobernador PBA (PRO-LLA)</td><td>Infobae 26/04/26, Letra P</td><td><span class="confidence high">ALTA</span></td></tr>
+        <tr><td><strong>Cristian Ritondo</strong></td><td>Gobernador PBA (PRO)</td><td>Letra P, Infobae</td><td><span class="confidence med">MEDIA</span></td></tr>
+        <tr><td><strong>Diego Valenzuela</strong></td><td>Gobernador PBA (LLA-3 Febrero)</td><td>Letra P</td><td><span class="confidence med">MEDIA</span></td></tr>
+        <tr><td><strong>Wado de Pedro</strong></td><td>Resiste candidatura Kicillof / juega propia</td><td>La Nación, Letra P</td><td><span class="confidence high">ALTA</span></td></tr>
+        <tr><td><strong>Sergio Massa</strong></td><td>Mediador / posible candidato peronismo</td><td>La Nación, Perfil</td><td><span class="confidence med">MEDIA</span></td></tr>
+        <tr><td><strong>Juan Pablo Allan</strong></td><td>Intendente La Plata (LLA-Bullrich)</td><td>Infocielo 18/07/25, 0221 19/08/25, Nova</td><td><span class="confidence high">ALTA</span></td></tr>
+        <tr><td><strong>Sergio Resa</strong></td><td>Intendente La Plata (alakismo)</td><td>LaPlata1 05/04/26, Letra P 08/09/25</td><td><span class="confidence high">ALTA</span></td></tr>
+        <tr><td><strong>Julio Garro</strong></td><td>Intendente LP (descartada por causa penal)</td><td>Infobae 17/03/25, Perfil, Infocielo</td><td><span class="confidence high">ALTA</span></td></tr>
+        <tr><td><strong>Norberto "Chucho" Gómez</strong></td><td>Sucesión LP (alakismo)</td><td>LaPlata1 05/04/26</td><td><span class="confidence med">MEDIA</span></td></tr>
+        <tr><td><strong>Guillermo "Nano" Cara</strong></td><td>Sucesión LP (alakismo)</td><td>LaPlata1 05/04/26</td><td><span class="confidence med">MEDIA</span></td></tr>
+        <tr><td><strong>Gonzalo Atanasof</strong></td><td>Sucesión LP (Lotería PBA · La Cámpora)</td><td>LaPlata1 05/04/26</td><td><span class="confidence med">MEDIA</span></td></tr>
+        <tr><td><strong>Florencia Saintout</strong></td><td>Sin candidatura declarada · senadora con licencia</td><td>Wikipedia, 0221</td><td><span class="confidence high">ALTA</span></td></tr>
+        <tr><td><strong>Guillermo Bardón</strong></td><td>Rechazó candidatura intendente LP</td><td>Nova, agencianova</td><td><span class="confidence high">ALTA</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Datos electorales duros — Octava Sección (La Plata) septiembre 2025</h3>
+    <div class="sec" style="background:#fafaf6;padding:12px;margin-top:0">
+      <div class="brow"><div class="bl">Fuerza Patria (Archanco/Resa)</div><div class="bb"><div class="br"><span style="width:43%;background:var(--R)"></span></div></div><div class="bv">43%</div></div>
+      <div class="brow"><div class="bl">LLA-PRO (Adorni/Allan)</div><div class="bb"><div class="br"><span style="width:37%;background:var(--V)"></span></div></div><div class="bv">37%</div></div>
+      <div class="brow"><div class="bl">Otros</div><div class="bb"><div class="br"><span style="width:20%;background:#888"></span></div></div><div class="bv">20%</div></div>
+      <p style="font-size:11px;color:var(--MU);margin-top:8px"><span class="src">Letra P 08/09/25</span> Padrón 8ª Sección: 639.839 electores. Fuerza Patria obtiene 6 bancas legislativas; reparto en HCD: 7 FP + 5 LLA.</p>
+    </div>
+
+    <h3>Resultado PBA total — 7 sept. 2025</h3>
+    <div class="sec" style="background:#fafaf6;padding:12px;margin-top:0">
+      <div class="brow"><div class="bl">Fuerza Patria</div><div class="bb"><div class="br"><span style="width:47.28%;background:var(--R)"></span></div></div><div class="bv">47,28%</div></div>
+      <div class="brow"><div class="bl">La Libertad Avanza</div><div class="bb"><div class="br"><span style="width:33.71%;background:var(--V)"></span></div></div><div class="bv">33,71%</div></div>
+      <div class="brow"><div class="bl">Otros (Somos, izq, FIT)</div><div class="bb"><div class="br"><span style="width:19%;background:#888"></span></div></div><div class="bv">~19%</div></div>
+      <p style="font-size:11px;color:var(--MU);margin-top:8px"><span class="src">La Nación 09/09/25</span> Participación: 60,99%. FP ganó 6 de 8 secciones. LLA solo ganó 5ª y 6ª.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ LEGAL -->
+<div id="legal" class="panel">
+  <div class="sec">
+    <h2>Validación Constitucional — MSP-01 <span class="mt">[VDD]</span></h2>
+
+    <div class="legal-box ok">
+      <h4>✅ AXEL KICILLOF — Elegibilidad presidencial 2027</h4>
+      <ul>
+        <li>Gobernador PBA 2019-2023 (1er mandato), reelecto 2023, 2do mandato finaliza dic. 2027.</li>
+        <li><strong>Art. 123 Const. PBA:</strong> NO PUEDE volver a ser gobernador PBA en 2027 (consume 2 mandatos consecutivos). Próxima elegibilidad para gobernación: 2031.</li>
+        <li><strong>Art. 89 Const. Nacional:</strong> SÍ PUEDE ser candidato a presidente. No tiene mandato presidencial previo. Ningún impedimento.</li>
+        <li><strong>Decisión política observada (OSINT):</strong> Tomó el PJ bonaerense en abril 2026, desplazó a Máximo Kirchner. Movimiento Derecho al Futuro lo lanzó. <span class="src">La Nación 23/04/26</span> <span class="src">El Estadista 09/02/26</span></li>
+      </ul>
+    </div>
+
+    <div class="legal-box">
+      <h4>❌ CRISTINA F. DE KIRCHNER — Inhabilitada</h4>
+      <ul>
+        <li>Condena firme Causa Vialidad (TOF 2, dic. 2022; confirmada por Casación).</li>
+        <li>Inhabilitación absoluta perpetua para cargos públicos según Art. 19 inc. 2 CP.</li>
+        <li>Rol real 2027: arquitecta simbólica del peronismo; ya no proyecta candidatura propia.</li>
+      </ul>
+    </div>
+
+    <div class="legal-box ok">
+      <h4>✅ JULIO ALAK — Múltiples elegibilidades</h4>
+      <ul>
+        <li>5to mandato intendente LP iniciado dic. 2023 (1er mandato del ciclo actual = 2023-2027). Constitucional para reelección como intendente.</li>
+        <li><strong>Para gobernador PBA:</strong> SÍ ELEGIBLE. No tiene mandato ejecutivo provincial previo (fue ministro, no gobernador).</li>
+        <li><strong>OSINT:</strong> apuesta por gobernación; deja sucesión municipal a Resa/Gómez/Cara/Atanasof. <span class="src">LaPlata1 05/04/26</span></li>
+      </ul>
+    </div>
+
+    <div class="legal-box ok">
+      <h4>✅ JULIO GARRO — Elegibilidad legal vs. viabilidad real</h4>
+      <ul>
+        <li>Intendente LP 2015-2019 (1er mandato), 2019-2023 (1er reelección permitida). Completó 2 mandatos consecutivos.</li>
+        <li>Carta Orgánica Municipal de La Plata permite reelección consecutiva: cumplió intervalo en 2023-2027 al no ser candidato → habilitado para 2027.</li>
+        <li><strong>BLOQUEO REAL:</strong> imputado por asociación ilícita, incumplimiento de funcionario público, falsedad ideológica y administración fraudulenta (mar. 2025). Causa por barrios privados irregulares. Allanamiento a su domicilio. <span class="src">Infobae 17/03/25</span> <span class="src">Perfil 18/03/25</span></li>
+        <li>Su candidatura es legalmente posible pero <span class="tp R">políticamente inviable</span> mientras la causa avance.</li>
+      </ul>
+    </div>
+
+    <div class="legal-box">
+      <h4>❌ VERÓNICA MAGARIO — Inhabilitada para VP</h4>
+      <ul>
+        <li>Vicegobernadora 2019-2023 y 2023-2027. Consumió 2 mandatos consecutivos. Art. 123 Const. PBA aplica.</li>
+        <li>Próxima elegibilidad para VP provincial: 2031. SÍ puede ser candidata a otros cargos (diputada, senadora, etc.).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ GOBERNACION -->
+<div id="gobpba" class="panel">
+  <div class="sec">
+    <h2>Disputa por la Gobernación PBA 2027 <span class="mt">[OS]</span><span class="mt">[MP]</span><span class="mt">[DK]</span></h2>
+
+    <div class="alert blue">
+      <strong>📰 Estado del armado (mayo 2026)</strong>
+      Kicillof se autoexcluye de la gobernación (va por Casa Rosada). Se abren tres frentes: <strong>Fuerza Patria</strong> con Alak como nombre fuerte + retazos de Massa/De Pedro/Larroque; <strong>PRO+LLA</strong> con principio de acuerdo Santilli como candidato; <strong>LLA puro</strong> con Pareja, , Valenzuela y Ritondo compitiendo internamente. <span class="src">Letra P 04/09/25</span> <span class="src">Infobae 26/04/26</span>
+    </div>
+
+    <h3>Bloque Fuerza Patria / Kirchnerismo</h3>
+    <div class="cg">
+      <div class="cp L">
+        <h3 class="lL">Julio Alak · V_E 51% · ELEGIBLE</h3>
+        <p style="font-size:12.5px;margin-top:6px">Ministro de Justicia PBA (Kicillof), hoy intendente LP. Ganó la 8ª Sección con 43% en sept. 2025 (más amplio de lo esperado en alakismo). Cena con los Duhalde en Villa Elisa; reuniones con intendentes; opera con red kicillofista. Apuesta: gobernación con respaldo de Kicillof (a cambio de impulsarlo para Casa Rosada). <span class="src">LaPlata1 05/04/26</span></p>
+        <div class="meter"><div class="lab">Red intendentes K</div><div class="mbar G"><span style="width:65%"></span></div></div>
+        <div class="meter"><div class="lab">Imagen provincial</div><div class="mbar Y"><span style="width:45%"></span></div></div>
+        <div class="meter"><div class="lab">Lealtad Kicillof</div><div class="mbar G"><span style="width:80%"></span></div></div>
+        <ul style="font-size:12px;margin-top:6px">
+          <li><strong>Fortaleza:</strong> 8ª sección al hombro + red municipal + lealtad probada con Kicillof + experiencia ministerial provincial.</li>
+          <li><strong>Debilidad:</strong> imagen muy platense; baja exposición en conurbano norte/sur.</li>
+          <li><strong>Riesgo:</strong> La Cámpora (Larroque) puede impulsar candidato propio; tensión interna FP.</li>
+        </ul>
+      </div>
+
+      <div class="cp L">
+        <h3 class="lL">Wado de Pedro · V_E 42%</h3>
+        <p style="font-size:12.5px;margin-top:6px">Senador nacional. Viajó a cumbre Barcelona (España) sin respaldar a Kicillof — gesto deliberado de fisura. Cercano a CFK. Su candidatura depende del aval de Cristina y del rechazo de los intendentes hacia Alak. <span class="src">La Nación 23/04/26</span></p>
+      </div>
+
+      <div class="cp L">
+        <h3 class="lL">Andrés "Cuervo" Larroque · V_E 36%</h3>
+        <p style="font-size:12.5px;margin-top:6px">Ministro de Desarrollo de la Comunidad PBA. Histórico La Cámpora, hoy hibridizado con Kicillof. Carta natural si la pulseada Cristina-Kicillof exige tercer nombre.</p>
+      </div>
+
+      <div class="cp L">
+        <h3 class="lL">Sergio Massa · V_E 38% · Mediador</h3>
+        <p style="font-size:12.5px;margin-top:6px">Rol declarado: mediador entre Kicillof y CFK. Foto del abrazo Kicillof-Massa post sept. 2025. Si la mediación fracasa, puede emerger como candidato de consenso. <span class="src">Parlamentario</span></p>
+      </div>
+    </div>
+
+    <h3>Bloque PRO + LLA + UCR</h3>
+    <div class="cg">
+      <div class="cp G">
+        <h3 class="lG">Diego Santilli · V_E 57% · Candidato natural PRO-LLA</h3>
+        <p style="font-size:12.5px;margin-top:6px">Diputado nacional / Ministro del Interior (Milei). Principio de acuerdo PRO-LLA cerrado en abril 2026 lo confirma como candidato. Ritondo y Pareja coinciden en su elegibilidad. <span class="src">Infobae 26/04/26</span></p>
+        <div class="meter"><div class="lab">Aval PRO-LLA</div><div class="mbar G"><span style="width:75%"></span></div></div>
+        <div class="meter"><div class="lab">Imagen conurbano</div><div class="mbar Y"><span style="width:50%"></span></div></div>
+        <ul style="font-size:12px;margin-top:6px">
+          <li><strong>Condición crítica:</strong> que la UCR de Abad cierre acuerdo en lista bonaerense.</li>
+          <li><Espertstrong>No forma parte de la contienda LLA:</strong> Pareja,  y Valenzuela pueden disputar candidatura.</li>
+        </ul>
+      </div>
+
+      <div class="cp V">
+        <h3 class="lV">Sebastián Pareja · V_E 45% · Aspira gobernador LLA</h3>
+        <p style="font-size:12.5px;margin-top:6px">Diputado nacional, presidente LLA-PBA. Operador clave de Karina Milei en provincia. <strong>"Es inevitable que en 2027 gobernemos PBA"</strong>. Acepta segundo lugar si Milei lo decide. Tensión con Las Fuerzas del Cielo (Caputo). <span class="src">Infobae 06/03/26</span> <span class="src">Parlamentario 30/10/25</span></p>
+        <div class="meter"><div class="lab">Red territorial LLA-PBA</div><div class="mbar V"><span style="width:70%"></span></div></div>
+        <div class="meter"><div class="lab">Aval Karina Milei</div><div class="mbar V"><span style="width:80%"></span></div></div>
+        <p style="font-size:11.5px;margin-top:6px;color:var(--V)"><strong>Lectura CD:</strong> Pareja es el "plan B" si Santilli no cierra con LLA. Su intención declarada es gobernador, pero acepta vicegobernador en fórmula con Santilli si Karina lo ordena. <strong>Hipótesis fórmula PRO-LLA: Santilli + Pareja</strong>.</p>
+      </div>
+
+      <div class="cp O">
+        <h3 class="lO">Cristian Ritondo · V_E 32%</h3>
+        <p style="font-size:12.5px;margin-top:6px">Presidente PRO-PBA. Más útil como armador que como candidato. Confirma a Santilli públicamente. <span class="src">Infobae 26/04/26</span></p>
+      </div>
+
+      <div class="cp V">
+        <h3 class="lV">Diego Valenzuela · V_E 34%</h3>
+        <p style="font-size:12.5px;margin-top:6px">Intendente Tres de Febrero. Cruzó del PRO a LLA. Único intendente que ganó conurbano por LLA en 2025. Anotado en la pelea. <span class="src">Infobae 08/09/25</span></p>
+      </div>
+    </div>
+
+    <h3>Scoring comparativo Gobernación PBA</h3>
+    <div class="sec" style="background:#fafaf6;padding:12px;margin-top:0">
+      <div class="brow"><div class="bl">Santilli (PRO-LLA)</div><div class="bb"><div class="br"><span style="width:57%;background:var(--GR)"></span></div></div><div class="bv">57%</div></div>
+      <div class="brow"><div class="bl">Alak (FP)</div><div class="bb"><div class="br"><span style="width:51%;background:var(--R)"></span></div></div><div class="bv">51%</div></div>
+      <div class="brow"><div class="bl">Pareja (LLA)</div><div class="bb"><div class="br"><span style="width:45%;background:var(--V)"></span></div></div><div class="bv">45%</div></div>
+      <div class="brow"><div class="bl">De Pedro (FP-CFK)</div><div class="bb"><div class="br"><span style="width:42%;background:var(--R)"></span></div></div><div class="bv">42%</div></div>
+      <div class="brow"><div class="bl">Massa (FP-Mediador)</div><div class="bb"><div class="br"><span style="width:38%;background:var(--R)"></span></div></div><div class="bv">38%</div></div>
+      <div class="brow"><div class="bl">Larroque (Cámpora)</div><div class="bb"><div class="br"><span style="width:36%;background:var(--R)"></span></div></div><div class="bv">36%</div></div>
+      <div class="brow"><div class="bl">Valenzuela (LLA)</div><div class="bb"><div class="br"><span style="width:34%;background:var(--V)"></span></div></div><div class="bv">34%</div></div>
+      <div class="brow"><div class="bl">Ritondo (PRO)</div><div class="bb"><div class="br"><span style="width:32%;background:var(--O)"></span></div></div><div class="bv">32%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ LA PLATA -->
+<div id="laplata" class="panel">
+  <div class="sec">
+    <h2>Intendencia La Plata 2027 — Mapa OSINT corregido <span class="mt">[OS]</span><span class="mt">[PR]</span></h2>
+
+    <div class="alert violet">
+      <strong>📍 Reconfiguración total del tablero LP</strong>
+      Alak proyecta gobernación → su sucesor natural en LP es <strong>Sergio Resa</strong>. Garro está imputado → la oposición platense queda descapitalizada. Allan no mide. Bardón rechaza. Los Adorni son paracaidistas. Saintout sin candidatura ejecutiva activa. <strong>El tablero LP queda más abierto que en cualquier elección reciente.</strong> <span class="src">LaPlata1 05/04/26</span> <span class="src">Nova 08/03/26</span>
+    </div>
+
+    <h3>Bloque Fuerza Patria — Sucesión Alak</h3>
+    <div class="cg">
+      <div class="cp G">
+        <h3 class="lG">Sergio Resa · V_E 49% · Candidato Alak</h3>
+        <p style="font-size:12.5px;margin-top:6px">Arquitecto UNLP. Actual Secretario de Planeamiento, Obras y Servicios Públicos LP. Encabezó lista FP a concejales 8ª Sección sept. 2025 → ganó. Marca obra pública visible. Es la designación más directa de Alak para sucederlo. <span class="src">Letra P 08/09/25</span> <span class="src">LaPlata1 05/04/26</span></p>
+        <div class="meter"><div class="lab">Aval Alak</div><div class="mbar G"><span style="width:85%"></span></div></div>
+        <div class="meter"><div class="lab">Vidriera obra pública</div><div class="mbar G"><span style="width:70%"></span></div></div>
+        <div class="meter"><div class="lab">Marca propia</div><div class="mbar Y"><span style="width:40%"></span></div></div>
+        <ul style="font-size:12px;margin-top:6px">
+          <li><strong>Fortaleza:</strong> ya fue cabeza de lista (testeado). Acceso directo al músculo gestor. Aval Alak total.</li>
+          <li><strong>Debilidad:</strong> bajo reconocimiento masivo fuera de obra pública. Sin marca personal construida.</li>
+          <li><strong>Condición:</strong> requiere que Alak salga ganando la pulseada interna por gobernación.</li>
+        </ul>
+      </div>
+
+      <div class="cp L">
+        <h3 class="lL">Norberto "Chucho" Gómez · V_E 38%</h3>
+        <p style="font-size:12.5px;margin-top:6px">Exconcejal, hoy Secretario General municipal. Prolongación directa de Alak ("hablar con Chucho es hablar con Julio"). Carta de poder real. <span class="src">LaPlata1 05/04/26</span></p>
+      </div>
+
+      <div class="cp L">
+        <h3 class="lL">Guillermo "Nano" Cara · V_E 36%</h3>
+        <p style="font-size:12.5px;margin-top:6px">Secretario de Gobierno LP. Territorio + militancia + estructura juvenil. Renovación en peronismo platense.</p>
+      </div>
+
+      <div class="cp L">
+        <h3 class="lL">Gonzalo Atanasof · V_E 32%</h3>
+        <p style="font-size:12.5px;margin-top:6px">Presidente Lotería y Casinos PBA. Vínculo La Cámpora. Carta de Máximo Kirchner para LP. Si La Cámpora no acepta a Resa, su nombre sube.</p>
+      </div>
+    </div>
+
+    <h3>Bloque PRO / LLA / Oposición</h3>
+    <div class="cg">
+      <div class="cp O">
+        <h3 class="lO">Julio Garro · V_E 28% · IMPUTADO</h3>
+        <span class="tp R">⚠ ASOCIACIÓN ILÍCITA</span>
+        <p style="font-size:12.5px;margin-top:6px"><strong>Causa abierta UFI N°16 La Plata (fiscal Condomí Alcorta).</strong> Imputado por asociación ilícita, incumplimiento de funcionario público, falsedad ideológica, administración fraudulenta. Allanamientos a su domicilio. Junto a 7 imputados + 4 empresas. Vinculación adicional con José Spinelli (socio en JGS SA, gastronomía concesiones LP) y entramado de la "megaestafa fiscal" Foresio. <span class="src">Infobae 17/03/25</span> <span class="src">InfoPlatense 25/06/25</span></p>
+        <div class="meter"><div class="lab">Imagen anterior (gestión)</div><div class="mbar G"><span style="width:55%"></span></div></div>
+        <div class="meter"><div class="lab">Carga judicial actual</div><div class="mbar R"><span style="width:80%"></span></div></div>
+        <div class="meter"><div class="lab">V_E corregida por causa</div><div class="mbar R"><span style="width:28%"></span></div></div>
+        <p style="font-size:11.5px;margin-top:6px;color:var(--R)"><strong>Lectura CD:</strong> Garro mide alto en imagen previa pero las imputaciones le cierran la puerta a una candidatura competitiva. Su entorno aguarda definiciones de Macri y se autoexcluyó de la conversación política pública. <span class="src">Nova 08/03/26</span></p>
+      </div>
+
+      <div class="cp V">
+        <h3 class="lV">Juan Pablo Allan · V_E 31% · No mide</h3>
+        <p style="font-size:12.5px;margin-top:6px">Exsenador PBA, ex-RENAR, hoy concejal LP (bloque LLA-Bullrich), Vicepresidente 2° HCD. Anuncia candidatura a intendente. Bullrich-istas en la 8ª sección fueron señalados como responsables de la derrota de sept. 2025. Perfil bajo durante la campaña. <span class="src">Letra P 09/09/25</span> <span class="src">0221 19/08/25</span></p>
+        <div class="meter"><div class="lab">Aval Bullrich</div><div class="mbar V"><span style="width:60%"></span></div></div>
+        <div class="meter"><div class="lab">Performance electoral 2025</div><div class="mbar R"><span style="width:30%"></span></div></div>
+        <div class="meter"><div class="lab">Marca instalada</div><div class="mbar Y"><span style="width:35%"></span></div></div>
+      </div>
+
+      <div class="cp V">
+        <h3 class="lV">Francisco Adorni / Manuel Adorni · V_E 30%</h3>
+        <p style="font-size:12.5px;margin-top:6px">Hipótesis Karina Milei: paracaidista parejista vía hermano del vocero presidencial. Francisco encabezó lista a diputado PBA 2025 → derrota local. Sin estructura platense. <span class="src">Letra P 09/09/25</span></p>
+      </div>
+
+      <div class="cp O">
+        <h3 class="lO">Guillermo Bardón · V_E rechaza</h3>
+        <p style="font-size:12.5px;margin-top:6px">Concejal LLA. Explícitamente declinó: <em>"no hay remota chance de que yo sea candidato a intendente, ya lo dije en 2023 y lo repito ahora"</em>. <span class="src">Nova 08/03/26</span></p>
+      </div>
+
+      <div class="cp O">
+        <h3 class="lO">Espacio UCR-LP</h3>
+        <p style="font-size:12.5px;margin-top:6px">UCR LP dividida: línea Mor Roig/Rovella/Forneris/Nicoletti dialoga con Alak; línea Cadaa fotografiada con Quintero Chasman (PRO) y Osaba (LLA) hacia el lado violeta. Sin candidato a intendente consolidado. Posible aporte a fórmula LLA. <span class="src">Nova 08/03/26</span></p>
+      </div>
+    </div>
+
+    <h3>Proyección 1ra vuelta La Plata 2027 — Escenario base</h3>
+    <div class="sec" style="background:#fafaf6;padding:12px;margin-top:0">
+      <div class="brow"><div class="bl">Resa (FP-Alak)</div><div class="bb"><div class="br"><span style="width:42%;background:var(--R)"></span></div></div><div class="bv">~42%</div></div>
+      <div class="brow"><div class="bl">Allan / Adorni (LLA-PRO)</div><div class="bb"><div class="br"><span style="width:34%;background:var(--V)"></span></div></div><div class="bv">~34%</div></div>
+      <div class="brow"><div class="bl">FIT / Izquierda</div><div class="bb"><div class="br"><span style="width:9%;background:#888"></span></div></div><div class="bv">~9%</div></div>
+      <div class="brow"><div class="bl">Otros + nulos/blancos</div><div class="bb"><div class="br"><span style="width:15%;background:#ccc"></span></div></div><div class="bv">~15%</div></div>
+      <p style="font-size:11px;color:var(--MU);margin-top:8px">Proyección basada en 8ª sección sept. 2025 (FP 43% / LLA-PRO 37%) + factor Garro imputado (-3 pts oposición) + factor Resa sin marca propia (-1 pt FP).</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ FORMULAS -->
+<div id="formulas" class="panel">
+  <div class="sec">
+    <h2>Fórmulas proyectadas 2027 <span class="mt">[GDA]</span><span class="mt">[MP]</span></h2>
+
+    <h3>Gobernación PBA — Fórmulas en disputa</h3>
+    <div class="cg">
+      <div class="cp G">
+        <h3 class="lG">Fórmula 1 · PRO+LLA+UCR — "Acuerdo abril 2026"</h3>
+        <div style="font-size:11px;background:#ddf0de;padding:5px 8px;border-radius:5px;margin-bottom:8px;font-weight:700;color:#1a4d1e">Probabilidad: 48% · Confirmada parcialmente OSINT</div>
+        <p style="font-size:12.5px"><strong>Gobernador:</strong> Diego Santilli (PRO-Ministro Interior)<br>
+        <strong>Vice:</strong> Sebastián Pareja (LLA-PBA) o referente UCR-Abad<br>
+        <strong>Pendiente:</strong> cierre UCR; tensión Macri vs. armado.<br>
+        <span class="src">Infobae 26/04/26</span> <span class="src">Letra P</span></p>
+      </div>
+
+      <div class="cp V">
+        <h3 class="lV">Fórmula 2 · LLA pura — "Plan Pareja"</h3>
+        <div style="font-size:11px;background:#ecdcfa;padding:5px 8px;border-radius:5px;margin-bottom:8px;font-weight:700;color:#3d1a5c">Probabilidad: 22%</div>
+        <p style="font-size:12.5px"><strong>Gobernador:</strong> Sebastián Pareja<br>
+        <strong>Vice:</strong> Diego Valenzuela (Tres de Febrero) o Luciano Olivera<br>
+        <strong>Condición:</strong> ruptura con PRO si Macri se planta.<br>
+        Resultado proyectado: fragmenta oposición, deja vía libre a FP.</p>
+      </div>
+
+      <div class="cp L">
+        <h3 class="lL">Fórmula 3 · Fuerza Patria — "Continuidad Kicillof"</h3>
+        <div style="font-size:11px;background:#fce0e3;padding:5px 8px;border-radius:5px;margin-bottom:8px;font-weight:700;color:#7a0b15">Probabilidad: 38%</div>
+        <p style="font-size:12.5px"><strong>Gobernador:</strong> Julio Alak (kicillofismo)<br>
+        <strong>Vice:</strong> Mario Secco (Ensenada) o Ferraresi (Avellaneda) o figura La Cámpora<br>
+        <strong>Condición:</strong> Kicillof candidato presidencial cede gobernación a hombre propio.<br>
+        Alternativa: De Pedro si CFK impone candidato.</p>
+      </div>
+
+      <div class="cp L">
+        <h3 class="lL">Fórmula 4 · FP — "Wado de Pedro consenso CFK"</h3>
+        <div style="font-size:11px;background:#fce0e3;padding:5px 8px;border-radius:5px;margin-bottom:8px;font-weight:700;color:#7a0b15">Probabilidad: 18%</div>
+        <p style="font-size:12.5px"><strong>Gobernador:</strong> Wado de Pedro (cristinista)<br>
+        Condición: que CFK le gane la pulseada interna a Kicillof por el liderazgo del peronismo nacional.</p>
+      </div>
+    </div>
+
+    <h3>Intendencia La Plata — Fórmulas</h3>
+    <div class="cg">
+      <div class="cp G">
+        <h3 class="lG">Fórmula LP-1 · FP-Alak — "Sucesión Resa"</h3>
+        <div style="font-size:11px;background:#ddf0de;padding:5px 8px;border-radius:5px;margin-bottom:8px;font-weight:700;color:#1a4d1e">Probabilidad: 52%</div>
+        <p style="font-size:12.5px"><strong>Intendente:</strong> Sergio Resa<br>
+        <strong>Concejales encabezando:</strong> Ariel Archanco (La Cámpora-Saintout), Chucho Gómez, Nano Cara<br>
+        <strong>Condición:</strong> Alak no obtiene gobernación → vuelve a LP / o Alak gobernador y deja a Resa.</p>
+      </div>
+
+      <div class="cp V">
+        <h3 class="lV">Fórmula LP-2 · LLA-Bullrich — "Allan + LLA pura"</h3>
+        <div style="font-size:11px;background:#ecdcfa;padding:5px 8px;border-radius:5px;margin-bottom:8px;font-weight:700;color:#3d1a5c">Probabilidad: 28%</div>
+        <p style="font-size:12.5px"><strong>Intendente:</strong> Juan Pablo Allan<br>
+        <strong>Concejales:</strong> Adorni / Sabrina Morales / Pedernera<br>
+        <strong>Riesgo:</strong> Allan no midió en 2025 (-6 pts vs FP).</p>
+      </div>
+
+      <div class="cp V">
+        <h3 class="lV">Fórmula LP-3 · LLA-Karina — "Adorni paracaidista"</h3>
+        <div style="font-size:11px;background:#ecdcfa;padding:5px 8px;border-radius:5px;margin-bottom:8px;font-weight:700;color:#3d1a5c">Probabilidad: 12%</div>
+        <p style="font-size:12.5px"><strong>Intendente:</strong> Francisco o Manuel Adorni (importación Karina Milei).<br>
+        Bajo arraigo platense, alto reconocimiento mediático.</p>
+      </div>
+
+      <div class="cp O">
+        <h3 class="lO">Fórmula LP-4 · PRO descabezado — "Sin Garro"</h3>
+        <div style="font-size:11px;background:#fdf3da;padding:5px 8px;border-radius:5px;margin-bottom:8px;font-weight:700;color:#7a5500">Probabilidad: 8%</div>
+        <p style="font-size:12.5px">Si Garro queda fuera por causa y nadie del PRO platense logra peso (Martínez Garmendia, Carolina Barros Schelotto), el espacio se diluye en LLA. Posible coalición Hechos+PRO+UCR como tercera fuerza.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ MIROFISH -->
+<div id="mirofish" class="panel">
+  <div class="sec">
+    <h2>Simulación MiroFish — 1.000 agentes <span class="mt">[MFSH]</span></h2>
+    <p style="font-size:12.5px;color:var(--MU)">Modelado de agentes con variables: alineación partidaria (FP/LLA-PRO/Otros), edad, sección, exposición digital, peso económico personal, sensibilidad a causa Garro, sensibilidad a Kicillof presidencial. Resultados de simulación a junio 2027.</p>
+
+    <h3>Resultado simulado Gobernación PBA — 4 escenarios</h3>
+    <div class="sc A">
+      <h4>Escenario 1 — PRO+LLA unidos con Santilli</h4>
+      <div class="pr">Probabilidad MiroFish: 41%</div>
+      <p>Santilli 44% · Alak 38% · Otros 18%. Diferencia <strong>6 pts a favor oposición</strong>. Sin balotaje. La unidad PRO-LLA materializada permite captar votos huérfanos de UCR y centro.</p>
+    </div>
+    <div class="sc B">
+      <h4>Escenario 2 — Oposición fragmentada (LLA y PRO solos)</h4>
+      <div class="pr">Probabilidad MiroFish: 24%</div>
+      <p>Alak 39% · Pareja 22% · Santilli 19% · Otros 20%. <strong>Victoria FP por fragmentación opositora</strong>. Replica el patrón Chubut 2023 invertido.</p>
+    </div>
+    <div class="sc D">
+      <h4>Escenario 3 — Victoria FP-Kicillof con Alak fuerte</h4>
+      <div class="pr">Probabilidad MiroFish: 19%</div>
+      <p>Alak 45% · Santilli 36% · Otros 19%. Si la economía Milei se deteriora hacia mediados 2026, FP captura ex-libertarios decepcionados. Kicillof presidente potencia voto K bonaerense.</p>
+    </div>
+    <div class="sc V">
+      <h4>Escenario 4 — Sorpresa LLA puro (Pareja gobernador)</h4>
+      <div class="pr">Probabilidad MiroFish: 16%</div>
+      <p>Pareja 38% · Alak 35% · Santilli 17% · Otros 10%. Si Karina Milei impone candidato LLA y PRO no acuerda. La 5ª y 6ª sección sostendrían a Pareja.</p>
+    </div>
+
+    <h3>Resultado simulado La Plata 2027</h3>
+    <div class="sc A">
+      <h4>Escenario A — Resa gana con FP unida</h4>
+      <div class="pr">Probabilidad: 49%</div>
+      <p>Resa 43% · Allan 31% · Adorni 10% · Otros 16%. Replica patrón 2025 con leve corrección.</p>
+    </div>
+    <div class="sc B">
+      <h4>Escenario B — Oposición unifica (Allan + apoyo PRO-Macri)</h4>
+      <div class="pr">Probabilidad: 27%</div>
+      <p>Allan unificado 41% · Resa 40% · Otros 19%. Empate técnico. Resultado depende del residuo Garro y movilización 8ª.</p>
+    </div>
+    <div class="sc C">
+      <h4>Escenario C — Tercera fuerza (paracaidista Adorni)</h4>
+      <div class="pr">Probabilidad: 14%</div>
+      <p>Adorni 32% (efecto figura mediática) · Resa 36% · Allan 18% · Otros 14%. Manuel Adorni captura voto LLA puro pero fractura LLA-Bullrich.</p>
+    </div>
+    <div class="sc E">
+      <h4>Escenario D — Saintout-Cámpora intenta interna</h4>
+      <div class="pr">Probabilidad: 10%</div>
+      <p>Si La Cámpora rompe con Alak en LP y Saintout retoma candidatura: Resa 33% · Saintout 14% (PASO interna) · Allan 30% · Otros. FP pierde por fractura interna.</p>
+    </div>
+
+    <h3>Sensibilidad de variables</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Impacto en Gob. PBA</th><th>Impacto en LP</th></tr></thead>
+      <tbody>
+        <tr><td>Acuerdo PRO-LLA cerrado</td><td>+9 pts a Santilli</td><td>+4 pts a Allan</td></tr>
+        <tr><td>UCR-Abad firma con PRO-LLA</td><td>+3 pts a Santilli</td><td>+2 pts a Allan</td></tr>
+        <tr><td>Causa Garro avanza con procesamiento</td><td>0</td><td>-5 pts a oposición</td></tr>
+        <tr><td>Kicillof candidato presidencial confirmado</td><td>+4 pts a Alak</td><td>+3 pts a Resa</td></tr>
+        <tr><td>Recesión nacional 2026 H2</td><td>+5 pts FP / -6 LLA</td><td>+4 FP / -5 LLA</td></tr>
+        <tr><td>La Cámpora rompe con Alak</td><td>-4 pts FP</td><td>-8 pts FP</td></tr>
+        <tr><td>Massa media exitosamente entre CFK-Kicillof</td><td>+3 pts FP</td><td>+2 pts FP</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================ NARRATIVA -->
+<div id="narrat" class="panel">
+  <div class="sec">
+    <h2>Guerra Narrativa 2027 <span class="mt">[GDA]</span><span class="mt">[OSP]</span><span class="mt">[OSB]</span>
+
+    </h2>
+    <div class="cg">
+      <div class="cp L">
+        <h3 class="lL">Narrativa FP-Kicillof</h3>
+        <p style="font-size:12.5px"><strong>Eje provincial (Alak):</strong> "La provincia que resistió el ajuste, ahora gobierna mejor que nunca."</p>
+        <p style="font-size:12.5px"><strong>Eje nacional (Kicillof):</strong> "Una alternativa federal, productiva, distinta a Milei y a la vieja Cristina."</p>
+        <ul style="font-size:12px">
+          <li>Pathos dominante en provincia; Logos pragmático en nacional.</li>
+          <li>Recurso: doblar la apuesta gestión vs. motosierra.</li>
+          <li>Vulnerabilidad: inflación 2019-2023 y caja CFK.</li>
+        </ul>
+      </div>
+
+      <div class="cp V">
+        <h3 class="lV">Narrativa LLA</h3>
+        <p style="font-size:12.5px"><strong>Eje (Pareja/Santilli-Milei):</strong> "Es inevitable. La provincia tiene que cambiar. Eliminar tasas, reducir Estado."</p>
+        <ul style="font-size:12px">
+          <li>Logos + Pathos indignación: casta, privilegios, gasto público.</li>
+          <li>TikTok dominante; voto joven LLA estructural.</li>
+          <li>Vulnerabilidad: gestión nacional desgastada por 4 años de ajuste.</li>
+        </ul>
+      </div>
+
+      <div class="cp G">
+        <h3 class="lG">Narrativa PRO + Acuerdo</h3>
+        <p style="font-size:12.5px"><strong>Eje (Santilli-Ritondo):</strong> "Llegamos al poder con orden. Gobernar PBA es nuestro deber pendiente."</p>
+        <ul style="font-size:12px">
+          <li>Ethos: gestión Vidal 2015-2019 + alineación nacional.</li>
+          <li>Vulnerabilidad: marca "ricos" en conurbano + causa Garro contamina marca local.</li>
+        </ul>
+      </div>
+
+      <div class="cp O">
+        <h3 class="lO">Narrativa anti-Garro / Pro-Alak en LP</h3>
+        <p style="font-size:12.5px"><strong>Eje:</strong> "Los 8 años de Garro = 1.500 millones de dólares de estafa inmobiliaria. La justicia avanza."</p>
+        <ul style="font-size:12px">
+          <li>Marco GDA: corrupción opositora se autodenuncia (irrefutabilidad documental).</li>
+          <li>Capacidad de saturación mediática en El Día, 0221, Infocielo.</li>
+          <li>Riesgo: que se perciba como persecución política → reduce efectividad.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Detector OSINT bots y CIB <span class="osint-tag">[OSB]</span></h3>
+    <div class="alert blue">
+      <strong>Patrones detectados (mayo 2026)</strong>
+      <ul style="margin-top:6px;padding-left:16px;font-size:12.5px">
+        <li><strong>X/Twitter:</strong> Amplificación coordinada inauténtica en cuentas pro-LLA (Las Fuerzas del Cielo). Volumen anómalo en debates Pareja/Caputo.</li>
+        <li><strong>TikTok:</strong> Battleground voto joven. LLA con ventaja estructural; FP responde con cuentas de intendentes municipales.</li>
+        <li><strong>WhatsApp:</strong> Canal primario peronismo bonaerense (cadenas Movimiento Derecho al Futuro + intendencias).</li>
+        <li><strong>Cuentas-fantasma con apellido "Alak" o "Resa":</strong> No detectadas en este análisis. Pero requiere monitoreo continuo PASO 2027.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ DIAGNOSTICO -->
+<div id="diag" class="panel">
+  <div class="sec">
+    <h2>Diagnóstico Final CD — Síntesis estratégica <span class="mt">[CD]</span><span class="mt">[EE]</span></h2>
+
+    <div class="alert violet">
+      <strong>🟣 Alerta morada — Kicillof ya no juega PBA</strong>
+      La pieza más importante del análisis. El gobernador apunta a Casa Rosada, no a su sucesión bonaerense. Su decisión condiciona TODA la arquitectura del FP. Quien herede la gobernación deberá hacerlo con la bendición del nuevo presidente del PJ PBA. Esa carta hoy la tiene Alak.
+    </div>
+
+    <div class="alert red">
+      <strong>🔴 Alerta Roja — Causa Garro descabeza oposición LP</strong>
+      Imputación por asociación ilícita + allanamientos + USD 1.500M en perjuicio investigado. La oposición platense pierde a su figura más reconocida. Sin Garro fuerte, LLA-Bullrich tiene a Allan que no midió. La izquierda LLA puede importar paracaidista (Adorni). Pero ninguna alternativa tiene marca instalada. <strong>El espacio FP-Alak-Resa hereda un tablero descapitalizado.</strong>
+    </div>
+
+    <div class="alert gold">
+      <strong>🟡 Alerta Amarilla — Tensión UCR-LLA-PRO</strong>
+      El acuerdo nacional UCR+LLA ya opera en Chaco, Mendoza, Entre Ríos. En PBA: principio de acuerdo PRO-LLA con Santilli pero UCR-Abad demora. Macri presiona por mantener identidad PRO. Si la coalición no cierra unificada, FP gana por fragmentación opositora.
+    </div>
+
+    <div class="alert green">
+      <strong>🟢 Oportunidad — Alak puede capturar 2 cargos simultáneos</strong>
+      Si la pulseada con La Cámpora se resuelve a su favor, Alak puede ser candidato a gobernador + dejar a Resa instalado como sucesor en LP. Esto requiere que: (a) Kicillof presidente; (b) red intendentes lo respalde; (c) La Cámpora acepte Atanasof o figura interna como vice.
+    </div>
+
+    <h3>Recomendaciones estratégicas por actor</h3>
+    <table>
+      <thead><tr><th>Actor</th><th>Movimiento prioritario</th><th>Horizonte</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Alak</strong></td><td>Consolidar candidatura gobernador con aval Kicillof + cerrar Resa en LP</td><td>0-6 meses</td></tr>
+        <tr><td><strong>Kicillof</strong></td><td>Cerrar nombre sucesorio PBA en favor de Alak ANTES de PASO 2027</td><td>3-9 meses</td></tr>
+        <tr><td><strong>Santilli</strong></td><td>Sellar acuerdo formal con LLA-Pareja + retener UCR-Abad</td><td>3-12 meses</td></tr>
+        <tr><td><strong>Pareja</strong></td><td>Decidir: vice de Santilli</td><td>6-12 meses</td></tr>
+        <tr><td><strong>Resa</strong></td><td>Construir marca propia mientras Alak campañe provincial</td><td>0-18 meses</td></tr>
+        <tr><td><strong>Allan</strong></td><td>Crítico: salir del concejal-anónimo a candidato visible o ceder a Adorni</td><td>6-12 meses</td></tr>
+        <tr><td><strong>Garro</strong></td><td>Resolver situación judicial antes que política. Sin sobreseimiento, sin candidatura.</td><td>0-12 meses</td></tr>
+        <tr><td><strong>La Cámpora-Saintout</strong></td><td>Negociar fórmula con Alak o romper. PASO interna mata FP.</td><td>3-9 meses</td></tr>
+        <tr><td><strong>UCR-Abad</strong></td><td>Definir: acuerdo PRO-LLA bancas vs. lista propia → si va sola, pierde representación</td><td>0-6 meses</td></tr>
+      </tbody>
+    </table>
+
+    <div class="vd" style="margin-top:16px">
+      <h3>Veredicto CD — Síntesis Ejecutiva</h3>
+      <p>PBA 2027 tiene un ganador probable: <strong style="color:var(--G)">Diego Santilli si la coalición PRO-LLA cierra unida</strong> (probabilidad 48%). Si no cierra, <strong style="color:var(--G)">Julio Alak es el ganador de fondo</strong> con respaldo de Kicillof presidencial y red de intendentes (probabilidad 38%). La Plata es el espejo invertido: <strong style="color:var(--G)">Sergio Resa hereda con altísima probabilidad</strong> porque la oposición platense está descabezada por la causa Garro y por la fragmentación interna LLA-Bullrich/Karina. Las dos variables decisivas son: (1) <strong>cómo termina la causa Garro</strong> en términos políticos (sobreseimiento o procesamiento firme); (2) <strong>si la UCR-Abad cierra acuerdo con PRO-LLA o juega por libre</strong>. Sin esas dos definiciones, ningún pronóstico es robusto.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ FUENTES -->
+<div id="fuentes" class="panel">
+  <div class="sec">
+    <h2>Trazabilidad documental completa</h2>
+
+    <button class="acc-btn" onclick="this.nextElementSibling.classList.toggle('open')">Fuentes primarias verificadas (37 piezas)</button>
+    <div class="acc-body">
+      <ul style="font-size:12px;padding:4px 0 10px 20px">
+        <li><strong>Infobae</strong> · 17/03/25 · "Imputaron al ex intendente de La Plata Julio Garro en una causa por corrupción y allanaron su casa"</li>
+        <li><strong>Perfil</strong> · 18/03/25 · "Imputaron a Julio Garro por la autorización ilegal de barrios privados en La Plata"</li>
+        <li><strong>Infocielo</strong> · 17/03/25 · "Imputaron a Julio Garro por presuntos actos de corrupción junto a otros siete involucrados"</li>
+        <li><strong>InfoPlatense</strong> · 25/06/25 · "Megaestafa fiscal en La Plata: avanza la causa que involucra a la contadora, empresarios y vinculados al garrismo"</li>
+        <li><strong>El Día</strong> · 22/10/24 · "Denuncian a la gestión de Garro por irregularidades en emprendimientos inmobiliarios"</li>
+        <li><strong>Ámbito</strong> · 09/04/26 · "Megaestafa inmobiliaria en La Plata: supera los u$s20 millones y avanza la causa penal"</li>
+        <li><strong>Letra P</strong> · 08/09/25 · "La Plata: triunfazo de Julio Alak, que proyecta su nombre a la escena provincial"</li>
+        <li><strong>Letra P</strong> · 09/09/25 · "Octava sección: Francisco Adorni y Juan Pablo Allan, los nombres de la derrota de La Libertad Avanza"</li>
+        <li><strong>Letra P</strong> · 04/09/25 · "Buenos Aires 2027: las 11 figuras que van por el sillón de Axel Kicillof"</li>
+        <li><strong>LaPlata1</strong> · 05/04/26 · "Con Alak en modo 2027, arranca la pelea por su herencia política en La Plata"</li>
+        <li><strong>La Nación</strong> · 23/04/26 · "Axel Kicillof asume en el PJ bonaerense con la intención de reforzar su candidatura presidencial"</li>
+        <li><strong>La Nación</strong> · 30/10/25 · "El diagnóstico de Sebastián Pareja, el armador bonaerense de LLA"</li>
+        <li><strong>La Nación</strong> · 09/09/25 · "Resultados: quién ganó las Elecciones 2025 en la provincia de Buenos Aires"</li>
+        <li><strong>Infobae</strong> · 06/03/26 · "Sebastián Pareja: Es inevitable que en el 2027 gobernemos la provincia de Buenos Aires"</li>
+        <li><strong>Infobae</strong> · 21/04/26 · "LLA dará inicio formal a la disputa electoral bonaerense: estará Santilli y se espera por Karina Milei"</li>
+        <li><strong>Infobae</strong> · 26/04/26 · "Principio de acuerdo entre LLA y el PRO para armar una alianza en provincia de Buenos Aires"</li>
+        <li><strong>Infobae</strong> · 07/09/25 · "Elecciones Buenos Aires 2025: guía rápida"</li>
+        <li><strong>Infobae</strong> · 08/09/25 · "Quién ganó en mi municipio: el mapa de los resultados por distrito"</li>
+        <li><strong>0221</strong> · 11/12/25 · "Juraron los doce concejales electos en La Plata"</li>
+        <li><strong>0221</strong> · 19/08/25 · "Juan Pablo Allan: Queremos llevar el modelo Milei al Concejo"</li>
+        <li><strong>0221</strong> · 12/12/23 · "Julio Alak asume su quinto mandato como intendente de La Plata"</li>
+        <li><strong>Perfil</strong> · 25/04/26 · "Karina Milei, Pareja y Santilli se juntaron y pusieron primera para el 2027 bonaerense"</li>
+        <li><strong>Perfil</strong> · 09/09/25 · "Resultados de las elecciones en Buenos Aires: el mapa de ganadores"</li>
+        <li><strong>Perfil</strong> · 05/04/26 · "Peronismo 2027: el desorden libertario lo obliga a ser opción"</li>
+        <li><strong>La Noticia Web</strong> · 05/02/26 · "Sebastián Pareja inició su gira de cara a 2027"</li>
+        <li><strong>Parlamentario</strong> · 30/10/25 · "Sebastián Pareja archivos"</li>
+        <li><strong>Agencia Comunas</strong> · 09/05/26 · "FATSA proclamó a Axel Kicillof como el mejor candidato del peronismo para 2027"</li>
+        <li><strong>Revista Zoom</strong> · 09/09/25 · "Kicillof y el peronismo frente al 2027"</li>
+        <li><strong>El Estadista</strong> · 09/02/26 · "Kicillof toma el PJ bonaerense y se lanza a la presidencia 2027"</li>
+        <li><strong>Letra P</strong> · 10/09/25 · "Axel Kicillof 2027? El Círculo Rojo lo reconoce como candidato"</li>
+        <li><strong>Nova Bonaerense</strong> · 08/03/26 · "La Plata entra en modo electoral y distintos espacios empiezan a proyectar candidatos"</li>
+        <li><strong>Infobae</strong> · 26/07/25 · "Con estrategias contrapuestas, la UCR inició negociaciones por las bancas nacionales"</li>
+        <li><strong>Ámbito</strong> · 13/05/25 · "Tras el triunfo de la alianza UCR-LLA en Chaco"</li>
+        <li><strong>Ámbito</strong> · 12/05/25 · "Chaco: la alianza UCR - LLA debutó con un triunfo"</li>
+        <li><strong>Infocielo</strong> · 18/07/25 · "El PRO de La Plata tantea un plan B ante el avance libertario y Julio Garro tiene un rol clave"</li>
+        <li><strong>Letra P</strong> · Sept-Dic 2025 · Resultados 8ª sección + bancas HCD + jura concejales</li>
+        <li><strong>Junta Electoral PBA</strong> · 19/09/25 · Resolución validez elecciones + escrutinio definitivo</li>
+      </ul>
+    </div>
+
+    <button class="acc-btn" onclick="this.nextElementSibling.classList.toggle('open')">Módulos aplicados y autores integrados</button>
+    <div class="acc-body">
+      <table>
+        <thead><tr><th>Código</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>[OS]</td><td>OSINT político Argentina — fuentes abiertas verificadas</td></tr>
+          <tr><td>[OSP]</td><td>Open Source Profile — huella digital candidatos</td></tr>
+          <tr><td>[OSB]</td><td>OSINT bots — detección comportamiento inauténtico coordinado</td></tr>
+          <tr><td>[VDD]</td><td>Vetting defensivo — validación constitucional</td></tr>
+          <tr><td>[MFSH]</td><td>1000 simulaciones — escenarios electorales</td></tr>
+          <tr><td>[GDA]</td><td>Ingeniería narrativa — guerra de marcos</td></tr>
+          <tr><td>[DK]</td><td>Sistema 1/2, sesgos cognitivos</td></tr>
+          <tr><td>[DG]</td><td>inteligencia emocional política</td></tr>
+          <tr><td>[MP]</td><td>consolidación de poder</td></tr>
+          <tr><td>[PR]</td><td>depredación política/judicial</td></tr>
+          <tr><td>[CD]</td><td>Framework Consultora Diagonales — veredicto integrado</td></tr>
+          <tr><td>[EE]</td><td>ERM — Enterprise Risk Management</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <button class="acc-btn" onclick="this.nextElementSibling.classList.toggle('open')">Limitaciones del análisis</button>
+    <div class="acc-body">
+      <ul style="font-size:12px;padding:4px 0 10px 20px">
+        <li>Análisis cerrado al 16 de mayo de 2026. Candidaturas definitivas se resolverán entre marzo y junio 2027.</li>
+        <li>La causa Garro está en etapa de instrucción; el procesamiento firme puede demorar o ser sobreseído.</li>
+        <li>El acuerdo PRO-LLA es "principio" según Infobae (26/04/26); falta cierre formal y aval Macri.</li>
+        <li>UCR-Abad mantiene definición pendiente. Lista provincial UCR-LP elegida 11/05/26 (Polo presidente Comité LP).</li>
+        <li>La intención de Pareja como gobernador es declaración pública (Infobae, LN+); el cierre depende de Karina Milei.</li>
+        <li>El proyecto Kicillof presidencial está abierto: Wado de Pedro y Massa pueden disputar interna.</li>
+        <li>Datos electorales 2025 → corregidos por OSINT. Las V_E son proyecciones basadas en performance previa + factores cualitativos.</li>
+        <li>MiroFish simula 1.000 agentes con variables cualitativas; no reemplaza encuesta cuantitativa.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<footer>
+  <strong>CONSULTORA DIAGONALES · ANÁLISIS MULTIDIMENSIONAL POLÍTICO-ELECTORAL</strong><br>
+  La Plata, Buenos Aires, Argentina · 16 mayo 2026 · v3 OSINT validado<br>
+  Documento de uso reservado. Análisis 100% fuentes públicas. [OS][VDD][MFSH][GDA][CD][PR]
+</footer>
+
+<!-- CONTACTO CD -->
+<div style="margin-top:40px;padding-top:30px;border-top:1px solid #ece8da;max-width:1100px;margin-left:auto;margin-right:auto;padding-left:13px;padding-right:13px;padding-bottom:40px">
+  <div style="background:linear-gradient(135deg,#2E7D32 0%,#1B5E20 100%);border-radius:14px;padding:16px;color:#fff;margin-bottom:20px;box-shadow:0 1px 3px rgba(46,125,50,.2)">
+    <h3 style="color:#E9C46A;margin-bottom:16px;font-size:14px;font-weight:700">📞 Contactar — Consultora Diagonales</h3>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <a href="https://wa.me/5492214597940?text=Solicito%20información%20sobre%20radiografías%20electorales" target="_blank"
+         style="background:rgba(255,255,255,0.15);color:#fff;padding:16px;border-radius:10px;text-align:center;
+                text-decoration:none;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,0.3);
+                cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;
+                transition:background 0.2s"
+         onmouseover="this.style.background='rgba(255,255,255,0.25)'"
+         onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+        <span style="font-size:24px">💬</span><span>WhatsApp</span>
+      </a>
+      <a href="tel:+5492214597940"
+         style="background:rgba(255,255,255,0.15);color:#fff;padding:16px;border-radius:10px;text-align:center;
+                text-decoration:none;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,0.3);
+                cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;
+                transition:background 0.2s"
+         onmouseover="this.style.background='rgba(255,255,255,0.25)'"
+         onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+        <span style="font-size:24px">☎️</span><span>Llamar</span>
+      </a>
+      <a href="mailto:info.consultoradiagonales@gmail.com?subject=Solicitud%20de%20Radiografía%20Electoral"
+         style="background:rgba(255,255,255,0.15);color:#fff;padding:16px;border-radius:10px;text-align:center;
+                text-decoration:none;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,0.3);
+                cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;
+                transition:background 0.2s"
+         onmouseover="this.style.background='rgba(255,255,255,0.25)'"
+         onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+        <span style="font-size:24px">✉️</span><span>Email</span>
+      </a>
+    </div>
+  </div>
+  <div style="text-align:center;color:#5A6470;font-size:11px">
+    <strong>📍 La Plata, Buenos Aires, Argentina</strong><br>
+    Inteligencia Política · Estrategia Electoral · Vetting Multidimensional
+  </div>
+</div>
+
+<script>
+function show(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+  el.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>

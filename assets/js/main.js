@@ -1,25 +1,28 @@
-const SUPABASE_URL = "https://TU-PROYECTO.supabase.co";
-const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY";
+const SUPABASE_URL = window.CD_SUPABASE?.url || "https://TU-PROYECTO.supabase.co";
+const SUPABASE_ANON_KEY = window.CD_SUPABASE?.anonKey || "TU_SUPABASE_ANON_KEY";
 const RENDER_SAMPLE_DATA_WHEN_UNCONFIGURED = true;
 
 const sampleReports = [
   {
-    titulo: "Radiografia politica de Buenos Aires",
+    titulo: "Radiografía Intendencia La Plata 2027",
     provincia: "Buenos Aires",
-    fecha: "2026-05-01",
-    pdf_url: "#",
+    localidad: "La Plata",
+    fecha: "2026-05-17",
+    html_url: "../radiografias/radiografia-intendencia-la-plata-2027.html",
   },
   {
-    titulo: "Mapa territorial y opinion publica",
-    provincia: "Santa Fe",
-    fecha: "2026-04-18",
-    pdf_url: "#",
+    titulo: "Radiografía PBA y La Plata",
+    provincia: "Buenos Aires",
+    localidad: "La Plata",
+    fecha: "2026-05-17",
+    html_url: "../radiografias/radiografia-pba-la-plata.html",
   },
   {
     titulo: "Escenarios electorales provinciales",
-    provincia: "Cordoba",
+    provincia: "Córdoba",
+    localidad: "Córdoba",
     fecha: "2026-03-28",
-    pdf_url: "#",
+    html_url: "#",
   },
 ];
 
@@ -31,14 +34,12 @@ const supabaseClient = isConfigured && window.supabase
 
 initNavigation();
 initLogoFallbacks();
+initActiveNavigation();
+initLoginModal();
+initTracking();
 
-if (page === "repo") {
-  loadReports();
-}
-
-if (page === "admin") {
-  initAdmin();
-}
+if (page === "repo") loadReports();
+if (page === "admin") initAdmin();
 
 function initNavigation() {
   const header = document.querySelector("[data-header]");
@@ -77,14 +78,133 @@ function initNavigation() {
 
 function initLogoFallbacks() {
   document.querySelectorAll("[data-logo]").forEach((image) => {
-    image.addEventListener(
-      "error",
-      () => {
-        image.classList.add("is-missing");
-      },
-      { once: true },
-    );
+    image.addEventListener("error", () => image.classList.add("is-missing"), { once: true });
   });
+}
+
+function initActiveNavigation() {
+  const key = page === "repo" ? "radiografias" : page === "home" ? "inicio" : page;
+  document.querySelectorAll(`[data-nav="${key}"]`).forEach((link) => link.classList.add("is-active"));
+}
+
+function initLoginModal() {
+  const modal = document.querySelector("[data-login-modal]");
+  if (!modal) return;
+
+  document.querySelectorAll("[data-login-open]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      trackEvent("access_validation_open", getEventContext(button));
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+    });
+  });
+
+  document.querySelectorAll("[data-login-close]").forEach((button) => {
+    button.addEventListener("click", () => {
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+    });
+  });
+
+  modal.querySelectorAll("form").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const email = form.querySelector('input[type="email"]')?.value?.trim();
+      const phone = form.querySelector('input[type="tel"]')?.value?.trim();
+      await saveLead({ email, phone });
+      trackEvent("lead_validation_requested", { email, phone });
+      form.innerHTML = '<p class="form-status">Solicitud recibida. Te contactaremos para completar la validación.</p>';
+    });
+  });
+}
+
+function getVisitorId() {
+  const key = "cd:visitor_id";
+  let visitorId = localStorage.getItem(key);
+  if (!visitorId) {
+    visitorId = crypto.randomUUID();
+    localStorage.setItem(key, visitorId);
+  }
+  return visitorId;
+}
+
+function getEventContext(element) {
+  const row = element.closest("a");
+  return {
+    label: row?.innerText?.trim() || element.textContent?.trim() || "",
+    href: row?.getAttribute("href") || "",
+  };
+}
+
+function initTracking() {
+  const startedAt = Date.now();
+  const visitorId = getVisitorId();
+  let maxScroll = 0;
+
+  trackEvent("page_view", { referrer: document.referrer, title: document.title });
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      maxScroll = Math.max(maxScroll, total > 0 ? Math.round((window.scrollY / total) * 100) : 0);
+    },
+    { passive: true },
+  );
+
+  document.querySelectorAll("[data-track]").forEach((item) => {
+    item.addEventListener("click", () => trackEvent(item.dataset.track, getEventContext(item)));
+  });
+
+  window.addEventListener("beforeunload", () => {
+    const payload = {
+      visitor_id: visitorId,
+      page,
+      path: location.pathname,
+      seconds: Math.round((Date.now() - startedAt) / 1000),
+      scroll_depth: maxScroll,
+    };
+    localStorage.setItem("cd:last_tracking", JSON.stringify(payload));
+    trackEvent("read_session", payload, true);
+  });
+}
+
+async function trackEvent(eventType, metadata = {}, useBeacon = false) {
+  const event = {
+    visitor_id: getVisitorId(),
+    event_type: eventType,
+    page,
+    path: location.pathname,
+    metadata,
+    user_agent: navigator.userAgent,
+  };
+
+  const events = JSON.parse(localStorage.getItem("cd:events") || "[]");
+  events.push({ ...event, at: new Date().toISOString() });
+  localStorage.setItem("cd:events", JSON.stringify(events.slice(-100)));
+
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient.from("visitor_events").insert(event);
+    await supabaseClient.rpc("register_visitor_touch", { p_visitor_id: event.visitor_id });
+  } catch (_) {
+    if (useBeacon) return;
+  }
+}
+
+async function saveLead({ email, phone }) {
+  if (!supabaseClient) return;
+  const visitor_id = getVisitorId();
+  await supabaseClient.from("visitor_profiles").upsert(
+    {
+      visitor_id,
+      email,
+      phone,
+      last_seen_at: new Date().toISOString(),
+    },
+    { onConflict: "visitor_id" },
+  );
 }
 
 async function loadReports() {
@@ -98,7 +218,7 @@ async function loadReports() {
     if (supabaseClient) {
       const { data, error } = await supabaseClient
         .from("radiografias")
-        .select("titulo, provincia, fecha, pdf_url, created_at")
+        .select("titulo, provincia, localidad, fecha, html_url, pdf_url, created_at")
         .order("fecha", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -110,36 +230,38 @@ async function loadReports() {
 
     renderReports(reports, container, count);
   } catch (error) {
-    container.innerHTML = `<div class="empty-state">No pudimos cargar las radiografias. ${escapeHtml(error.message)}</div>`;
+    container.innerHTML = `<div class="empty-state">No pudimos cargar las radiografías. ${escapeHtml(error.message)}</div>`;
   }
 }
 
 function renderReports(reports, container, count) {
-  if (count) {
-    count.textContent = `${reports.length} ${reports.length === 1 ? "radiografia" : "radiografias"}`;
-  }
+  if (count) count.textContent = `${reports.length} ${reports.length === 1 ? "radiografía" : "radiografías"}`;
 
   if (!reports.length) {
-    container.innerHTML = '<div class="empty-state">Todavia no hay radiografias publicadas.</div>';
+    container.innerHTML = '<div class="empty-state">Todavía no hay radiografías publicadas.</div>';
     return;
   }
 
   container.innerHTML = reports
     .map((report) => {
       const date = formatDate(report.fecha);
-      const title = escapeHtml(report.titulo || "Radiografia sin titulo");
-      const province = escapeHtml(report.provincia || "Territorio");
-      const href = report.pdf_url ? escapeAttribute(report.pdf_url) : "#";
+      const title = escapeHtml(report.titulo || "Radiografía sin título");
+      const place = escapeHtml(report.localidad || report.provincia || "Territorio");
+      const href = escapeAttribute(report.html_url || report.pdf_url || "#");
+      const requestHref = buildPdfRequestLink(report);
       return `
         <article class="report-card">
           <div>
             <div class="report-meta">
-              <span>${province}</span>
+              <span>${place}</span>
               <time datetime="${escapeAttribute(report.fecha || "")}">${date}</time>
             </div>
             <h2>${title}</h2>
           </div>
-          <a class="download-link" href="${href}" target="_blank" rel="noopener">Descargar PDF</a>
+          <div class="report-actions">
+            <a class="download-link" href="${href}" target="_blank" rel="noopener" download data-track="download_report">Descargar</a>
+            <a class="request-link" href="${requestHref}" target="_blank" rel="noopener" data-track="request_pdf">Solicitar PDF</a>
+          </div>
         </article>
       `;
     })
@@ -153,7 +275,7 @@ function initAdmin() {
   if (!form) return;
 
   if (!supabaseClient) {
-    status.textContent = "Supabase todavia no esta configurado. Edita assets/js/main.js para habilitar la carga.";
+    status.textContent = "Supabase todavía no está configurado. Edita assets/js/supabase-config.js para habilitar la carga.";
   }
 
   form.addEventListener("submit", async (event) => {
@@ -165,19 +287,20 @@ function initAdmin() {
     }
 
     const formData = new FormData(form);
-    const file = formData.get("pdf");
+    const file = formData.get("archivo");
     const titulo = String(formData.get("titulo") || "").trim();
     const provincia = String(formData.get("provincia") || "").trim();
+    const localidad = String(formData.get("localidad") || "").trim();
     const fecha = String(formData.get("fecha") || "").trim();
 
-    if (!file || file.type !== "application/pdf") {
-      status.textContent = "Selecciona un PDF valido.";
+    if (!file || !isHtmlFile(file)) {
+      status.textContent = "Selecciona un archivo HTML válido.";
       return;
     }
 
     submit.disabled = true;
     submit.textContent = "Guardando...";
-    status.textContent = "Subiendo PDF y publicando metadata.";
+    status.textContent = "Subiendo HTML y publicando metadata.";
 
     try {
       const cleanName = file.name
@@ -190,31 +313,45 @@ function initAdmin() {
 
       const { error: uploadError } = await supabaseClient.storage
         .from("radiografias")
-        .upload(path, file, { cacheControl: "3600", upsert: false });
+        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: "text/html" });
 
       if (uploadError) throw uploadError;
 
       const { data: publicData } = supabaseClient.storage.from("radiografias").getPublicUrl(path);
-      const pdf_url = publicData.publicUrl;
+      const html_url = publicData.publicUrl;
 
       const { error: insertError } = await supabaseClient.from("radiografias").insert({
         titulo,
         provincia,
+        localidad,
         fecha,
-        pdf_url,
+        html_url,
       });
 
       if (insertError) throw insertError;
 
       form.reset();
-      status.innerHTML = `Radiografia publicada. <a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`;
+      status.innerHTML = `Radiografía publicada. <a href="${escapeAttribute(html_url)}" target="_blank" rel="noopener">Abrir HTML</a>`;
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
       submit.disabled = false;
-      submit.textContent = "Guardar radiografia";
+      submit.textContent = "Guardar radiografía";
     }
   });
+}
+
+function isHtmlFile(file) {
+  const name = file.name.toLowerCase();
+  return file.type === "text/html" || name.endsWith(".html") || name.endsWith(".htm");
+}
+
+function buildPdfRequestLink(report) {
+  const title = report.titulo || "Radiografía";
+  const place = report.localidad || report.provincia || "Territorio";
+  const subject = encodeURIComponent(`Solicitud de PDF - ${title}`);
+  const body = encodeURIComponent(`Solicito la versión PDF de la radiografía "${title}" (${place}). Formato solicitado: PDF.`);
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=info.consultoradiagonales@gmail.com&su=${subject}&body=${body}`;
 }
 
 function formatDate(value) {

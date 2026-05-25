@@ -25,6 +25,7 @@
       <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" data-menu-toggle>
         <span></span>
         <span></span>
+        <span></span>
       </button>
     </header>
 
@@ -39,9 +40,9 @@
       <section class="mx-auto grid min-h-screen max-w-7xl gap-10 px-6 pb-24 pt-36 md:px-10 lg:grid-cols-[.85fr_1.15fr] lg:px-12">
         <div>
           <p class="eyebrow">Panel admin</p>
-          <h1 class="page-title">Carga de radiografias PDF.</h1>
+          <h1 class="page-title">Carga de radiografias HTML.</h1>
           <p class="mt-6 max-w-xl text-base leading-8 text-slate-300">
-            Subi el archivo, completa la metadata y publica el informe. El PDF queda guardado en el bucket publico
+            Subi el archivo, completa la metadata y publica el informe. El HTML queda guardado en el bucket publico
             <span class="font-semibold text-white">radiografias</span> y aparece en el repositorio.
           </p>
           <div class="admin-note">
@@ -61,13 +62,19 @@
               <input name="provincia" type="text" placeholder="Buenos Aires" required />
             </label>
             <label>
+              <span>Localidad</span>
+              <input name="localidad" type="text" placeholder="La Plata" required />
+            </label>
+          </div>
+          <div class="grid gap-5 md:grid-cols-2">
+            <label>
               <span>Fecha</span>
               <input name="fecha" type="date" required />
             </label>
           </div>
           <label>
-            <span>PDF</span>
-            <input name="pdf" type="file" accept="application/pdf" required />
+            <span>Archivo HTML</span>
+            <input name="archivo" type="file" accept=".html,.htm,text/html" required />
           </label>
           <button class="primary-link justify-center" type="submit" data-submit>Guardar radiografia</button>
           <p class="form-status" data-form-status role="status"></p>
@@ -75,6 +82,7 @@
       </section>
     </main>
 
+    <script src="../assets/js/supabase-config.js"></script>
     <script src="../assets/js/main.js"></script>
   </body>
 </html>

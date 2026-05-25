@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#0B1220">
+<title>Radiografía Estratégica · La Plata 2027 · Consultora Diagonales</title>
+<style>
+:root{
+  --bg:#CDEFF5; --bg2:#BDEAF2; --panel:rgba(255,255,255,.86); --panel2:rgba(225,247,252,.92);
+  --line:#AEC8DE; --text:#08235A; --muted:#385071; --steel:#4B698A;
+  --gold:#009EA6; --red:#C73545; --green:#008D78; --orange:#D07924;
+  --acc:#00B7C7;
+  --shadow:0 18px 45px rgba(7,63,126,.18),0 4px 14px rgba(0,130,180,.12);
+  --shadow-strong:0 24px 60px rgba(7,63,126,.26),0 8px 24px rgba(0,130,180,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif;
+  background:linear-gradient(135deg,rgba(232,249,253,.97) 0%,rgba(197,239,247,.97) 42%,rgba(132,221,233,.88) 100%),
+             radial-gradient(760px 420px at 96% 8%,rgba(0,174,196,.46) 0%,transparent 62%),
+             radial-gradient(680px 360px at 8% 100%,rgba(37,194,210,.50) 0%,transparent 62%),
+             var(--bg);
+  color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased;
+  font-size:15px;letter-spacing:.01em;
+  min-height:100vh;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:
+    linear-gradient(135deg,transparent 0 55%,rgba(0,174,196,.24) 55% 69%,transparent 69%),
+    radial-gradient(440px 280px at 92% 78%,rgba(0,190,209,.52),transparent 70%);
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+
+header.top{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.90);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 10px 30px rgba(7,63,126,.10);
+  transition:all .2s ease;
+}
+.brand{display:flex;align-items:center;justify-content:space-between;padding:16px 0;transition:all .2s ease}
+.logo{display:flex;align-items:center;gap:12px}
+.logoMark{
+  width:56px;height:56px;border-radius:50%;position:relative;flex:0 0 auto;overflow:visible;
+  background:
+    linear-gradient(90deg,rgba(5,54,121,.86) 0 49%,rgba(17,151,245,.94) 49% 100%),
+    radial-gradient(circle at 62% 22%,#20B9FF 0%,#0059B2 58%,#042E72 100%);
+  box-shadow:0 12px 32px rgba(0,91,178,.25);
+  transition:all .2s ease;
+}
+.logoMark::before{
+  content:"";position:absolute;inset:8px;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%,transparent 0 25%,rgba(45,188,255,.48) 26% 31%,transparent 32% 52%,rgba(45,188,255,.45) 53% 58%,transparent 59%),
+    linear-gradient(90deg,transparent 0 47%,rgba(45,188,255,.52) 48% 53%,transparent 54%),
+    linear-gradient(0deg,transparent 0 47%,rgba(45,188,255,.52) 48% 53%,transparent 54%);
+  opacity:.9;
+}
+.logoMark::after{
+  content:"";position:absolute;left:-7px;top:25px;width:78px;height:9px;
+  background:#fff;transform:rotate(-48deg) skewX(-18deg);
+  border-radius:50% 8px 50% 8px;
+  box-shadow:0 0 0 2px rgba(0,61,133,.95),0 7px 18px rgba(0,61,133,.22);
+}
+.logoMark .initials{display:none}
+.logo b{font-weight:800;letter-spacing:.16em;font-size:18px;color:var(--text);transition:all .2s ease}
+.logo span{font-size:11px;color:var(--muted);letter-spacing:.12em}
+.classified{font-size:10px;letter-spacing:.22em;color:var(--gold);border:1px solid rgba(0,158,166,.25);padding:5px 9px;border-radius:3px;background:rgba(0,183,199,.06)}
+.menu-toggle{
+  display:none;width:38px;height:38px;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.86);
+  color:var(--gold);cursor:pointer;
+}
+.menu-toggle span,.menu-toggle span::before,.menu-toggle span::after{
+  content:"";display:block;width:18px;height:2px;background:currentColor;border-radius:2px;position:relative;
+}
+.menu-toggle span::before{position:absolute;top:-6px}
+.menu-toggle span::after{position:absolute;top:6px}
+body.compact header.top{background:rgba(255,255,255,.96);box-shadow:0 10px 35px rgba(8,35,90,.08)}
+body.compact .brand{padding:7px 0}
+body.compact .logoMark{width:42px;height:42px;box-shadow:0 8px 28px rgba(0,91,178,.22)}
+body.compact .logoMark::before{inset:6px;display:block}
+body.compact .logoMark::after{display:block;left:-6px;top:19px;width:58px;height:7px}
+body.compact .logoMark .initials{display:none}
+body.compact .logoText,.compact .classified{display:none}
+body.compact .menu-toggle{display:inline-flex}
+
+nav.tabs{
+  background:rgba(255,255,255,.86);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;
+  box-shadow:0 12px 28px rgba(7,63,126,.10);
+  position:sticky;top:53px;z-index:49;
+}
+nav.tabs::-webkit-scrollbar{display:none}
+.tabsInner{display:flex;gap:4px;padding:8px 18px;min-width:max-content}
+.tab{
+  padding:9px 14px;font-size:12px;color:var(--muted);cursor:pointer;
+  border-radius:5px;white-space:nowrap;transition:all .2s;letter-spacing:.04em;
+  border:1px solid transparent;
+}
+.tab:hover{color:var(--text);background:rgba(0,183,199,.14);border-color:rgba(0,158,166,.28);box-shadow:0 8px 18px rgba(0,126,170,.16);transform:translateY(-1px)}
+.tab.active{color:var(--text);background:rgba(0,183,199,.17);border-color:rgba(0,158,166,.35);box-shadow:0 8px 18px rgba(0,126,170,.16)}
+body.compact nav.tabs{
+  display:none;position:fixed;top:55px;right:18px;left:auto;width:min(280px,calc(100vw - 36px));
+  border:1px solid var(--line);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-strong);
+}
+body.compact nav.tabs.open{display:block}
+body.compact .tabsInner{display:flex;flex-direction:column;min-width:0;padding:8px}
+body.compact .tab{width:100%;padding:11px 12px}
+
+.hero{padding:48px 0 28px;border-bottom:1px solid var(--line)}
+.kicker{font-size:11px;letter-spacing:.28em;color:var(--gold);margin-bottom:14px}
+.hero h1{font-size:clamp(26px,4.5vw,42px);font-weight:700;line-height:1.15;letter-spacing:-.01em;margin-bottom:14px}
+.hero h1 em{color:var(--acc);font-style:normal}
+.hero p.lead{color:var(--muted);max-width:780px;font-size:15px}
+.hero .meta{display:flex;flex-wrap:wrap;gap:18px;margin-top:22px;font-size:12px;color:var(--muted)}
+.hero .meta b{color:var(--gold);font-weight:600}
+
+section.panel{display:none;padding:36px 0 60px;animation:fade .3s ease}
+section.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+h2.s{font-size:22px;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
+h2.s::before{content:"";display:inline-block;width:3px;height:18px;background:var(--gold);margin-right:10px;vertical-align:-3px;border-radius:1px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:24px;max-width:780px}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:28px}
+.kpi{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);border:1px solid var(--line);border-radius:8px;padding:18px;box-shadow:var(--shadow);backdrop-filter:blur(12px);transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease}
+.kpi:hover{box-shadow:var(--shadow-strong);transform:translateY(-2px);border-color:rgba(0,126,170,.34)}
+.kpi .l{font-size:10px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px}
+.kpi .v{font-size:28px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.kpi .v small{font-size:13px;color:var(--muted);font-weight:400;margin-left:4px}
+.kpi .d{font-size:11px;color:var(--steel);margin-top:6px}
+.kpi.up .v{color:var(--green)}
+.kpi.down .v{color:var(--red)}
+.kpi.warn .v{color:var(--orange)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;box-shadow:var(--shadow);backdrop-filter:blur(12px);transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease}
+.card:hover{box-shadow:var(--shadow-strong);transform:translateY(-2px);border-color:rgba(0,126,170,.34)}
+.card h3{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--gold);letter-spacing:.04em}
+.card .role{font-size:11px;color:var(--steel);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+.card p{font-size:13px;color:var(--muted);margin-bottom:10px}
+.card .stats{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:10px;background:rgba(0,183,199,.08);border:1px solid rgba(0,158,166,.22);color:var(--acc);padding:4px 8px;border-radius:3px;letter-spacing:.08em}
+.chip.r{background:rgba(199,53,69,.08);border-color:rgba(199,53,69,.25);color:#B62E3D}
+.chip.g{background:rgba(0,141,120,.08);border-color:rgba(0,141,120,.25);color:#007F6D}
+.chip.o{background:rgba(208,121,36,.08);border-color:rgba(208,121,36,.25);color:#A7601C}
+
+.bars{margin-top:18px}
+.bar-row{margin-bottom:14px}
+.bar-row .l{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.bar-row .l span:first-child{color:var(--text);font-weight:600}
+.bar-row .l span:last-child{color:var(--gold);font-weight:700}
+.bar{height:7px;background:#E7F1F6;border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--steel),var(--acc));border-radius:4px}
+.bar.r i{background:linear-gradient(90deg,#7a1f25,var(--red))}
+.bar.g i{background:linear-gradient(90deg,#1f5a25,var(--green))}
+.bar.o i{background:linear-gradient(90deg,#7a4a1f,var(--orange))}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin:14px 0;background:var(--panel);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);background:rgba(0,183,199,.06);font-weight:600}
+tr:hover td{background:rgba(0,183,199,.04)}
+td b{color:var(--text)}
+td.num{font-variant-numeric:tabular-nums;color:var(--acc);font-weight:600}
+
+.alert{padding:14px 16px;border-radius:6px;margin:14px 0;font-size:13px;border-left:3px solid;background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(12px)}
+.alert.r{border-color:var(--red);color:#9D2632}
+.alert.o{border-color:var(--orange);color:#915414}
+.alert.g{border-color:var(--green);color:#006D5E}
+.alert b{color:var(--text)}
+
+.tl{position:relative;padding-left:24px;margin:18px 0}
+.tl::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:1px;background:var(--line)}
+.tl-item{position:relative;padding-bottom:18px;font-size:13px}
+.tl-item::before{content:"";position:absolute;left:-22px;top:5px;width:9px;height:9px;background:var(--gold);border-radius:50%;box-shadow:0 0 0 3px var(--bg)}
+.tl-item .date{font-size:10px;color:var(--gold);letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.tl-item b{color:var(--text)}
+.tl-item p{color:var(--muted);font-size:12.5px;margin-top:2px}
+
+.foda{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0}
+.foda-box{padding:16px;border-radius:6px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(12px);transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease}
+.foda-box:hover{box-shadow:var(--shadow-strong);transform:translateY(-2px);border-color:rgba(0,126,170,.34)}
+.foda-box h4{font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;color:var(--gold)}
+.foda-box.f h4{color:var(--green)}
+.foda-box.o h4{color:var(--acc)}
+.foda-box.d h4{color:var(--orange)}
+.foda-box.a h4{color:var(--red)}
+.foda-box ul{list-style:none;padding:0}
+.foda-box li{font-size:12.5px;color:var(--muted);padding:5px 0;padding-left:14px;position:relative}
+.foda-box li::before{content:"›";position:absolute;left:0;color:var(--steel)}
+
+.scen{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:14px 0}
+.scen-card{padding:18px;border-radius:6px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(12px);transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease}
+.scen-card:hover{box-shadow:var(--shadow-strong);transform:translateY(-2px);border-color:rgba(0,126,170,.34)}
+.scen-card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.scen-card .head b{font-size:13px;letter-spacing:.04em}
+.scen-card .prob{font-size:18px;font-weight:700;color:var(--gold)}
+.scen-card p{font-size:12px;color:var(--muted)}
+
+.modgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin:14px 0}
+.mod{padding:9px 8px;border:1px solid var(--line);border-radius:4px;text-align:center;font-size:11px;color:var(--steel);background:rgba(0,183,199,.04);font-weight:600;letter-spacing:.04em}
+.acc-btn{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  margin:10px 0 0;padding:13px 14px;border:1px solid var(--line);
+  border-radius:6px;background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+  color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.08em;
+  text-align:left;cursor:pointer;text-transform:uppercase;
+  box-shadow:var(--shadow);transition:box-shadow .2s ease,transform .2s ease,border-color .2s ease;
+}
+.acc-btn::after{content:"+";color:var(--acc);font-size:16px;line-height:1}
+.acc-btn:hover{border-color:rgba(0,158,166,.42);background:rgba(0,183,199,.10);box-shadow:var(--shadow-strong);transform:translateY(-1px)}
+.acc-btn:has(+ .acc-body.open)::after{content:"−"}
+.acc-body{
+  display:none;border:1px solid var(--line);border-top:0;border-radius:0 0 6px 6px;
+  background:rgba(255,255,255,.66);padding:12px 14px 14px;margin-bottom:10px;
+}
+.acc-body.open{display:block}
+.acc-body li{color:var(--muted);margin-bottom:7px}
+.acc-body strong{color:var(--text)}
+
+footer.contact{margin-top:60px;border-top:1px solid var(--line);padding:36px 0;background:rgba(255,255,255,.62);backdrop-filter:blur(12px)}
+.contact-grid{text-align:center}
+.contact-grid h3{font-size:13px;letter-spacing:.18em;color:var(--gold);margin-bottom:8px;text-transform:uppercase}
+.contact-grid p{color:var(--muted);font-size:12px;margin-bottom:20px}
+.btns{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.btns a{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:5px;text-decoration:none;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--text);transition:all .2s;letter-spacing:.04em;box-shadow:var(--shadow)}
+.btns a:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px);box-shadow:var(--shadow-strong);background:rgba(255,255,255,.92)}
+.copy{font-size:10px;color:var(--steel);letter-spacing:.16em;margin-top:14px}
+
+@media(max-width:680px){
+  body{font-size:14px}
+  body::before{background:radial-gradient(340px 240px at 100% 8%,rgba(0,190,209,.42),transparent 72%),radial-gradient(320px 220px at 0 100%,rgba(37,194,210,.44),transparent 70%)}
+  .hero{padding:32px 0 22px}
+  h2.s{font-size:19px}
+  .foda{grid-template-columns:1fr}
+  .kpi .v{font-size:24px}
+  .brand{padding:11px 0}
+  .logo{gap:9px}
+  .logoMark{width:44px;height:44px}
+  .logoMark::after{left:-8px;top:20px;width:65px;height:8px}
+  .logo b{font-size:15px;letter-spacing:.1em}
+  .logo span{font-size:9px}
+  .classified{font-size:9px;padding:4px 7px}
+  nav.tabs{top:46px}
+  .tabsInner{padding:6px 14px}
+  .tab{padding:8px 11px;font-size:11px}
+  body.compact nav.tabs{top:53px;right:12px;width:calc(100vw - 24px)}
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  th,td{padding:10px 9px}
+  .acc-btn{font-size:11px;line-height:1.35}
+  .hero h1{font-size:28px}
+  .contact-actions{grid-template-columns:1fr}`n}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap brand">
+    <div class="logo">
+      <span class="logoMark" aria-hidden="true"><span class="initials">CD</span></span>
+      <div class="logoText"><b>CONSULTORA DIAGONALES</b><br><span>ANÁLISIS MULTIDIMENSIONAL</span></div>
+    </div>
+    <div class="classified">CONFIDENCIAL · CD/2026/LP-2027</div>
+    <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false"><span></span></button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabsInner">
+    <div class="tab active" data-t="resumen">Resumen</div>
+    <div class="tab" data-t="contexto">Contexto</div>
+    <div class="tab" data-t="actores">Actores</div>
+    <div class="tab" data-t="encuestas">Encuestas</div>
+    <div class="tab" data-t="osint">OSINT</div>
+    <div class="tab" data-t="judicial">Judicial</div>
+    <div class="tab" data-t="foda">FODA</div>
+    <div class="tab" data-t="territorio">Territorio</div>
+    <div class="tab" data-t="escenarios">Escenarios</div>
+    <div class="tab" data-t="simulacion">Simulación</div>
+    <div class="tab" data-t="veredicto">Veredicto</div>
+    <div class="tab" data-t="metodologia">Metodología</div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<section class="panel active" id="resumen">
+<div class="hero">
+  <div class="kicker">RADIOGRAFÍA ESTRATÉGICA MULTIDIMENSIONAL · LP-2027</div>
+  <h1>La Plata 2027 · <em>Fórmulas en disputa por la intendencia</em></h1>
+  <p class="lead">Análisis del tablero electoral de la capital bonaerense con foco en candidatos de cada fuerza política para la sucesión municipal del 10 de diciembre de 2027. Recorte temporal: 1 de abril – 15 de mayo de 2026.</p>
+  <div class="meta">
+    <div><b>Período</b>: 01/04/2026 – 15/05/2026</div>
+    <div><b>Padrón</b>: 601.077 electores</div>
+    <div><b>Próximo turno</b>: General octubre 2027</div>
+    <div><b>Versión</b>: vNEXT · 16/05/2026</div>
+  </div>
+</div>
+
+  <h2 class="s">Resumen ejecutivo</h2>
+  <p class="sub">Diagnóstico sintético de la disputa por la intendencia de La Plata a 18 meses del comicio general.</p>
+
+  <div class="kpis">
+    <div class="kpi up"><div class="l">Piso PJ La Plata</div><div class="v">43%<small> Sept-25</small></div><div class="d">Triunfo Fuerza Patria octava sección</div></div>
+    <div class="kpi warn"><div class="l">Techo opositor unificado</div><div class="v">37%<small> +/-2</small></div><div class="d">LLA+PRO 2025 / sin Garro</div></div>
+    <div class="kpi down"><div class="l">Imagen pos. Alak</div><div class="v">34,1%<small> May-26</small></div><div class="d">CB Consultora · 3ro peor país</div></div>
+    <div class="kpi"><div class="l">Diferencial gestión</div><div class="v">+248%<small> Salarios</small></div><div class="d">Supera inflación · narrativa CD</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Tesis 1 · Migración Alak</h3>
+      <div class="role">Probabilidad 62%</div>
+      <p>Alak desactiva reelección municipal y compite por gobernación bonaerense en 2027 en la apuesta MDF-Kicillof. Liberaría el cargo a un delfín del propio aparato municipal.</p>
+      <div class="stats"><span class="chip">PJ Fuerza Patria</span><span class="chip o">Aval Kicillof</span></div>
+    </div>
+    <div class="card">
+      <h3>Tesis 2 · Polo libertario</h3>
+      <div class="role">Probabilidad 55%</div>
+      <p>Adornigate elimina al hermano del jefe de Gabinete del tablero. Osaba se consolida como precandidato karinismo puro. Allan retiene el cuadro Bullrich. Interna LLA abierta.</p>
+      <div class="stats"><span class="chip o">Interna LLA</span><span class="chip r">Crisis ANDIS</span></div>
+    </div>
+    <div class="card">
+      <h3>Tesis 3 · Vacío PRO</h3>
+      <div class="role">Probabilidad 71%</div>
+      <p>Garro neutralizado por dos causas judiciales activas. Morzone sin consensos internos. PRO La Plata expuesto a fusión subordinada con LLA o a colapsar electoralmente.</p>
+      <div class="stats"><span class="chip r">Garro imputado</span><span class="chip">Morzone sin techo</span></div>
+    </div>
+  </div>
+
+  <div class="alert o"><b>Hipótesis dominante CD:</b> La fórmula final 2027 enfrentaría a un sucesor del aparato Alak/PJ contra el ganador de una interna libertaria entre Juanes Osaba (karinismo) y Juan Pablo Allan (bullrichismo), con el PRO como socio menor o ausente.</div>
+</section>
+
+<section class="panel" id="contexto">
+  <h2 class="s">Contexto político</h2>
+  <p class="sub">La Plata, capital provincial y segundo distrito en volumen electoral bonaerense, expone una dinámica triangular con dominio peronista y oposición fragmentada.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Resultado base · Sep-25</h3>
+      <div class="role">Octava sección · Legislativas</div>
+      <p>Fuerza Patria <b>43%</b> contra alianza LLA+PRO <b>37%</b>. Seis puntos de diferencia. El peronismo empató técnicamente en el casco urbano por primera vez en dos elecciones.</p>
+    </div>
+    <div class="card">
+      <h3>Reconfiguración PJ · Feb-Mar 2026</h3>
+      <div class="role">Alak presidente PJ La Plata</div>
+      <p>Tras 18 años recupera la conducción partidaria. Desplaza al camporista Archanco. Integra a sindicalismo (CGT), bruerismo, alakismo y La Cámpora en lista de unidad.</p>
+    </div>
+    <div class="card">
+      <h3>Adornigate · 14-Abr-26</h3>
+      <div class="role">Crisis Casa Rosada</div>
+      <p>Escándalo del jefe de Gabinete elimina a Francisco Adorni como candidato. Karina Milei desplaza a Romo y posiciona a Osaba al frente del bloque legislativo.</p>
+    </div>
+    <div class="card">
+      <h3>Caída imagen Alak · Abr-May 26</h3>
+      <div class="role">CB Consultora · ranking federal</div>
+      <p>Imagen positiva 36% (abril) y 34,1% (mayo). Posición 3ra peor entre intendentes capitales del país. Asentamientos, inseguridad y planificación urbana son los reclamos centrales.</p>
+    </div>
+  </div>
+
+  <div class="bars">
+    <div class="bar-row"><div class="l"><span>Fuerza Patria · Sep 2025</span><span>43,0%</span></div><div class="bar g"><i style="width:43%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>LLA + PRO · Sep 2025</span><span>37,0%</span></div><div class="bar"><i style="width:37%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>Otras fuerzas · Sep 2025</span><span>20,0%</span></div><div class="bar o"><i style="width:20%"></i></div></div>
+  </div>
+</section>
+
+<section class="panel" id="actores">
+  <h2 class="s">Mapa de actores</h2>
+  <p class="sub">Cabezas de fórmula por fuerza política. Ponderación por imagen, trayectoria, anclaje territorial y respaldo de aparato.</p>
+
+  <h3 style="font-size:13px;color:var(--gold);margin:18px 0 10px;letter-spacing:.12em">PERONISMO / FUERZA PATRIA</h3>
+  <div class="grid">
+    <div class="card">
+      <h3>Julio Alak</h3>
+      <div class="role">Intendente · candidato a gobernador o reelecto</div>
+      <p>5 mandatos como intendente (1991-2007 y desde 2023). Presidente del PJ La Plata. Aliado natural de Kicillof. Su prioridad declarada es la gobernación bonaerense en 2027 (apuesta MDF).</p>
+      <div class="stats"><span class="chip">Trayectoria 9,2/10</span><span class="chip r">Imagen 34%</span><span class="chip g">Aparato 8,8/10</span></div>
+    </div>
+    <div class="card">
+      <h3>Ariel Archanco</h3>
+      <div class="role">Diputado provincial · La Cámpora</div>
+      <p>Ex presidente del PJ local. Reelecto diputado en 2025. Candidato natural del kirchnerismo platense junto a Florencia Saintout. Capacidad institucional alta, base territorial débil tras la salida de Pablo Elías.</p>
+      <div class="stats"><span class="chip">Aval CFK</span><span class="chip o">Territorio 5,5/10</span><span class="chip r">Sin "calle"</span></div>
+    </div>
+    <div class="card">
+      <h3>Sergio Resa</h3>
+      <div class="role">Secretario de Planeamiento · delfín Alak</div>
+      <p>Mesa chica alakista. Encabezó la lista de concejales en 2025. Perfil de gestión técnica. Carta natural si Alak migra a la gobernación. Bajo conocimiento público fuera del aparato.</p>
+      <div class="stats"><span class="chip">Delfín 9/10</span><span class="chip r">Conoc. 35%</span></div>
+    </div>
+    <div class="card">
+      <h3>Florencia Saintout</h3>
+      <div class="role">Ministra Cultura PBA · La Cámpora</div>
+      <p>Ya fue candidata 2019 (40,76% perdió con Garro). Senadora provincial en licencia. Mantiene capilaridad cultural y militante. Pérdida de Los Hornos tras fractura Elías la debilita.</p>
+      <div class="stats"><span class="chip">Antecedente 40%</span><span class="chip o">Base erosionada</span></div>
+    </div>
+  </div>
+
+  <h3 style="font-size:13px;color:var(--gold);margin:24px 0 10px;letter-spacing:.12em">LA LIBERTAD AVANZA</h3>
+  <div class="grid">
+    <div class="card">
+      <h3>Juan Esteban "Juanes" Osaba</h3>
+      <div class="role">Diputado provincial · Pareja/Karina Milei</div>
+      <p>Diputado bonaerense desde 2025. Ex EMATUR con Garro (2015-2019). Apoderado LLA bonaerense. Tomó la presidencia del bloque legislativo tras Adornigate. Cuadro karinismo puro.</p>
+      <div class="stats"><span class="chip">Aval Karina</span><span class="chip g">Armado 7,8/10</span><span class="chip o">Conoc. 40%</span></div>
+    </div>
+    <div class="card">
+      <h3>Juan Pablo Allan</h3>
+      <div class="role">Concejal · vicepresidente CD · Bullrich</div>
+      <p>Ex senador. Ex director RENAR. Concejal desde diciembre 2025. Vicepresidente segundo del Concejo Deliberante. Cara natural del bullrichismo. Sub-performance en septiembre 2025 lo dejó cuestionado dentro de su propio sector.</p>
+      <div class="stats"><span class="chip">Aval Bullrich</span><span class="chip r">Performance baja</span></div>
+    </div>
+    <div class="card">
+      <h3>Matías de Urraza</h3>
+      <div class="role">Cuadro técnico · Pareja</div>
+      <p>Integrante de la mesa política libertaria local junto a Osaba y Fragaso. Perfil bajo. Carta secundaria si Osaba escala a otra candidatura provincial.</p>
+      <div class="stats"><span class="chip o">Carta B</span></div>
+    </div>
+    <div class="card">
+      <h3>Francisco Adorni · NEUTRALIZADO</h3>
+      <div class="role">Diputado provincial · LLA</div>
+      <p>Encabezó la octava sección en septiembre 2025 con derrota frente a FP. Tras Adornigate (abril 2026) desactivó su candidatura a intendente. Apellido pasó de motor a lastre.</p>
+      <div class="stats"><span class="chip r">Fuera de juego</span></div>
+    </div>
+  </div>
+
+  <h3 style="font-size:13px;color:var(--gold);margin:24px 0 10px;letter-spacing:.12em">PRO</h3>
+  <div class="grid">
+    <div class="card">
+      <h3>Nicolás Morzone</h3>
+      <div class="role">Concejal · presidente bloque PRO</div>
+      <p>Ungido por Cristian Ritondo. Activo en redes y sesiones del Concejo Deliberante. Crítico permanente de la gestión Alak. Sin consensos internos. Tiempo a su favor de cara a 2031 si pierde en 2027.</p>
+      <div class="stats"><span class="chip">Vocero opositor</span><span class="chip r">Sin techo interno</span></div>
+    </div>
+    <div class="card">
+      <h3>Julio Garro · CONDICIONADO</h3>
+      <div class="role">Ex intendente · 2015-2023</div>
+      <p>Dos causas judiciales activas: ñoquis municipales (14 imputados) y barrios cerrados (asociación ilícita, administración fraudulenta). Imputado en marzo 2025. En retiro estratégico. Sector interno lo espera con carpetazos si "asoma la nariz".</p>
+      <div class="stats"><span class="chip r">Imputado</span><span class="chip r">Carpetazos</span></div>
+    </div>
+    <div class="card">
+      <h3>Julieta Quintero Chasman</h3>
+      <div class="role">Legisladora provincial · PRO</div>
+      <p>Articula con sector libertario radical (Cadaa, Osaba). Carta de unidad opositora amplia. Capacidad de mesa más que de cabeza de fórmula.</p>
+      <div class="stats"><span class="chip o">Articuladora</span></div>
+    </div>
+  </div>
+
+  <h3 style="font-size:13px;color:var(--gold);margin:24px 0 10px;letter-spacing:.12em">OTROS ESPACIOS</h3>
+  <div class="grid">
+    <div class="card">
+      <h3>Marcelo "Chuby" Leguizamón</h3>
+      <div class="role">Senador · Hechos · ex PRO</div>
+      <p>Dejó el PRO en diciembre 2025. Base provincial vinculada a hermanos Passaglia. Espacio "Hechos" con potencial vecinalista. Carta intermedia.</p>
+      <div class="stats"><span class="chip">Hechos</span><span class="chip o">Outsider</span></div>
+    </div>
+    <div class="card">
+      <h3>Pablo Nicoletti · sector UCR</h3>
+      <div class="role">Presidente UCR La Plata</div>
+      <p>Línea articulada con Mor Roig, Rovella y Forneris (centro político). Tensión con sector Cadaa que ya migra hacia LLA. UCR La Plata "camaleónica".</p>
+      <div class="stats"><span class="chip o">UCR / centro</span></div>
+    </div>
+    <div class="card">
+      <h3>Frente de Izquierda</h3>
+      <div class="role">FIT-U · PTS / PO</div>
+      <p>Históricamente entre 3% y 5% en La Plata. Sin candidato definido al cierre de este informe. Funcional al techo del peronismo en escenario polarizado.</p>
+      <div class="stats"><span class="chip">3-5%</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="encuestas">
+  <h2 class="s">Encuestas relevantes 2026</h2>
+  <p class="sub">Mediciones publicadas entre abril y mayo 2026 que afectan la disputa LP-2027.</p>
+
+  <table>
+    <tr><th>Consultora</th><th>Fecha</th><th>Variable medida</th><th>Dato</th><th>Implicancia LP-2027</th></tr>
+    <tr><td><b>CB Consultora</b></td><td>May-26</td><td>Imagen positiva intendentes capitales</td><td class="num">34,1%</td><td>Alak 3ro peor del país. Sostiene la presión interna por una migración a gobernación.</td></tr>
+    <tr><td><b>CB Consultora</b></td><td>Abr-26</td><td>Imagen positiva intendentes capitales</td><td class="num">36,0%</td><td>Tendencia descendente intermensual.</td></tr>
+    <tr><td><b>Zuban Córdoba</b></td><td>Abr-May 26</td><td>Potencial de voto Kicillof PBA</td><td class="num">41,8%</td><td>LLA 31,9% en PBA. Techo opositor menor al piso oficialismo. Arrastre municipal.</td></tr>
+    <tr><td><b>Zuban Córdoba</b></td><td>Abr-May 26</td><td>Potencial Kicillof nacional</td><td class="num">44,1%</td><td>Caída de Milei fuera del top 4. Refuerza apuesta peronista provincial.</td></tr>
+    <tr><td><b>Zuban Córdoba</b></td><td>May-26</td><td>"Hace falta cambio de gobierno"</td><td class="num">71,2%</td><td>Bandera opositora vigente. Doble lectura: el oficialismo nacional sangra y el municipal capitaliza.</td></tr>
+  </table>
+
+  <div class="alert"><b>Lectura CD:</b> El piso peronista en La Plata es mayor que en CABA o que en el promedio bonaerense por arrastre del aparato Kicillof-Alak. La baja imagen de Alak no se traduce automáticamente en derrota electoral porque la oposición no muestra una cara competitiva de unidad.</div>
+
+  <div class="bars">
+    <div class="bar-row"><div class="l"><span>Imagen positiva Alak · mayo 2026</span><span>34,1%</span></div><div class="bar r"><i style="width:34.1%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>Imagen positiva Alak · abril 2026</span><span>36,0%</span></div><div class="bar r"><i style="width:36%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>Potencial voto Kicillof · nacional</span><span>44,1%</span></div><div class="bar g"><i style="width:44.1%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>Intención LLA · PBA general</span><span>31,9%</span></div><div class="bar o"><i style="width:31.9%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>Demanda de cambio nacional</span><span>71,2%</span></div><div class="bar o"><i style="width:71.2%"></i></div></div>
+  </div>
+</section>
+
+<section class="panel" id="osint">
+  <h2 class="s">OSINT · Huella digital y narrativa</h2>
+  <p class="sub">Relevamiento sobre portales locales, provinciales y nacionales · X / Instagram / Facebook · marzo-mayo 2026.</p>
+
+  <table>
+    <tr><th>Actor</th><th>Volumen menciones</th><th>Sentimiento</th><th>Narrativa dominante</th></tr>
+    <tr><td><b>Julio Alak</b></td><td class="num">Alto</td><td>Mixto · 45% neg</td><td>Obras / asentamientos / IOMA / migración a gobernación</td></tr>
+    <tr><td><b>Ariel Archanco</b></td><td class="num">Medio</td><td>Neutro / institucional</td><td>Reforma constitución / vacío territorial</td></tr>
+    <tr><td><b>Juanes Osaba</b></td><td class="num">Medio-alto</td><td>Positivo militante</td><td>Karinismo puro · City Bus · ascenso interno</td></tr>
+    <tr><td><b>Juan Pablo Allan</b></td><td class="num">Medio</td><td>Mixto</td><td>Seguridad · ex RENAR · bullrichismo</td></tr>
+    <tr><td><b>Nicolás Morzone</b></td><td class="num">Bajo-medio</td><td>Negativo interno</td><td>"Tira humo" · sobreexposición · debate parlamentario</td></tr>
+    <tr><td><b>Francisco Adorni</b></td><td class="num">Alto · negativo</td><td>Crítico</td><td>Adornigate · lastre del apellido</td></tr>
+    <tr><td><b>Julio Garro</b></td><td class="num">Bajo</td><td>Negativo judicial</td><td>Imputaciones · barrios cerrados · ñoquis</td></tr>
+  </table>
+
+  <h3 style="font-size:13px;color:var(--gold);margin:18px 0 10px;letter-spacing:.12em">PORTALES DE COBERTURA SOSTENIDA</h3>
+  <p class="sub" style="font-size:12px">Letra P · La Política Online · Infobae · Perfil · Página 12 · Ámbito · La Nación · El Día La Plata · 0221 · InfoPlatense · LaPlata1 · Diagonales · Primera Página · Punto Capital Noticias · NOVA · Agencia NOVA · Cronos · InfoCielo · DIB · El Cronista · LetraP · El Correo Gráfico · Radio Universidad UNLP.</p>
+
+  <div class="alert g"><b>Hallazgo OSINT clave:</b> El portal LaPlata1 publicó el 18-abr-26 el perfil "Juanes Osaba candidato Karina" confirmando el desplazamiento de Adorni. Diagonales y Letra P consolidan a Alak como candidato a gobernación. Cinco portales sincronizados validan la hipótesis de migración Alak.</div>
+</section>
+
+<section class="panel" id="judicial">
+  <h2 class="s">Riesgo y exposición judicial</h2>
+  <p class="sub">Causas activas con potencial de impacto electoral en La Plata 2027.</p>
+
+  <table>
+    <tr><th>Actor</th><th>Causa</th><th>Estado</th><th>Riesgo</th></tr>
+    <tr><td><b>Julio Garro</b></td><td>Ñoquis municipales · 14 imputados · Juzgado Garantías N° 6</td><td>Allanamientos abril 2025 · prosecución activa 2026</td><td><span class="chip r">ALTO</span></td></tr>
+    <tr><td><b>Julio Garro</b></td><td>Barrios cerrados · asociación ilícita · administración fraudulenta · 400 desarrollos sin convalidación provincial</td><td>Imputado y allanado marzo 2025 · denuncia Alak/Mongiardino</td><td><span class="chip r">CRÍTICO</span></td></tr>
+    <tr><td><b>Julio Alak</b></td><td>Sin causas penales activas en su contra. Es denunciante en las dos anteriores.</td><td>—</td><td><span class="chip g">BAJO</span></td></tr>
+    <tr><td><b>Manuel Adorni · contexto</b></td><td>"Adornigate" · escándalo Casa Rosada · línea de flotación libertaria</td><td>Activo · arrastre político a Francisco Adorni</td><td><span class="chip o">MEDIO indirecto</span></td></tr>
+  </table>
+
+  <div class="alert r"><b>Asimetría judicial decisiva:</b> El PRO La Plata tiene a su único candidato con historial competitivo (Garro, 48,72% en 2019) bloqueado por dos causas penales. El peronismo gobernante carece de exposición judicial análoga. La interna libertaria queda como única vía real de competencia opositora.</div>
+</section>
+
+<section class="panel" id="foda">
+  <h2 class="s">FODA cruzado del tablero</h2>
+  <p class="sub">Diagnóstico bio-psico-estratégico de los tres polos en disputa.</p>
+
+  <h3 style="font-size:13px;color:var(--gold);margin:14px 0 10px;letter-spacing:.12em">POLO PJ / FUERZA PATRIA</h3>
+  <div class="foda">
+    <div class="foda-box f"><h4>FORTALEZAS</h4><ul>
+      <li>Triunfo electoral septiembre 2025 (+6 pts)</li>
+      <li>Aparato municipal + 12 concejales / 1 voto del quórum propio</li>
+      <li>Unidad PJ alcanzada en marzo 2026</li>
+      <li>Alianza vertical con Kicillof y CGT regional</li>
+      <li>Plan obra: 1.000 cuadras · superávit fiscal · calificación "A"</li>
+    </ul></div>
+    <div class="foda-box o"><h4>OPORTUNIDADES</h4><ul>
+      <li>Adornigate erosiona al competidor principal</li>
+      <li>71% demanda cambio nacional pero la marca Kicillof es escudo provincial</li>
+      <li>Crisis PRO + interna LLA permite consolidar al delfín en 2027</li>
+      <li>Sucesión planificada: Resa, Bonicatto, Iañez, Cara como cartas</li>
+    </ul></div>
+    <div class="foda-box d"><h4>DEBILIDADES</h4><ul>
+      <li>Imagen Alak 34,1% (3ra peor país)</li>
+      <li>Inseguridad como reclamo número uno</li>
+      <li>Casco urbano empate técnico con LLA+PRO</li>
+      <li>Tensión interna La Cámpora vs. alakismo · base territorial volátil</li>
+      <li>Crisis IOMA (corte agremiación médica) erosiona transversalmente</li>
+    </ul></div>
+    <div class="foda-box a"><h4>AMENAZAS</h4><ul>
+      <li>Si Alak migra a gobernación, la transferencia no es 1:1</li>
+      <li>Posible candidatura propia La Cámpora (Archanco) divide voto</li>
+      <li>Deterioro económico nacional impacta capital provincial</li>
+      <li>Vulnerabilidad asentamientos / planificación urbana</li>
+    </ul></div>
+  </div>
+
+  <h3 style="font-size:13px;color:var(--gold);margin:18px 0 10px;letter-spacing:.12em">POLO LLA</h3>
+  <div class="foda">
+    <div class="foda-box f"><h4>FORTALEZAS</h4><ul>
+      <li>Crecimiento sostenido en periferia platense</li>
+      <li>Aval directo Karina Milei a Osaba</li>
+      <li>Cuadros legislativos consolidados (Allan, Bardón, Defeo)</li>
+      <li>Capacidad de aspirar al casco urbano (empate 2025)</li>
+    </ul></div>
+    <div class="foda-box o"><h4>OPORTUNIDADES</h4><ul>
+      <li>Vacío PRO La Plata abre absorción de votos amarillos</li>
+      <li>Demanda de cambio 71%</li>
+      <li>Reconfiguración octava sección bajo conducción Pareja</li>
+      <li>Caída imagen Alak abre flanco</li>
+    </ul></div>
+    <div class="foda-box d"><h4>DEBILIDADES</h4><ul>
+      <li>Sin candidato unificado (Osaba vs Allan)</li>
+      <li>Adornigate manchó la marca local</li>
+      <li>Crisis ANDIS / coimas erosiona narrativa anticasta</li>
+      <li>Bajo perfil de Allan en campaña 2025</li>
+    </ul></div>
+    <div class="foda-box a"><h4>AMENAZAS</h4><ul>
+      <li>Interna karinismo vs Fuerzas del Cielo no resuelta</li>
+      <li>PRO podría romper alianza local en 2027</li>
+      <li>Sin gestión municipal previa (riesgo "improvisación")</li>
+      <li>Penalidad si el ciclo económico nacional se deteriora</li>
+    </ul></div>
+  </div>
+
+  <h3 style="font-size:13px;color:var(--gold);margin:18px 0 10px;letter-spacing:.12em">POLO PRO</h3>
+  <div class="foda">
+    <div class="foda-box f"><h4>FORTALEZAS</h4><ul>
+      <li>Antecedente Garro (48,72% en 2019)</li>
+      <li>Estructura territorial 2015-2023 sostenida</li>
+      <li>Bloque en Concejo Deliberante con peso bisagra</li>
+    </ul></div>
+    <div class="foda-box o"><h4>OPORTUNIDADES</h4><ul>
+      <li>Negociar lugar en lista LLA con peso real</li>
+      <li>Capitalizar imagen seguridad como agenda</li>
+      <li>Articular sector UCR Cadaa / Quintero Chasman</li>
+    </ul></div>
+    <div class="foda-box d"><h4>DEBILIDADES</h4><ul>
+      <li>Sin candidato competitivo en el mediano plazo</li>
+      <li>Morzone sin consensos · "tira humo" según pares</li>
+      <li>Deserciones permanentes hacia LLA</li>
+    </ul></div>
+    <div class="foda-box a"><h4>AMENAZAS</h4><ul>
+      <li>Doble causa judicial Garro neutraliza al referente</li>
+      <li>Macri-Milei en tensión nacional</li>
+      <li>Posibilidad concreta de quedar sin candidatura propia</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="panel" id="territorio">
+  <h2 class="s">Mapa territorial</h2>
+  <p class="sub">Distribución de poder por zona del distrito.</p>
+
+  <table>
+    <tr><th>Zona</th><th>Padrón %</th><th>Dominio 2025</th><th>Tendencia 2027</th></tr>
+    <tr><td><b>Casco urbano</b></td><td class="num">28%</td><td>Empate técnico FP vs LLA+PRO</td><td>Zona bisagra · disputa milimétrica</td></tr>
+    <tr><td><b>Los Hornos</b></td><td class="num">14%</td><td>FP histórico · fractura Cámpora-Alak</td><td>Trasvase Elías → Alak consolida</td></tr>
+    <tr><td><b>Tolosa / Ringuelet</b></td><td class="num">11%</td><td>Peronismo cómodo</td><td>Sostenido</td></tr>
+    <tr><td><b>City Bell / Villa Elisa</b></td><td class="num">12%</td><td>PRO + LLA históricos</td><td>Migración masiva a LLA</td></tr>
+    <tr><td><b>Gonnet / Joaquín Gorina</b></td><td class="num">9%</td><td>Mixto · clase media alta</td><td>Disputa entre LLA y oficialismo</td></tr>
+    <tr><td><b>Periferia rural / Olmos / Etcheverry</b></td><td class="num">12%</td><td>FP territorial · LLA en crecimiento</td><td>Erosión moderada del peronismo</td></tr>
+    <tr><td><b>Asentamientos / villas</b></td><td class="num">14%</td><td>FP dominante</td><td>Vulnerabilidad si gestión no muestra obra</td></tr>
+  </table>
+
+  <div class="alert o"><b>Eje crítico territorial:</b> La Plata tiene la mayor cantidad de asentamientos del país (autodiagnóstico del propio intendente en marzo 2026). El control de ese 14% del padrón es la garantía del piso peronista. El casco urbano define el techo y la diferencia final.</div>
+</section>
+
+<section class="panel" id="escenarios">
+  <h2 class="s">Escenarios proyectivos</h2>
+  <p class="sub">Tres rutas posibles para la disputa LP-2027.</p>
+
+  <div class="scen">
+    <div class="scen-card"><div class="head"><b>Escenario A · Migración Alak</b><span class="prob">42%</span></div>
+      <p>Alak compite por gobernación. Resa o Bonicatto encabezan el PJ municipal. Adversario: Osaba (LLA). Fórmula final: <b>Sucesor PJ vs Osaba (LLA-PRO)</b>. Resultado proyectado FP 39-42% / LLA-PRO 37-40%.</p>
+    </div>
+    <div class="scen-card"><div class="head"><b>Escenario B · Reelección Alak</b><span class="prob">28%</span></div>
+      <p>Alak desiste gobernación y va por sexto mandato. Adversario: Osaba o ganador interna Allan-Osaba. Fórmula final: <b>Alak vs LLA</b>. Resultado proyectado FP 41-45% / LLA-PRO 35-39%.</p>
+    </div>
+    <div class="scen-card"><div class="head"><b>Escenario C · Tridivisión</b><span class="prob">18%</span></div>
+      <p>La Cámpora compite por fuera con Archanco o Saintout. PRO rompe con LLA. Fórmula tripartita. Resultado proyectado: FP 32-35% / LLA 30-33% / PRO 12-15%. Riesgo balotaje municipal si la ley aplica.</p>
+    </div>
+    <div class="scen-card"><div class="head"><b>Escenario D · Outsider</b><span class="prob">12%</span></div>
+      <p>Aparición de Leguizamón (Hechos) o figura UCR-centro como tercera fuerza competitiva. Fragmentación opositora extrema. Beneficiario: oficialismo PJ por arrastre. Resultado FP 40-43%.</p>
+    </div>
+  </div>
+
+  <div class="alert"><b>Lectura agregada:</b> En tres de cuatro escenarios el peronismo mantiene la intendencia. El único escenario de pérdida real es el de unidad opositora total (LLA+PRO+UCR) con candidato único competitivo, hoy inexistente.</div>
+</section>
+
+<section class="panel" id="simulacion">
+  <h2 class="s">Simulación [Módulo MFSH] · 1.000 agentes</h2>
+  <p class="sub">Modelo de transferencia de votos y comportamiento de bisagra. Variables: peso aparato nacional / peso aparato provincial / peso aparato municipal sobre distrito.</p>
+
+  <div class="kpis">
+    <div class="kpi"><div class="l">V_E % · Fuerza Patria</div><div class="v">41,3%<small> simulado</small></div><div class="d">Banda 38-44%</div></div>
+    <div class="kpi"><div class="l">V_E % · LLA + PRO</div><div class="v">37,6%<small> simulado</small></div><div class="d">Banda 34-40% · interna abierta</div></div>
+    <div class="kpi"><div class="l">P-Colapso PRO solo</div><div class="v">71%<small></small></div><div class="d">Probabilidad de no presentar boleta propia</div></div>
+    <div class="kpi"><div class="l">Transferencia Adorni → Osaba</div><div class="v">62%<small></small></div><div class="d">Retención del votante LLA original</div></div>
+  </div>
+
+  <div class="bars">
+    <div class="bar-row"><div class="l"><span>Probabilidad Alak gobernador</span><span>62%</span></div><div class="bar g"><i style="width:62%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>Probabilidad Osaba ganador interna LLA</span><span>58%</span></div><div class="bar"><i style="width:58%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>Probabilidad fórmula PJ vs Osaba en general</span><span>54%</span></div><div class="bar"><i style="width:54%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>Probabilidad triunfo PJ en general</span><span>57%</span></div><div class="bar g"><i style="width:57%"></i></div></div>
+    <div class="bar-row"><div class="l"><span>Probabilidad PRO candidato propio competitivo</span><span>22%</span></div><div class="bar r"><i style="width:22%"></i></div></div>
+  </div>
+</section>
+
+<section class="panel" id="veredicto">
+  <h2 class="s">Veredicto CD</h2>
+  <p class="sub">Hipótesis final sobre las fórmulas en disputa en la general 2027.</p>
+
+  <div class="alert g"><b>Fórmula proyectada PJ / Fuerza Patria:</b> <b>Sergio Resa</b> (Secretario de Planeamiento, alakismo) como cabeza de fórmula, con respaldo orgánico del PJ unificado y articulación La Cámpora-CGT en las listas, en caso de migración Alak a gobernación. Probabilidad de configuración: <b>62%</b>.</div>
+
+  <div class="alert o"><b>Fórmula proyectada LLA:</b> <b>Juan Esteban "Juanes" Osaba</b> (diputado bonaerense, karinismo) como cabeza de fórmula tras imponerse en la interna libertaria contra Juan Pablo Allan, con cesión de lugares al PRO y/o sector Bullrich en lista. Probabilidad: <b>58%</b>.</div>
+
+  <div class="alert"><b>Fórmula alternativa PRO en solitario:</b> <b>Nicolás Morzone</b> como única carta competitiva si fracasa la alianza con LLA. Probabilidad de configuración: <b>22%</b>. Escenario subóptimo para la oposición.</div>
+
+  <h3 style="font-size:14px;color:var(--gold);margin:22px 0 10px">CONCLUSIÓN ESTRATÉGICA</h3>
+  <p style="font-size:14px;color:var(--text);margin-bottom:12px">El escenario más probable para octubre de 2027 enfrenta a un sucesor del aparato Alak (PJ Fuerza Patria) contra Juanes Osaba (LLA, con o sin PRO subordinado). El peronismo conserva la intendencia con margen de 3-6 puntos en el escenario base, salvo deterioro económico nacional severo o ruptura interna del PJ por candidatura propia de La Cámpora. El PRO funciona como aportante de votos pero pierde su autonomía como fuerza con candidato propio.</p>
+
+  <p style="font-size:13px;color:var(--muted)">El factor decisivo es la migración o no de Alak a la pelea por la gobernación bonaerense: si se concreta, la transferencia al delfín no es total y el margen se estrecha. Si no se concreta, su imagen baja se convierte en techo. La oposición depende casi exclusivamente de su capacidad de unidad: con candidato único competitivo entre LLA y PRO el margen se cierra a 1-2 puntos.</p>
+</section>
+
+<section class="panel" id="metodologia">
+  <h2 class="s">Metodología de investigación</h2>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">El presente, es un análisis comparativo multidisciplinario sobre los actores y escenarios políticos.</p>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">La consultora utiliza una metodología de rastreo integral orientada a identificar fortalezas, debilidades, construcción narrativa, posicionamiento político, comportamiento digital, percepción social y capacidad de proyección electoral.</p>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Nuestro módulo ejecuta: relevamiento de redes sociales oficiales y ecosistemas paralelos; análisis de interacción orgánica y comentarios segmentados por plataforma; observación de discursos públicos, entrevistas y declaraciones recientes; rastreo de medios de comunicación locales, provinciales, nacionales y canales digitales.</p>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Realizamos: análisis de construcción simbólica y emocional; evaluación de niveles de polarización y aprobación; revisión de antecedentes institucionales y administrativos; inspección de boletines oficiales, obras públicas, licitaciones y reasignaciones.</p>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Nos focalizamos en la estructura territorial y vínculos políticos; recopilación de encuestas públicas y privadas detectadas;</p>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Se generan múltiples simulaciones proyectivas de comportamiento electoral y escenarios políticos.</p>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Los estudios son diseñados bajo una lógica comparativa transversal, integrando variables: políticas; comunicacionales; sociológicas; electorales; territoriales; digitales; institucionales; emocionales; semióticas; mediáticas.</p>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Segmentación por plataformas digitales: Facebook; Instagram; X/Twitter; YouTube; TikTok; medios digitales; ecosistemas de comentarios; circulación audiovisual; comunidades militantes; interacción territorial.</p>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Las investigaciones incorporan: monitoreo de tendencias; análisis de engagement; observación de narrativas dominantes; detección de críticas recurrentes; identificación de operaciones digitales; evaluación de construcción de liderazgo; comportamiento de audiencias; percepción espontánea y percepción inducida.</p>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">El objetivo final consiste en elaborar un diagnóstico comparativo profundo que permita proyectar escenarios políticos posibles, detectar tendencias emergentes y evaluar el posicionamiento relativo a determinados dirigentes políticos.</p>
+
+  <h3 style="font-size:12px;color:var(--gold);margin:14px 0 6px;letter-spacing:.14em">PLATAFORMAS MONITOREADAS</h3>
+  <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Facebook, Instagram, X/Twitter, YouTube, TikTok, medios digitales, ecosistemas de comentarios, circulación audiovisual, comunidades militantes, interacción territorial.</p>
+
+  <h3 style="font-size:12px;color:var(--gold);margin:18px 0 8px;letter-spacing:.14em">FUENTES</h3>
+  <div class="sec">
+    <h2 style="font-size:18px;font-weight:700;margin:0 0 12px;letter-spacing:-.01em">Trazabilidad documental completa</h2>
+
+    <button class="acc-btn" onclick="this.nextElementSibling.classList.toggle('open')">Fuentes primarias verificadas (37 piezas)</button>
+    <div class="acc-body">
+      <ul style="font-size:12px;padding:4px 0 10px 20px">
+        <li><strong>Infobae</strong> · 17/03/25 · "Imputaron al ex intendente de La Plata Julio Garro en una causa por corrupción y allanaron su casa"</li>
+        <li><strong>Perfil</strong> · 18/03/25 · "Imputaron a Julio Garro por la autorización ilegal de barrios privados en La Plata"</li>
+        <li><strong>Infocielo</strong> · 17/03/25 · "Imputaron a Julio Garro por presuntos actos de corrupción junto a otros siete involucrados"</li>
+        <li><strong>InfoPlatense</strong> · 25/06/25 · "Megaestafa fiscal en La Plata: avanza la causa que involucra a la contadora, empresarios y vinculados al garrismo"</li>
+        <li><strong>El Día</strong> · 22/10/24 · "Denuncian a la gestión de Garro por irregularidades en emprendimientos inmobiliarios"</li>
+        <li><strong>Ámbito</strong> · 09/04/26 · "Megaestafa inmobiliaria en La Plata: supera los u$s20 millones y avanza la causa penal"</li>
+        <li><strong>Letra P</strong> · 08/09/25 · "La Plata: triunfazo de Julio Alak, que proyecta su nombre a la escena provincial"</li>
+        <li><strong>Letra P</strong> · 09/09/25 · "Octava sección: Francisco Adorni y Juan Pablo Allan, los nombres de la derrota de La Libertad Avanza"</li>
+        <li><strong>Letra P</strong> · 04/09/25 · "Buenos Aires 2027: las 11 figuras que van por el sillón de Axel Kicillof"</li>
+        <li><strong>LaPlata1</strong> · 05/04/26 · "Con Alak en modo 2027, arranca la pelea por su herencia política en La Plata"</li>
+        <li><strong>La Nación</strong> · 23/04/26 · "Axel Kicillof asume en el PJ bonaerense con la intención de reforzar su candidatura presidencial"</li>
+        <li><strong>La Nación</strong> · 30/10/25 · "El diagnóstico de Sebastián Pareja, el armador bonaerense de LLA"</li>
+        <li><strong>La Nación</strong> · 09/09/25 · "Resultados: quién ganó las Elecciones 2025 en la provincia de Buenos Aires"</li>
+        <li><strong>Infobae</strong> · 06/03/26 · "Sebastián Pareja: Es inevitable que en el 2027 gobernemos la provincia de Buenos Aires"</li>
+        <li><strong>Infobae</strong> · 21/04/26 · "LLA dará inicio formal a la disputa electoral bonaerense: estará Santilli y se espera por Karina Milei"</li>
+        <li><strong>Infobae</strong> · 26/04/26 · "Principio de acuerdo entre LLA y el PRO para armar una alianza en provincia de Buenos Aires"</li>
+        <li><strong>Infobae</strong> · 07/09/25 · "Elecciones Buenos Aires 2025: guía rápida"</li>
+        <li><strong>Infobae</strong> · 08/09/25 · "Quién ganó en mi municipio: el mapa de los resultados por distrito"</li>
+        <li><strong>0221</strong> · 11/12/25 · "Juraron los doce concejales electos en La Plata"</li>
+        <li><strong>0221</strong> · 19/08/25 · "Juan Pablo Allan: Queremos llevar el modelo Milei al Concejo"</li>
+        <li><strong>0221</strong> · 12/12/23 · "Julio Alak asume su quinto mandato como intendente de La Plata"</li>
+        <li><strong>Perfil</strong> · 25/04/26 · "Karina Milei, Pareja y Santilli se juntaron y pusieron primera para el 2027 bonaerense"</li>
+        <li><strong>Perfil</strong> · 09/09/25 · "Resultados de las elecciones en Buenos Aires: el mapa de ganadores"</li>
+        <li><strong>Perfil</strong> · 05/04/26 · "Peronismo 2027: el desorden libertario lo obliga a ser opción"</li>
+        <li><strong>La Noticia Web</strong> · 05/02/26 · "Sebastián Pareja inició su gira de cara a 2027"</li>
+        <li><strong>Parlamentario</strong> · 30/10/25 · "Sebastián Pareja archivos"</li>
+        <li><strong>Agencia Comunas</strong> · 09/05/26 · "FATSA proclamó a Axel Kicillof como el mejor candidato del peronismo para 2027"</li>
+        <li><strong>Revista Zoom</strong> · 09/09/25 · "Kicillof y el peronismo frente al 2027"</li>
+        <li><strong>El Estadista</strong> · 09/02/26 · "Kicillof toma el PJ bonaerense y se lanza a la presidencia 2027"</li>
+        <li><strong>Letra P</strong> · 10/09/25 · "Axel Kicillof 2027? El Círculo Rojo lo reconoce como candidato"</li>
+        <li><strong>Nova Bonaerense</strong> · 08/03/26 · "La Plata entra en modo electoral y distintos espacios empiezan a proyectar candidatos"</li>
+        <li><strong>Infobae</strong> · 26/07/25 · "Con estrategias contrapuestas, la UCR inició negociaciones por las bancas nacionales"</li>
+        <li><strong>Ámbito</strong> · 13/05/25 · "Tras el triunfo de la alianza UCR-LLA en Chaco"</li>
+        <li><strong>Ámbito</strong> · 12/05/25 · "Chaco: la alianza UCR - LLA debutó con un triunfo"</li>
+        <li><strong>Infocielo</strong> · 18/07/25 · "El PRO de La Plata tantea un plan B ante el avance libertario y Julio Garro tiene un rol clave"</li>
+        <li><strong>Letra P</strong> · Sept-Dic 2025 · Resultados 8ª sección + bancas HCD + jura concejales</li>
+        <li><strong>Junta Electoral PBA</strong> · 19/09/25 · Resolución validez elecciones + escrutinio definitivo</li>
+      </ul>
+    </div>
+
+    <button class="acc-btn" onclick="this.nextElementSibling.classList.toggle('open')">Módulos aplicados y autores integrados</button>
+    <div class="acc-body">
+      <table>
+        <thead><tr><th>Código</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>[OS]</td><td>OSINT político Argentina — fuentes abiertas verificadas</td></tr>
+          <tr><td>[OSP]</td><td>Open Source Profile — huella digital candidatos</td></tr>
+          <tr><td>[OSB]</td><td>OSINT bots — detección comportamiento inauténtico coordinado</td></tr>
+          <tr><td>[VDD]</td><td>Vetting defensivo — validación constitucional</td></tr>
+          <tr><td>[MFSH]</td><td>1000 simulaciones — escenarios electorales</td></tr>
+          <tr><td>[GDA]</td><td>Ingeniería narrativa — guerra de marcos</td></tr>
+          <tr><td>[DK]</td><td>Sistema 1/2, sesgos cognitivos</td></tr>
+          <tr><td>[DG]</td><td>inteligencia emocional política</td></tr>
+          <tr><td>[MP]</td><td>consolidación de poder</td></tr>
+          <tr><td>[PR]</td><td>depredación política/judicial</td></tr>
+          <tr><td>[CD]</td><td>Framework Consultora Diagonales — veredicto integrado</td></tr>
+          <tr><td>[EE]</td><td>ERM — Enterprise Risk Management</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <button class="acc-btn" onclick="this.nextElementSibling.classList.toggle('open')">Limitaciones del análisis</button>
+    <div class="acc-body">
+      <ul style="font-size:12px;padding:4px 0 10px 20px">
+        <li>Análisis cerrado al 16 de mayo de 2026. Candidaturas definitivas se resolverán entre marzo y junio 2027.</li>
+        <li>La causa Garro está en etapa de instrucción; el procesamiento firme puede demorar o ser sobreseído.</li>
+        <li>El acuerdo PRO-LLA es "principio" según Infobae (26/04/26); falta cierre formal y aval Macri.</li>
+        <li>UCR-Abad mantiene definición pendiente. Lista provincial UCR-LP elegida 11/05/26 (Polo presidente Comité LP).</li>
+        <li>La intención de Pareja como gobernador es declaración pública (Infobae, LN+); el cierre depende de Karina Milei.</li>
+        <li>El proyecto Kicillof presidencial está abierto: Wado de Pedro y Massa pueden disputar interna.</li>
+        <li>Datos electorales 2025 → corregidos por OSINT. Las V_E son proyecciones basadas en performance previa + factores cualitativos.</li>
+        <li>MiroFish simula 1.000 agentes con variables cualitativas; no reemplaza encuesta cuantitativa.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer class="contact">
+  <div class="wrap contact-grid">
+    <div style="background:linear-gradient(135deg,#2E7D32 0%,#1B5E20 100%);border-radius:14px;padding:16px;color:#fff;margin:0 auto 20px;max-width:1100px;box-shadow:0 18px 45px rgba(46,125,50,.22),0 4px 14px rgba(0,80,40,.16)">
+      <h3 style="color:#E9C46A;margin-bottom:16px;font-size:14px;font-weight:700">📞 Contactar — Consultora Diagonales</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+        <a href="https://wa.me/5492214597940?text=Solicito%20información%20sobre%20radiografías%20electorales" target="_blank" rel="noopener noreferrer" style="background:rgba(255,255,255,.15);color:#fff;padding:16px;border-radius:10px;text-align:center;text-decoration:none;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,.3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:background .2s,transform .2s" onmouseover="this.style.background='rgba(255,255,255,.25)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,.15)';this.style.transform='translateY(0)'">
+          <span style="font-size:24px">💬</span><span>WhatsApp</span>
+        </a>
+        <a href="tel:+5492214597940" style="background:rgba(255,255,255,.15);color:#fff;padding:16px;border-radius:10px;text-align:center;text-decoration:none;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,.3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:background .2s,transform .2s" onmouseover="this.style.background='rgba(255,255,255,.25)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,.15)';this.style.transform='translateY(0)'">
+          <span style="font-size:24px">☎️</span><span>Llamar</span>
+        </a>
+        <a href="mailto:info.consultoradiagonales@gmail.com?subject=Solicitud%20de%20Radiografía%20Electoral" style="background:rgba(255,255,255,.15);color:#fff;padding:16px;border-radius:10px;text-align:center;text-decoration:none;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,.3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:background .2s,transform .2s" onmouseover="this.style.background='rgba(255,255,255,.25)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,.15)';this.style.transform='translateY(0)'">
+          <span style="font-size:24px">✉️</span><span>Email</span>
+        </a>
+      </div>
+    </div>
+    <div style="text-align:center;color:#5A6470;font-size:11px">
+      <strong>📍 La Plata, Buenos Aires, Argentina</strong><br>
+      Inteligencia Política · Estrategia Electoral · Vetting Multidimensional
+    </div>
+    <div class="copy">CONFIDENCIAL · USO INTERNO · CD-LP2027-vNEXT · 16/05/2026</div>
+  </div>
+</footer>
+
+<script>
+const tabs=document.querySelectorAll('.tab');
+const panels=document.querySelectorAll('section.panel');
+const nav=document.querySelector('nav.tabs');
+const menuToggle=document.querySelector('.menu-toggle');
+
+function setCompactHeader(){
+  const compact=window.scrollY>80;
+  document.body.classList.toggle('compact',compact);
+  if(!compact){
+    nav.classList.remove('open');
+    menuToggle.setAttribute('aria-expanded','false');
+  }
+}
+
+menuToggle.addEventListener('click',()=>{
+  const open=nav.classList.toggle('open');
+  menuToggle.setAttribute('aria-expanded',String(open));
+});
+
+window.addEventListener('scroll',setCompactHeader,{passive:true});
+setCompactHeader();
+
+tabs.forEach(t=>{
+  t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('active'));
+    panels.forEach(p=>p.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.t).classList.add('active');
+    nav.classList.remove('open');
+    menuToggle.setAttribute('aria-expanded','false');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+</script>
+
+</body>
+</html>
+
