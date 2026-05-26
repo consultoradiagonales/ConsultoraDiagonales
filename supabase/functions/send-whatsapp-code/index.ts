@@ -51,7 +51,8 @@ Deno.serve(async (req) => {
     const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
     if (token && phoneNumberId) {
-      const whatsappResponse = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
+      const graphVersion = Deno.env.get("WHATSAPP_GRAPH_VERSION") || "v21.0";
+      const whatsappResponse = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

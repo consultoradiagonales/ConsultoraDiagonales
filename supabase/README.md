@@ -47,7 +47,8 @@ Variables requeridas:
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY="..."
 supabase secrets set WHATSAPP_TOKEN="..."
 supabase secrets set WHATSAPP_PHONE_NUMBER_ID="..."
+supabase secrets set WHATSAPP_GRAPH_VERSION="v21.0"
 supabase secrets set WHATSAPP_CODE_PEPPER="una-cadena-larga-secreta"
 ```
 
-`WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` corresponden a WhatsApp Cloud API.
+`WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` corresponden a WhatsApp Cloud API. `WHATSAPP_GRAPH_VERSION` permite actualizar la versión de Graph API sin editar código.

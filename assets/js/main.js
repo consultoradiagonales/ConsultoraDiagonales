@@ -100,6 +100,26 @@ function initFooterText() {
 }
 
 function initServiceRequests() {
+  const whatsappMessages = {
+    territorial:
+      "Hola Consultora Diagonales. Quiero solicitar un servicio de Inteligencia territorial. Necesito analizar un territorio, sus actores, dinámicas y escenarios para tomar mejores decisiones.",
+    electoral:
+      "Hola Consultora Diagonales. Quiero solicitar un servicio de Escenarios electorales. Necesito analizar tendencias, actores y proyecciones para un contexto electoral específico.",
+    opinion:
+      "Hola Consultora Diagonales. Quiero solicitar un servicio de Opinión pública. Necesito medir percepciones, comportamientos y clima social sobre un tema, actor o territorio.",
+  };
+
+  document.querySelectorAll("[data-service]").forEach((card) => {
+    const message = whatsappMessages[card.dataset.service] || "Hola Consultora Diagonales. Quiero consultar por sus servicios.";
+    const href = `https://wa.me/5492214597940?text=${encodeURIComponent(message)}`;
+    card.setAttribute("href", href);
+    card.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.open(href, "_blank", "noopener");
+    });
+  });
+  return;
+
   const serviceLabels = {
     territorial: "Inteligencia territorial",
     electoral: "Escenarios electorales",
