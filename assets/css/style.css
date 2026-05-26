@@ -13,6 +13,10 @@
   --title: #092743;
 }
 
+body[data-page="repo"] .repository-hero p:not(.eyebrow) {
+  display: none !important;
+}
+
 * {
   box-sizing: border-box;
 }
