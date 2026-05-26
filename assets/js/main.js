@@ -38,6 +38,7 @@ const ADMIN_SESSION_KEY = "cd:admin_unlocked";
 initNavigation();
 initLogoFallbacks();
 initActiveNavigation();
+initFooterText();
 initLoginModal();
 initTracking();
 
@@ -90,6 +91,12 @@ function initLogoFallbacks() {
 function initActiveNavigation() {
   const key = page === "repo" ? "radiografias" : page === "home" ? "inicio" : page;
   document.querySelectorAll(`[data-nav="${key}"]`).forEach((link) => link.classList.add("is-active"));
+}
+
+function initFooterText() {
+  document.querySelectorAll(".site-footer").forEach((footer) => {
+    footer.textContent = "© CONSULTORA DIAGONALES | Data Analytics.";
+  });
 }
 
 function initServiceRequests() {

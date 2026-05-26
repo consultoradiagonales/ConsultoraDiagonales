@@ -211,7 +211,7 @@ input {
   display: grid;
   align-content: start;
   gap: 0.75rem;
-  padding: 8.25rem clamp(1.35rem, 5vw, 3.5rem) 2rem;
+  padding: 9.75rem clamp(1.35rem, 5vw, 3.5rem) 2rem;
   background:
     radial-gradient(circle at 16% 8%, rgba(218, 250, 255, 0.86), transparent 32%),
     radial-gradient(circle at 86% 18%, rgba(99, 221, 245, 0.54), transparent 36%),
@@ -221,6 +221,17 @@ input {
   pointer-events: none;
   transform: translateY(-12px);
   transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.mobile-menu::before {
+  content: "";
+  position: absolute;
+  top: 1.15rem;
+  left: clamp(1.35rem, 5vw, 3.5rem);
+  width: min(58vw, 250px);
+  height: 72px;
+  background: url("../img/logo-completo.png") left center / contain no-repeat;
+  filter: drop-shadow(0 8px 18px rgba(2, 18, 31, 0.22));
 }
 
 .mobile-menu.is-open {
@@ -619,10 +630,10 @@ input {
 
 .login-box {
   position: relative;
-  width: min(100%, 480px);
+  width: min(100%, 680px);
   border: 1px solid var(--box-border);
   border-radius: 8px;
-  padding: 1.15rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
   background: var(--box-blue);
   box-shadow: 0 20px 60px rgba(0, 16, 27, 0.26);
 }
@@ -638,8 +649,8 @@ input {
 
 .access-form {
   display: grid;
-  gap: 0.8rem;
-  margin-top: 1rem;
+  gap: 1rem;
+  margin-top: 1.25rem;
 }
 
 .access-form label {
@@ -673,17 +684,28 @@ input {
   letter-spacing: 0.08em;
 }
 
+.access-form .primary-link {
+  width: 100%;
+  margin-top: 0.15rem;
+}
+
 .site-footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
+  min-height: 34px;
   border-top: 1px solid rgba(139, 207, 241, 0.2);
-  padding: 0.65rem clamp(1rem, 3vw, 2rem);
+  padding: 0.45rem clamp(1rem, 3vw, 2rem);
   color: rgba(244, 251, 255, 0.72);
   background: rgba(3, 27, 45, 0.62);
-  font-size: 0.82rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   text-align: center;
+}
+
+.site-footer img {
+  display: none !important;
 }
 
 .subpage {
@@ -1058,10 +1080,12 @@ body[data-page="servicios"] .subpage {
 
   .site-header {
     height: 82px;
-    padding: 0 1.6rem;
+    padding: 0 clamp(1.35rem, 6vw, 2rem);
+    justify-content: space-between;
   }
 
   .brand {
+    flex: 0 0 auto;
     min-width: 78px;
     width: 78px;
     height: 68px;
@@ -1069,12 +1093,20 @@ body[data-page="servicios"] .subpage {
   }
 
   .brand-full {
-    display: none;
+    display: none !important;
     max-width: min(68vw, 300px);
   }
 
   .brand-mark {
     display: block !important;
+    width: 58px;
+    height: 58px;
+  }
+
+  .menu-toggle {
+    flex: 0 0 58px;
+    width: 58px;
+    height: 58px;
   }
 
   .site-header.is-scrolled .brand {
@@ -1208,8 +1240,10 @@ body[data-page="servicios"] .subpage {
   }
 
   .site-footer {
-    align-items: flex-start;
-    flex-direction: column;
+    min-height: 32px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.62rem;
+    line-height: 1.35;
   }
 
   .contact-actions {
