@@ -4,5 +4,6 @@ window.CD_SUPABASE = {
 };
 
 window.CD_ADMIN = {
-  uploadKey: "CAMBIAR_CLAVE_ADMIN",
+  uploadKey: "",
+  useEdgeUpload: true,
 };

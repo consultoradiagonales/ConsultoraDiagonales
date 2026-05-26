@@ -26,12 +26,6 @@ for select
 to anon
 using (true);
 
-create policy "Radiografias anon insert"
-on public.radiografias
-for insert
-to anon
-with check (true);
-
 insert into storage.buckets (id, name, public)
 values ('radiografias', 'radiografias', true)
 on conflict (id) do update set public = true;
@@ -41,12 +35,6 @@ on storage.objects
 for select
 to anon
 using (bucket_id = 'radiografias');
-
-create policy "Radiografias storage anon upload"
-on storage.objects
-for insert
-to anon
-with check (bucket_id = 'radiografias');
 
 create table if not exists public.visitor_profiles (
   visitor_id uuid primary key,

@@ -34,6 +34,7 @@ const supabaseClient = isConfigured && window.supabase
 const CONTACT_STORAGE_KEY = "cd:contact";
 const PHONE_VERIFIED_KEY = "cd:phone_verified";
 const ADMIN_SESSION_KEY = "cd:admin_unlocked";
+const ADMIN_UPLOAD_KEY = "cd:admin_upload_key";
 
 initNavigation();
 initLogoFallbacks();
@@ -733,17 +734,18 @@ function initAdmin() {
     const expectedKey = window.CD_ADMIN?.uploadKey || "";
     const providedKey = getFormValue(login, "admin_key");
 
-    if (!expectedKey || expectedKey === "CAMBIAR_CLAVE_ADMIN") {
-      loginStatus.textContent = "Configura window.CD_ADMIN.uploadKey en assets/js/supabase-config.js.";
+    if (!providedKey) {
+      loginStatus.textContent = "Ingresa la clave de administrador.";
       return;
     }
 
-    if (providedKey !== expectedKey) {
+    if (expectedKey && providedKey !== expectedKey) {
       loginStatus.textContent = "Clave incorrecta.";
       return;
     }
 
     sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+    sessionStorage.setItem(ADMIN_UPLOAD_KEY, providedKey);
     login.reset();
     unlockAdmin();
   });
@@ -782,41 +784,7 @@ function initAdmin() {
     status.textContent = "Subiendo PDF y publicando metadata.";
 
     try {
-      const cleanName = file.name
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9.]+/g, "-")
-        .replace(/-+/g, "-");
-      const path = `${fecha}/${crypto.randomUUID()}-${cleanName}`;
-
-      const { error: uploadError } = await supabaseClient.storage
-        .from("radiografias")
-        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: "application/pdf" });
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicData } = supabaseClient.storage.from("radiografias").getPublicUrl(path);
-      const pdf_url = publicData.publicUrl;
-
-      const { error: insertError } = await supabaseClient.from("radiografias").insert({
-        titulo,
-        provincia,
-        localidad,
-        fecha,
-        pdf_url,
-      });
-
-      if (insertError) throw insertError;
-
-      await supabaseClient.from("admin_upload_events").insert({
-        titulo,
-        provincia,
-        localidad,
-        pdf_url,
-        uploaded_by: "admin_key",
-        user_agent: navigator.userAgent,
-      });
+      const { pdf_url } = await uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha });
 
       form.reset();
       status.innerHTML = `PDF publicado. <a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`;
@@ -827,6 +795,70 @@ function initAdmin() {
       submit.textContent = "Guardar PDF";
     }
   });
+}
+
+async function uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha }) {
+  if (window.CD_ADMIN?.useEdgeUpload !== false) {
+    const adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "";
+    const formData = new FormData();
+    formData.append("archivo", file);
+    formData.append("titulo", titulo);
+    formData.append("provincia", provincia);
+    formData.append("localidad", localidad);
+    formData.append("fecha", fecha);
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-report`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_ANON_KEY,
+        "x-admin-key": adminKey,
+      },
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "No se pudo publicar el PDF.");
+    return data;
+  }
+
+  const cleanName = file.name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9.]+/g, "-")
+    .replace(/-+/g, "-");
+  const path = `${fecha}/${crypto.randomUUID()}-${cleanName}`;
+
+  const { error: uploadError } = await supabaseClient.storage
+    .from("radiografias")
+    .upload(path, file, { cacheControl: "3600", upsert: false, contentType: "application/pdf" });
+
+  if (uploadError) throw uploadError;
+
+  const { data: publicData } = supabaseClient.storage.from("radiografias").getPublicUrl(path);
+  const pdf_url = publicData.publicUrl;
+
+  const { error: insertError } = await supabaseClient.from("radiografias").insert({
+    titulo,
+    provincia,
+    localidad,
+    fecha,
+    pdf_url,
+  });
+
+  if (insertError) throw insertError;
+
+  await supabaseClient.from("admin_upload_events").insert({
+    titulo,
+    provincia,
+    localidad,
+    pdf_url,
+    uploaded_by: "admin_key",
+    user_agent: navigator.userAgent,
+  });
+
+  return { pdf_url };
 }
 
 function isPdfFile(file) {

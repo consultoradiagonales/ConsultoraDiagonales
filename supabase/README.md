@@ -11,9 +11,12 @@ window.CD_SUPABASE = {
 };
 
 window.CD_ADMIN = {
-  uploadKey: "CLAVE_PRIVADA_PARA_ADMIN",
+  uploadKey: "",
+  useEdgeUpload: true,
 };
 ```
+
+La clave de administrador real no debe publicarse en el frontend. El panel la pide al ingresar y la envía como header a la Edge Function `admin-upload-report`, que la compara contra el secret `ADMIN_UPLOAD_KEY`.
 
 ## Base de datos
 
@@ -39,12 +42,14 @@ Desplegar:
 ```bash
 supabase functions deploy send-whatsapp-code
 supabase functions deploy verify-whatsapp-code
+supabase functions deploy admin-upload-report
 ```
 
 Variables requeridas:
 
 ```bash
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY="..."
+supabase secrets set ADMIN_UPLOAD_KEY="clave-larga-para-cargar-radiografias"
 supabase secrets set WHATSAPP_TOKEN="..."
 supabase secrets set WHATSAPP_PHONE_NUMBER_ID="..."
 supabase secrets set WHATSAPP_GRAPH_VERSION="v21.0"
