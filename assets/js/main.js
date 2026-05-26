@@ -718,11 +718,15 @@ function initAdmin() {
   const loginStatus = document.querySelector("[data-admin-login-status]");
   const status = document.querySelector("[data-form-status]");
   const submit = document.querySelector("[data-submit]");
+  const dashboard = document.querySelector("[data-admin-dashboard]");
+  const refresh = document.querySelector("[data-admin-refresh]");
   if (!form) return;
 
   const unlockAdmin = () => {
     login?.classList.add("is-hidden");
     form.classList.remove("is-hidden");
+    dashboard?.classList.remove("is-hidden");
+    loadAdminDashboard();
   };
 
   if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "true") {
@@ -788,6 +792,7 @@ function initAdmin() {
 
       form.reset();
       status.innerHTML = `PDF publicado. <a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`;
+      loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
@@ -795,6 +800,113 @@ function initAdmin() {
       submit.textContent = "Guardar PDF";
     }
   });
+
+  refresh?.addEventListener("click", loadAdminDashboard);
+}
+
+async function loadAdminDashboard() {
+  const dashboard = document.querySelector("[data-admin-dashboard]");
+  if (!dashboard || dashboard.classList.contains("is-hidden")) return;
+
+  const containers = {
+    reports: document.querySelector("[data-admin-reports]"),
+    downloads: document.querySelector("[data-admin-downloads]"),
+    contacts: document.querySelector("[data-admin-contacts]"),
+    events: document.querySelector("[data-admin-events]"),
+  };
+
+  if (!supabaseClient) {
+    renderAdminList(containers.reports, [], "Configura Supabase para ver radiografías cargadas.");
+    renderAdminList(containers.downloads, JSON.parse(localStorage.getItem("cd:pdf_downloads") || "[]").slice(-8).reverse(), "Sin consumos locales.");
+    renderAdminList(containers.contacts, [JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}")].filter((item) => item.phone || item.email), "Sin contactos locales.");
+    renderAdminList(containers.events, JSON.parse(localStorage.getItem("cd:events") || "[]").slice(-12).reverse(), "Sin eventos locales.");
+    return;
+  }
+
+  try {
+    const data = await fetchAdminDashboard();
+    setAdminTotal("reports", data.reports?.length || 0);
+    setAdminTotal("downloads", data.downloads?.length || 0);
+    setAdminTotal("contacts", data.contacts?.length || 0);
+    setAdminTotal("events", data.events?.length || 0);
+    renderAdminList(containers.reports, data.reports || [], "Todavía no hay radiografías cargadas.", renderAdminReportItem);
+    renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", renderAdminDownloadItem);
+    renderAdminList(containers.contacts, data.contacts || [], "Todavía no hay contactos.", renderAdminContactItem);
+    renderAdminList(containers.events, data.events || [], "Todavía no hay eventos.", renderAdminEventItem);
+  } catch (error) {
+    Object.values(containers).forEach((container) => renderAdminList(container, [], `No se pudo cargar: ${error.message}`));
+  }
+}
+
+async function fetchAdminDashboard() {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-dashboard`, {
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+      "x-admin-key": sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "",
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "No se pudo cargar el tablero.");
+  return data;
+}
+
+function setAdminTotal(key, value) {
+  const target = document.querySelector(`[data-admin-total="${key}"]`);
+  if (target) target.textContent = String(value);
+}
+
+function renderAdminList(container, items, emptyText, renderer = renderGenericAdminItem) {
+  if (!container) return;
+  if (!items.length) {
+    container.innerHTML = `<p class="admin-list-empty">${escapeHtml(emptyText)}</p>`;
+    return;
+  }
+  container.innerHTML = items.map(renderer).join("");
+}
+
+function renderGenericAdminItem(item) {
+  return `<div class="admin-list-item"><strong>${escapeHtml(item.titulo || item.full_name || item.event_type || "Registro")}</strong><small>${escapeHtml(item.created_at || item.last_seen_at || "")}</small></div>`;
+}
+
+function renderAdminReportItem(item) {
+  return `
+    <div class="admin-list-item">
+      <strong>${escapeHtml(item.titulo || "Radiografía sin título")}</strong>
+      <span>${escapeHtml([item.localidad, item.provincia].filter(Boolean).join(", ") || "Territorio")}</span>
+      <small>${escapeHtml(item.fecha || item.created_at || "")}</small>
+    </div>
+  `;
+}
+
+function renderAdminDownloadItem(item) {
+  return `
+    <div class="admin-list-item">
+      <strong>${escapeHtml(item.full_name || item.email || item.phone || "Usuario validado")}</strong>
+      <span>${escapeHtml(item.lugar || item.provincia || "PDF")}</span>
+      <small>${escapeHtml(item.downloaded_at || item.created_at || "")}</small>
+    </div>
+  `;
+}
+
+function renderAdminContactItem(item) {
+  return `
+    <div class="admin-list-item">
+      <strong>${escapeHtml(item.full_name || item.email || item.phone || "Contacto")}</strong>
+      <span>${escapeHtml([item.organization, item.phone_validation_status].filter(Boolean).join(" | "))}</span>
+      <small>${escapeHtml(item.last_seen_at || item.created_at || "")}</small>
+    </div>
+  `;
+}
+
+function renderAdminEventItem(item) {
+  return `
+    <div class="admin-list-item">
+      <strong>${escapeHtml(item.event_type || "Evento")}</strong>
+      <span>${escapeHtml([item.page, item.path].filter(Boolean).join(" | "))}</span>
+      <small>${escapeHtml(item.created_at || "")}</small>
+    </div>
+  `;
 }
 
 async function uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha }) {

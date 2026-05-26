@@ -43,6 +43,7 @@ Desplegar:
 supabase functions deploy send-whatsapp-code
 supabase functions deploy verify-whatsapp-code
 supabase functions deploy admin-upload-report
+supabase functions deploy admin-dashboard
 ```
 
 Variables requeridas:

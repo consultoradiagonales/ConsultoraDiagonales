@@ -88,6 +88,42 @@
           <button class="primary-link justify-center" type="submit" data-submit>Guardar PDF</button>
           <p class="form-status" data-form-status role="status"></p>
         </form>
+
+        <section class="admin-dashboard is-hidden lg:col-span-2" data-admin-dashboard>
+          <div class="admin-dashboard-header">
+            <div>
+              <p class="eyebrow">Actividad</p>
+              <h2>RadiografÃ­as, contactos y consumos.</h2>
+            </div>
+            <button class="secondary-link" type="button" data-admin-refresh>Actualizar</button>
+          </div>
+
+          <div class="admin-metrics">
+            <article><span data-admin-total="reports">0</span><small>RadiografÃ­as</small></article>
+            <article><span data-admin-total="downloads">0</span><small>Descargas recientes</small></article>
+            <article><span data-admin-total="contacts">0</span><small>Contactos</small></article>
+            <article><span data-admin-total="events">0</span><small>Eventos</small></article>
+          </div>
+
+          <div class="admin-data-grid">
+            <article>
+              <h3>RadiografÃ­as cargadas</h3>
+              <div class="admin-list" data-admin-reports></div>
+            </article>
+            <article>
+              <h3>Consumos PDF</h3>
+              <div class="admin-list" data-admin-downloads></div>
+            </article>
+            <article>
+              <h3>Contactos y validaciÃ³n</h3>
+              <div class="admin-list" data-admin-contacts></div>
+            </article>
+            <article>
+              <h3>Actividad reciente</h3>
+              <div class="admin-list" data-admin-events></div>
+            </article>
+          </div>
+        </section>
       </section>
     </main>
 
