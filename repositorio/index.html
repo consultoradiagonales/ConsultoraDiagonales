@@ -19,6 +19,7 @@
         <a href="../index.html" data-nav="inicio">Inicio</a>
         <a href="../servicios/index.html" data-nav="servicios">Servicios</a>
         <a href="index.html" data-nav="radiografias">Radiografías</a>
+        <a href="../registro/index.html" data-nav="registro">Registro</a>
         <a href="../contacto/index.html" data-nav="contacto">Contacto</a>
       </nav>
       <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle><span></span><span></span><span></span></button>
@@ -28,6 +29,7 @@
       <a href="../index.html">Inicio</a>
       <a href="../servicios/index.html">Servicios</a>
       <a href="index.html">Radiografías</a>
+      <a href="../registro/index.html">Registro</a>
       <a href="../contacto/index.html">Contacto</a>
     </div>
 
@@ -45,21 +47,12 @@
       </section>
 
       <section class="mx-auto max-w-7xl px-6 pb-24 md:px-10 lg:px-12">
-        <div class="repo-toolbar">
-          <span data-count>Radiografías</span>
-          <a class="secondary-link" href="../admin/index.html">Admin</a>
-        </div>
-        <div class="repo-grid" data-reports>
-          <article class="skeleton-card"></article>
-          <article class="skeleton-card"></article>
-          <article class="skeleton-card"></article>
-        </div>
-
         <div class="repo-toolbar mt-14">
-          <span>Últimos análisis radiográficos</span>
+          <span>Últimos análisis <strong>radiográficos</strong></span>
+          <small data-count>Total: 0</small>
           <a class="secondary-link" href="../analisis/index.html">Ver todos</a>
         </div>
-        <div class="latest-list">
+        <div class="latest-list" data-reports>
           <a href="#" data-login-open data-track="gated">
             <time>2026-05-17</time>
             <span>Intendencia La Plata 2027</span>
@@ -82,13 +75,13 @@
           <label><span>Correo electrónico</span><input type="email" placeholder="nombre@dominio.com" required /></label>
           <label><span>Teléfono celular</span><input type="tel" placeholder="+54 9 ..." required /></label>
           <button class="primary-link justify-center" type="submit">Solicitar validación</button>
+          <a class="secondary-link justify-center" href="../registro/index.html">Crear cuenta</a>
         </form>
       </div>
     </div>
 
     <footer class="site-footer">
-      <img src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
-      <span>© 1DE4 S.R.L | Repositorio de inteligencia territorial.</span>
+      <span>© 1DE4 S.R.L | Inteligencia territorial y análisis político.</span>
     </footer>
 
     <script src="../assets/js/supabase-config.js"></script>

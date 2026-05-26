@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Registro de usuarios de Consultora Diagonales." />
+    <title>Registro | Consultora Diagonales</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body class="bg-[#080d14] text-white antialiased" data-page="registro">
+    <header class="site-header is-solid" data-header>
+      <a class="brand" href="../index.html" aria-label="Consultora Diagonales">
+        <img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
+        <img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo />
+      </a>
+      <nav class="desktop-nav" aria-label="Navegacion principal">
+        <a href="../index.html" data-nav="inicio">Inicio</a>
+        <a href="../servicios/index.html" data-nav="servicios">Servicios</a>
+        <a href="../repositorio/index.html" data-nav="radiografias">Radiografías</a>
+        <a href="index.html" data-nav="registro">Registro</a>
+        <a href="../contacto/index.html" data-nav="contacto">Contacto</a>
+      </nav>
+      <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle>
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </header>
+
+    <div class="mobile-menu" data-mobile-menu aria-hidden="true">
+      <a href="../index.html">Inicio</a>
+      <a href="../servicios/index.html">Servicios</a>
+      <a href="../repositorio/index.html">Radiografías</a>
+      <a href="index.html">Registro</a>
+      <a href="../contacto/index.html">Contacto</a>
+    </div>
+
+    <main class="subpage">
+      <section class="registration-layout mx-auto grid min-h-screen max-w-7xl gap-10 px-6 pb-24 pt-36 md:px-10 lg:grid-cols-[.9fr_1.1fr] lg:px-12">
+        <div>
+          <p class="eyebrow">Descarga de PDFs</p>
+          <h1 class="page-title">Registrate para descargar radiografías PDF.</h1>
+          <p class="mt-6 max-w-xl text-base leading-8 text-slate-300">
+            El registro se usa solo para validar contactos y habilitar descargas. Siempre pedimos teléfono para enviar
+            un código de validación por WhatsApp antes de permitir el acceso a PDFs.
+          </p>
+        </div>
+
+        <form class="registration-form" data-registration-form>
+          <div class="grid gap-5 md:grid-cols-2">
+            <label>
+              <span>Nombre y apellido</span>
+              <input name="full_name" type="text" autocomplete="name" placeholder="Tu nombre" required />
+            </label>
+            <label>
+              <span>Teléfono</span>
+              <input name="phone" type="tel" autocomplete="tel" placeholder="+54 9 ..." required />
+            </label>
+          </div>
+          <label>
+            <span>Correo electrónico</span>
+            <input name="email" type="email" autocomplete="email" placeholder="nombre@dominio.com" />
+          </label>
+          <label>
+            <span>Organización o rol</span>
+            <input name="organization" type="text" autocomplete="organization" placeholder="Consultora, medio, equipo..." />
+          </label>
+          <div class="phone-verification" data-phone-verification>
+            <div>
+              <span>Validación por WhatsApp</span>
+              <p>Solicita el código y escribilo acá para habilitar descargas PDF.</p>
+            </div>
+            <div class="grid gap-3 md:grid-cols-[1fr_auto]">
+              <input name="whatsapp_code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código de WhatsApp" />
+              <button class="secondary-link justify-center" type="button" data-send-whatsapp-code>Enviar código</button>
+            </div>
+          </div>
+
+          <label class="checkbox-field">
+            <input name="terms" type="checkbox" required />
+            <span>Acepto el uso de mis datos para gestionar mi acceso y comunicaciones de Consultora Diagonales.</span>
+          </label>
+          <button class="primary-link justify-center" type="submit" data-registration-submit>Validar acceso</button>
+
+          <div class="social-login-panel">
+            <span>O ingresar con una cuenta social</span>
+            <div class="social-login-grid">
+              <button type="button" data-social-provider="google">Gmail</button>
+              <button type="button" data-social-provider="facebook">Facebook</button>
+              <button type="button" data-social-provider="twitter">X / Twitter</button>
+              <button type="button" data-social-provider="tiktok">TikTok</button>
+            </div>
+          </div>
+
+          <p class="form-status" data-registration-status role="status"></p>
+        </form>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>&copy; 1DE4 S.R.L | Inteligencia territorial y análisis político.</span>
+    </footer>
+
+    <script src="../assets/js/supabase-config.js"></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>

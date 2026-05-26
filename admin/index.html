@@ -19,10 +19,10 @@
       <nav class="desktop-nav" aria-label="Navegacion principal">
         <a href="../index.html">Inicio</a>
         <a href="../index.html#servicios">Servicios</a>
-        <a href="../repositorio/index.html">Radiografias</a>
+        <a href="../repositorio/index.html">Radiografías</a>
         <a href="../index.html#contacto">Contacto</a>
       </nav>
-      <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" data-menu-toggle>
+      <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle>
         <span></span>
         <span></span>
         <span></span>
@@ -32,7 +32,7 @@
     <div class="mobile-menu" data-mobile-menu aria-hidden="true">
       <a href="../index.html">Inicio</a>
       <a href="../index.html#servicios">Servicios</a>
-      <a href="../repositorio/index.html">Radiografias</a>
+      <a href="../repositorio/index.html">Radiografías</a>
       <a href="../index.html#contacto">Contacto</a>
     </div>
 
@@ -40,21 +40,30 @@
       <section class="mx-auto grid min-h-screen max-w-7xl gap-10 px-6 pb-24 pt-36 md:px-10 lg:grid-cols-[.85fr_1.15fr] lg:px-12">
         <div>
           <p class="eyebrow">Panel admin</p>
-          <h1 class="page-title">Carga de radiografias HTML.</h1>
+          <h1 class="page-title">Carga de radiografías PDF.</h1>
           <p class="mt-6 max-w-xl text-base leading-8 text-slate-300">
-            Subi el archivo, completa la metadata y publica el informe. El HTML queda guardado en el bucket publico
-            <span class="font-semibold text-white">radiografias</span> y aparece en el repositorio.
+            Subí el PDF corregido, completá la metadata y publicá el informe. El archivo queda guardado en el bucket público
+            <span class="font-semibold text-white">radiografías</span> y aparece en el repositorio.
           </p>
           <div class="admin-note">
             Configura <span>SUPABASE_URL</span> y <span>SUPABASE_ANON_KEY</span> en
-            <span>assets/js/main.js</span> antes de publicar.
+            <span>assets/js/supabase-config.js</span> antes de publicar.
           </div>
         </div>
 
-        <form class="admin-form" data-admin-form>
+        <form class="admin-form" data-admin-login>
           <label>
-            <span>Titulo</span>
-            <input name="titulo" type="text" placeholder="Radiografia politica de..." required />
+            <span>Clave de administrador</span>
+            <input name="admin_key" type="password" autocomplete="current-password" placeholder="Clave para subir radiografías" required />
+          </label>
+          <button class="primary-link justify-center" type="submit">Ingresar al panel</button>
+          <p class="form-status" data-admin-login-status role="status"></p>
+        </form>
+
+        <form class="admin-form is-hidden" data-admin-form>
+          <label>
+            <span>Título</span>
+            <input name="titulo" type="text" placeholder="Radiografía política de..." required />
           </label>
           <div class="grid gap-5 md:grid-cols-2">
             <label>
@@ -73,10 +82,10 @@
             </label>
           </div>
           <label>
-            <span>Archivo HTML</span>
-            <input name="archivo" type="file" accept=".html,.htm,text/html" required />
+            <span>Archivo PDF</span>
+            <input name="archivo" type="file" accept=".pdf,application/pdf" required />
           </label>
-          <button class="primary-link justify-center" type="submit" data-submit>Guardar radiografia</button>
+          <button class="primary-link justify-center" type="submit" data-submit>Guardar PDF</button>
           <p class="form-status" data-form-status role="status"></p>
         </form>
       </section>

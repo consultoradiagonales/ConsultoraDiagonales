@@ -6,6 +6,9 @@
   --glass: rgba(8, 15, 25, 0.64);
   --blue: #6ed5ff;
   --blue-soft: rgba(74, 137, 226, 0.25);
+  --box-blue: #08364a;
+  --box-blue-hover: #0a4258;
+  --box-border: rgba(139, 207, 241, 0.44);
   --navy: #041b2c;
   --title: #092743;
 }
@@ -22,6 +25,10 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   letter-spacing: 0;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(183, 238, 255, 0.9), transparent 34%),
+    radial-gradient(circle at 82% 18%, rgba(75, 204, 240, 0.5), transparent 36%),
+    linear-gradient(180deg, #d8f7ff 0%, #98dceb 45%, #52a9c1 72%, #06314a 100%);
 }
 
 a,
@@ -111,8 +118,8 @@ input {
 .desktop-nav {
   display: flex;
   align-items: center;
-  gap: clamp(2rem, 5vw, 5.5rem);
-  margin-right: clamp(1rem, 4vw, 5.5rem);
+  gap: clamp(0.85rem, 2.4vw, 2.75rem);
+  margin-right: clamp(0rem, 1.4vw, 1.5rem);
 }
 
 .desktop-nav a,
@@ -202,11 +209,14 @@ input {
   inset: 0;
   z-index: 40;
   display: grid;
-  align-content: center;
-  gap: 2rem;
-  padding: 6rem 2rem;
-  background: rgba(5, 9, 15, 0.92);
-  backdrop-filter: blur(22px);
+  align-content: start;
+  gap: 0.75rem;
+  padding: 8.25rem clamp(1.35rem, 5vw, 3.5rem) 2rem;
+  background:
+    radial-gradient(circle at 16% 8%, rgba(218, 250, 255, 0.86), transparent 32%),
+    radial-gradient(circle at 86% 18%, rgba(99, 221, 245, 0.54), transparent 36%),
+    linear-gradient(180deg, rgba(88, 176, 198, 0.9), rgba(8, 44, 63, 0.92));
+  backdrop-filter: blur(24px) saturate(1.12);
   opacity: 0;
   pointer-events: none;
   transform: translateY(-12px);
@@ -221,10 +231,13 @@ input {
 
 .mobile-menu a {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(2rem, 11vw, 4.6rem);
+  min-height: 54px;
+  color: #dff8ff;
+  font-size: clamp(1rem, 4.4vw, 1.35rem);
   font-weight: 800;
-  letter-spacing: 0;
-  text-transform: none;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .hero-shell {
@@ -244,9 +257,9 @@ input {
 
 .hero-overlay {
   background:
-    radial-gradient(circle at 20% 28%, rgba(209, 236, 250, 0.66), rgba(160, 213, 241, 0.24) 32%, transparent 56%),
-    linear-gradient(90deg, rgba(219, 239, 250, 0.8), rgba(172, 216, 241, 0.34) 42%, rgba(50, 117, 157, 0.1) 70%),
-    linear-gradient(180deg, rgba(230, 243, 250, 0.22) 0%, rgba(119, 185, 221, 0.18) 52%, rgba(5, 42, 65, 0.5) 83%, rgba(4, 31, 51, 0.84) 100%);
+    radial-gradient(circle at 20% 28%, rgba(220, 250, 255, 0.78), rgba(148, 226, 245, 0.34) 32%, transparent 56%),
+    linear-gradient(90deg, rgba(225, 250, 255, 0.86), rgba(147, 222, 243, 0.42) 42%, rgba(50, 159, 185, 0.18) 70%),
+    linear-gradient(180deg, rgba(230, 252, 255, 0.34) 0%, rgba(117, 217, 239, 0.28) 52%, rgba(18, 111, 139, 0.52) 83%, rgba(4, 55, 74, 0.84) 100%);
   mix-blend-mode: normal;
 }
 
@@ -256,7 +269,7 @@ input {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: rgba(121, 200, 239, 0.15);
+  background: rgba(93, 222, 244, 0.18);
   backdrop-filter: saturate(0.96) contrast(0.96);
 }
 
@@ -288,7 +301,7 @@ input {
   margin-top: 1.6rem;
   max-width: 600px;
   color: #0d243a;
-  font-size: clamp(1.05rem, 1.34vw, 1.35rem);
+  font-size: clamp(1.175rem, 1.48vw, 1.475rem);
   line-height: 1.6;
   font-family: "Times New Roman", Times, serif;
   font-style: italic;
@@ -345,18 +358,25 @@ input {
 
 .institutional-card {
   min-height: 250px;
-  border: 1px solid rgba(139, 207, 241, 0.33);
+  border: 1px solid var(--box-border);
   border-radius: 8px;
   padding: 1.75rem 2rem;
-  background: rgba(3, 29, 48, 0.62);
+  background: var(--box-blue);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 22px 65px rgba(0, 14, 25, 0.24);
   backdrop-filter: blur(16px);
   transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
+.service-card {
+  display: block;
+  min-height: 190px;
+  color: inherit;
+  text-decoration: none;
+}
+
 .institutional-card:hover {
   transform: translateY(-4px);
-  background: rgba(3, 36, 59, 0.78);
+  background: var(--box-blue-hover);
   box-shadow: inset 0 0 0 1px rgba(110, 213, 255, 0.22), 0 24px 80px rgba(18, 110, 170, 0.22);
 }
 
@@ -421,11 +441,11 @@ input {
 
 .contact-card {
   width: min(100%, 520px);
-  border: 1px solid rgba(122, 194, 232, 0.34);
+  border: 1px solid var(--box-border);
   border-radius: 8px;
   padding: 1.15rem;
   color: #fff;
-  background: linear-gradient(135deg, rgba(3, 41, 66, 0.86), rgba(5, 73, 107, 0.76));
+  background: var(--box-blue);
   box-shadow: 0 18px 55px rgba(0, 16, 27, 0.28);
 }
 
@@ -440,7 +460,7 @@ input {
 
 .contact-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
@@ -486,11 +506,11 @@ input {
   width: min(100%, 430px);
   justify-self: end;
   align-self: center;
-  border: 1px solid rgba(122, 194, 232, 0.28);
+  border: 1px solid var(--box-border);
   border-radius: 8px;
   padding: 0.85rem 1rem;
   color: rgba(236, 247, 252, 0.92);
-  background: rgba(3, 45, 70, 0.66);
+  background: var(--box-blue);
   text-decoration: none;
   font-size: 0.88rem;
   line-height: 1.45;
@@ -501,7 +521,7 @@ input {
 .method-link:hover {
   transform: translateY(-3px);
   border-color: rgba(110, 213, 255, 0.6);
-  background: rgba(6, 51, 78, 0.72);
+  background: var(--box-blue-hover);
 }
 
 .latest-band {
@@ -519,19 +539,19 @@ input {
   grid-template-columns: 160px 1fr auto;
   gap: 1rem;
   align-items: center;
-  border: 1px solid rgba(122, 194, 232, 0.25);
+  border: 1px solid var(--box-border);
   border-radius: 8px;
   padding: 1rem 1.15rem;
   color: #fff;
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--box-blue);
   text-decoration: none;
   transition: background 180ms ease, transform 180ms ease, border-color 180ms ease;
 }
 
 .latest-list a:hover {
   transform: translateY(-2px);
-  border-color: rgba(110, 213, 255, 0.5);
-  background: rgba(110, 213, 255, 0.1);
+  border-color: rgba(210, 247, 255, 0.64);
+  background: var(--box-blue-hover);
 }
 
 .latest-list time,
@@ -558,10 +578,10 @@ input {
   justify-content: space-between;
   gap: 1.5rem;
   margin: 2.5rem 0 1.5rem;
-  border: 1px solid rgba(122, 194, 232, 0.3);
+  border: 1px solid var(--box-border);
   border-radius: 8px;
   padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--box-blue);
 }
 
 .access-panel h2,
@@ -585,8 +605,8 @@ input {
   display: grid;
   place-items: center;
   padding: 1.5rem;
-  background: rgba(3, 13, 22, 0.76);
-  backdrop-filter: blur(18px);
+  background: rgba(3, 13, 22, 0.24);
+  backdrop-filter: blur(1.5px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 180ms ease;
@@ -599,25 +619,27 @@ input {
 
 .login-box {
   position: relative;
-  width: min(100%, 680px);
-  border: 1px solid rgba(122, 194, 232, 0.36);
+  width: min(100%, 480px);
+  border: 1px solid var(--box-border);
   border-radius: 8px;
-  padding: 1.5rem;
-  background: #031b2d;
+  padding: 1.15rem;
+  background: var(--box-blue);
+  box-shadow: 0 20px 60px rgba(0, 16, 27, 0.26);
 }
 
-.login-box button {
+.login-box [data-login-close] {
   position: absolute;
   top: 0.8rem;
   right: 0.9rem;
   color: #fff;
   font-size: 1.5rem;
+  line-height: 1;
 }
 
 .access-form {
   display: grid;
-  gap: 1rem;
-  margin-top: 1.2rem;
+  gap: 0.8rem;
+  margin-top: 1rem;
 }
 
 .access-form label {
@@ -634,7 +656,7 @@ input {
 }
 
 .access-form input {
-  min-height: 50px;
+  min-height: 44px;
   border: 1px solid rgba(122, 194, 232, 0.3);
   border-radius: 8px;
   padding: 0 1rem;
@@ -643,35 +665,61 @@ input {
   outline: none;
 }
 
+.access-form .primary-link,
+.access-form .secondary-link {
+  min-height: 42px;
+  padding: 0.65rem 1rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
 .site-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  border-top: 1px solid var(--line);
-  padding: 2rem clamp(1.5rem, 4vw, 4rem);
-  color: rgba(255, 255, 255, 0.56);
-  background: #031b2d;
-}
-
-.site-footer img {
-  max-width: 220px;
-  max-height: 42px;
-  object-fit: contain;
+  justify-content: center;
+  min-height: 42px;
+  border-top: 1px solid rgba(139, 207, 241, 0.2);
+  padding: 0.65rem clamp(1rem, 3vw, 2rem);
+  color: rgba(244, 251, 255, 0.72);
+  background: rgba(3, 27, 45, 0.62);
+  font-size: 0.82rem;
+  text-align: center;
 }
 
 .subpage {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(8, 20, 34, 0.82), rgba(6, 20, 33, 0.9) 54%, rgba(3, 16, 27, 0.98)),
-    linear-gradient(90deg, rgba(135, 204, 235, 0.28), rgba(7, 24, 38, 0.68)),
+    radial-gradient(circle at 16% 4%, rgba(210, 247, 255, 0.5), transparent 32%),
+    radial-gradient(circle at 88% 16%, rgba(95, 217, 242, 0.36), transparent 36%),
+    linear-gradient(180deg, rgba(211, 248, 255, 0.78), rgba(84, 181, 204, 0.76) 46%, rgba(3, 49, 70, 0.94)),
+    linear-gradient(90deg, rgba(135, 224, 245, 0.34), rgba(7, 24, 38, 0.58)),
     url("../img/hero-bg.jpg") center/cover no-repeat,
     #081421;
-  background-attachment: scroll, scroll, fixed, scroll;
+  background-attachment: scroll, scroll, scroll, scroll, fixed, scroll;
+}
+
+body[data-page="repo"] .subpage,
+body[data-page="registro"] .subpage,
+body[data-page="contacto"] .subpage {
+  background:
+    radial-gradient(circle at 20% 28%, rgba(205, 248, 255, 0.68), rgba(70, 198, 226, 0.28) 32%, transparent 56%),
+    linear-gradient(90deg, rgba(205, 249, 255, 0.58), rgba(57, 178, 210, 0.34) 42%, rgba(7, 78, 104, 0.12) 70%),
+    linear-gradient(180deg, rgba(215, 251, 255, 0.24) 0%, rgba(44, 175, 208, 0.24) 52%, rgba(2, 88, 119, 0.48) 83%, rgba(2, 43, 65, 0.72) 100%),
+    url("../img/Fondo_Radigrafias_Registr_Contacto.png") center/cover no-repeat,
+    url("../img/hero-bg.jpg") center/cover no-repeat,
+    #06314a;
+  background-attachment: scroll, scroll, scroll, fixed, fixed, scroll;
 }
 
 .repository-hero {
   border-bottom: 1px solid var(--line);
+}
+
+body[data-page="repo"] .repository-hero p,
+body[data-page="registro"] .registration-layout > div > p:not(.eyebrow),
+body[data-page="admin"] main .text-slate-300,
+body[data-page="contacto"] .section-title {
+  color: #06264a !important;
 }
 
 .page-title {
@@ -687,11 +735,33 @@ input {
   justify-content: space-between;
   gap: 1rem;
   padding: 2rem 0;
-  color: var(--muted);
+  color: #06264a;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+
+.repo-toolbar strong,
+.repo-toolbar small,
+.repo-toolbar [data-count] {
+  color: #06264a;
+}
+
+.repo-toolbar small {
+  margin-left: auto;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+}
+
+body[data-page="servicios"] .subpage {
+  background:
+    linear-gradient(35deg, rgba(2, 31, 49, 0.8) 0%, rgba(5, 62, 86, 0.56) 34%, rgba(83, 207, 235, 0.2) 68%, rgba(222, 250, 255, 0.1) 100%),
+    radial-gradient(circle at 18% 8%, rgba(210, 247, 255, 0.38), transparent 34%),
+    linear-gradient(180deg, rgba(211, 248, 255, 0.58), rgba(84, 181, 204, 0.56) 46%, rgba(3, 49, 70, 0.9)),
+    url("../img/hero-bg.jpg") center/cover no-repeat,
+    #06314a;
+  background-attachment: scroll, scroll, scroll, fixed, scroll;
 }
 
 .repo-grid {
@@ -703,9 +773,9 @@ input {
 .report-card,
 .skeleton-card {
   min-height: 280px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--box-border);
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+  background: var(--box-blue);
 }
 
 .report-card {
@@ -718,8 +788,8 @@ input {
 
 .report-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(110, 168, 255, 0.42);
-  background: linear-gradient(180deg, rgba(79, 135, 213, 0.15), rgba(255, 255, 255, 0.04));
+  border-color: rgba(210, 247, 255, 0.64);
+  background: var(--box-blue-hover);
 }
 
 .report-meta {
@@ -784,7 +854,7 @@ input {
   border-radius: 8px;
   padding: 2rem;
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--box-blue);
 }
 
 .skeleton-card {
@@ -813,19 +883,21 @@ input {
   display: grid;
   align-content: start;
   gap: 1.25rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--box-border);
   border-radius: 8px;
   padding: clamp(1.25rem, 3vw, 2rem);
-  background: rgba(255, 255, 255, 0.055);
+  background: var(--box-blue);
   backdrop-filter: blur(18px);
 }
 
-.admin-form label {
+.admin-form label,
+.registration-form label {
   display: grid;
   gap: 0.6rem;
 }
 
-.admin-form label span {
+.admin-form label span,
+.registration-form label span {
   color: var(--blue);
   font-size: 0.72rem;
   font-weight: 800;
@@ -833,7 +905,8 @@ input {
   text-transform: uppercase;
 }
 
-.admin-form input {
+.admin-form input,
+.registration-form input {
   width: 100%;
   min-height: 52px;
   border: 1px solid var(--line);
@@ -844,9 +917,115 @@ input {
   outline: none;
 }
 
-.admin-form input:focus {
+.admin-form input:focus,
+.registration-form input:focus {
   border-color: rgba(110, 168, 255, 0.6);
   box-shadow: 0 0 0 3px rgba(110, 168, 255, 0.12);
+}
+
+.registration-layout {
+  align-items: center;
+}
+
+.registration-form {
+  display: grid;
+  align-content: start;
+  gap: 1.25rem;
+  border: 1px solid var(--box-border);
+  border-radius: 8px;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: var(--box-blue);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 70px rgba(0, 14, 25, 0.3);
+}
+
+.access-mode-tabs,
+.social-login-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.access-mode-tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.25rem;
+  border: 1px solid rgba(122, 194, 232, 0.25);
+  border-radius: 8px;
+  background: rgba(3, 7, 12, 0.38);
+}
+
+.access-mode-tabs button,
+.social-login-grid button {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: rgba(226, 240, 248, 0.88);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.access-mode-tabs button.is-active,
+.social-login-grid button:hover {
+  border-color: rgba(110, 213, 255, 0.42);
+  background: rgba(110, 213, 255, 0.13);
+  color: #fff;
+}
+
+.phone-verification,
+.social-login-panel {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid var(--box-border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--box-blue-hover);
+}
+
+.phone-verification span,
+.social-login-panel span {
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.phone-verification p {
+  margin-top: 0.3rem;
+  color: rgba(226, 240, 248, 0.72);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.social-login-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.checkbox-field {
+  grid-template-columns: 20px 1fr;
+  align-items: start;
+}
+
+.checkbox-field input {
+  min-height: 20px;
+  height: 20px;
+  margin-top: 0.1rem;
+  accent-color: #6ed5ff;
+}
+
+.checkbox-field span {
+  color: rgba(226, 240, 248, 0.76);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.55;
+  text-transform: none;
 }
 
 .admin-note {
@@ -883,18 +1062,23 @@ input {
   }
 
   .brand {
-    min-width: 82px;
+    min-width: 78px;
+    width: 78px;
     height: 68px;
+    justify-content: flex-start;
   }
 
   .brand-full {
     display: none;
+    max-width: min(68vw, 300px);
   }
 
   .brand-mark {
     display: block !important;
-    width: 72px;
-    height: 72px;
+  }
+
+  .site-header.is-scrolled .brand {
+    min-width: 78px;
   }
 
   .desktop-nav a::after {
@@ -909,6 +1093,22 @@ input {
   .home-card-grid,
   .repo-grid {
     grid-template-columns: 1fr;
+  }
+
+  .repository-hero .page-title,
+  .registration-layout .page-title {
+    font-size: clamp(2.35rem, 8.5vw, 4.6rem);
+    line-height: 1.02;
+  }
+
+  .repository-hero p,
+  .registration-layout p {
+    max-width: 100%;
+  }
+
+  .report-card,
+  .skeleton-card {
+    min-height: 220px;
   }
 
   .institutional-card {
@@ -929,7 +1129,7 @@ input {
 
 @media (max-width: 640px) {
   .page-title {
-    font-size: clamp(2.3rem, 14vw, 4rem);
+    font-size: clamp(2.15rem, 11vw, 3.45rem);
     max-width: 100%;
   }
 
@@ -949,8 +1149,14 @@ input {
     max-width: 96%;
   }
 
+  .repository-hero .page-title,
+  .registration-layout .page-title {
+    font-size: clamp(2.2rem, 10.5vw, 3.35rem);
+    line-height: 1.04;
+  }
+
   .hero-copy {
-    font-size: 0.95rem;
+    font-size: 1.075rem;
     max-width: 94%;
     line-height: 1.5;
     margin-top: 1.15rem;
@@ -963,6 +1169,10 @@ input {
   .institutional-card {
     min-height: 154px;
     padding: 1.05rem 1.15rem;
+  }
+
+  .service-card {
+    min-height: 146px;
   }
 
   .institutional-card p {
@@ -1022,6 +1232,20 @@ input {
 
   .latest-list a {
     grid-template-columns: 1fr;
+  }
+
+  .report-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .report-card h2 {
+    font-size: clamp(1.55rem, 8vw, 2.25rem);
+  }
+
+  .registration-form,
+  .admin-form {
+    padding: 1rem;
   }
 
   .access-panel {
