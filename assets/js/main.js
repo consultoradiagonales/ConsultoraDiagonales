@@ -764,7 +764,7 @@ function initAdmin() {
     event.preventDefault();
 
     if (!supabaseClient) {
-      status.textContent = "Configura SUPABASE_URL y SUPABASE_ANON_KEY antes de guardar.";
+      status.textContent = "Supabase no está disponible en esta pestaña. Recargá el admin conectado.";
       return;
     }
 
