@@ -863,6 +863,8 @@ function resetAdminForm() {
   form.elements.id.value = "";
   form.querySelector('[name="archivo"]')?.setAttribute("required", "required");
   if (submit) submit.textContent = "Guardar PDF";
+  const status = document.querySelector("[data-form-status]");
+  if (status) status.textContent = "";
   cancelEdit?.classList.add("is-hidden");
 }
 
@@ -870,6 +872,7 @@ function fillAdminEditForm(report) {
   const form = document.querySelector("[data-admin-form]");
   const submit = document.querySelector("[data-submit]");
   const cancelEdit = document.querySelector("[data-admin-cancel-edit]");
+  const status = document.querySelector("[data-form-status]");
   if (!form) return;
   form.elements.id.value = report.id || "";
   form.elements.titulo.value = report.titulo || "";
@@ -877,7 +880,8 @@ function fillAdminEditForm(report) {
   form.elements.localidad.value = report.localidad || "";
   form.elements.fecha.value = report.fecha || "";
   form.querySelector('[name="archivo"]')?.removeAttribute("required");
-  if (submit) submit.textContent = "Actualizar PDF";
+  if (submit) submit.textContent = "Actualizar radiografía";
+  if (status) status.textContent = "Editando radiografía: podés cambiar el título/datos o seleccionar otro PDF para reemplazar el archivo actual.";
   cancelEdit?.classList.remove("is-hidden");
   form.scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -967,8 +971,8 @@ function renderAdminReportItem(item) {
       <small>${escapeHtml(item.fecha || item.created_at || "")}</small>
       <div class="admin-list-actions">
         ${item.pdf_url ? `<a class="admin-action-button" href="${escapeAttribute(item.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}
-        <button class="admin-action-button" type="button" data-admin-edit="${escapeAttribute(item.id || "")}">Modificar</button>
-        <button class="admin-action-button is-danger" type="button" data-admin-delete="${escapeAttribute(item.id || "")}">Borrar</button>
+        <button class="admin-action-button" type="button" data-admin-edit="${escapeAttribute(item.id || "")}">Modificar datos / reemplazar PDF</button>
+        <button class="admin-action-button is-danger" type="button" data-admin-delete="${escapeAttribute(item.id || "")}">Borrar PDF</button>
       </div>
     </div>
   `;
