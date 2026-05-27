@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260527-admincrud" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -63,6 +63,7 @@
         </form>
 
         <form class="admin-form is-hidden" data-admin-form>
+          <input name="id" type="hidden" />
           <label>
             <span>Título</span>
             <input name="titulo" type="text" placeholder="Radiografía política de..." required />
@@ -85,9 +86,12 @@
           </div>
           <label>
             <span>Archivo PDF</span>
-            <input name="archivo" type="file" accept=".pdf,application/pdf" required />
+            <input name="archivo" type="file" accept=".pdf,application/pdf" />
           </label>
-          <button class="primary-link justify-center" type="submit" data-submit>Guardar PDF</button>
+          <div class="admin-form-actions">
+            <button class="primary-link justify-center" type="submit" data-submit>Guardar PDF</button>
+            <button class="secondary-link justify-center is-hidden" type="button" data-admin-cancel-edit>Cancelar ediciÃ³n</button>
+          </div>
           <p class="form-status" data-form-status role="status"></p>
         </form>
 
@@ -129,7 +133,7 @@
       </section>
     </main>
 
-    <script src="../assets/js/supabase-config.js?v=20260527"></script>
-    <script src="../assets/js/main.js?v=20260527"></script>
+    <script src="../assets/js/supabase-config.js?v=20260527-admincrud"></script>
+    <script src="../assets/js/main.js?v=20260527-admincrud"></script>
   </body>
 </html>

@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
         .from("radiografias")
         .select("id, titulo, provincia, localidad, fecha, pdf_url, created_at")
         .order("created_at", { ascending: false })
-        .limit(8),
+        .limit(1000),
       supabase
         .from("pdf_downloads")
         .select("id, radiografia_id, pdf_url, email, phone, full_name, lugar, provincia, localidad, downloaded_at, created_at")

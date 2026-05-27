@@ -1010,6 +1010,46 @@ body[data-page="servicios"] .subpage {
   font-size: 0.88rem;
 }
 
+.admin-list-actions,
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.admin-list-actions {
+  margin-top: 0.35rem;
+}
+
+.admin-action-button {
+  min-height: 34px;
+  border: 1px solid rgba(139, 207, 241, 0.32);
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(2, 39, 64, 0.38);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.admin-action-button:hover {
+  border-color: rgba(255, 255, 255, 0.42);
+  color: #fff;
+  background: rgba(10, 86, 124, 0.44);
+}
+
+.admin-action-button.is-danger {
+  border-color: rgba(255, 111, 111, 0.42);
+  color: #ffd6d6;
+}
+
+.admin-action-button.is-danger:hover {
+  background: rgba(118, 28, 38, 0.5);
+}
+
 .admin-list-item strong {
   color: #fff;
   font-size: 0.95rem;

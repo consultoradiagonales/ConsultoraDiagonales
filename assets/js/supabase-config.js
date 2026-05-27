@@ -4,6 +4,6 @@ window.CD_SUPABASE = {
 };
 
 window.CD_ADMIN = {
-  uploadKey: "",
+  uploadKey: "diagonales-admin-2026",
   useEdgeUpload: true,
 };

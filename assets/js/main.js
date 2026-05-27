@@ -35,6 +35,7 @@ const CONTACT_STORAGE_KEY = "cd:contact";
 const PHONE_VERIFIED_KEY = "cd:phone_verified";
 const ADMIN_SESSION_KEY = "cd:admin_unlocked";
 const ADMIN_UPLOAD_KEY = "cd:admin_upload_key";
+let adminReports = [];
 
 initNavigation();
 initLogoFallbacks();
@@ -713,6 +714,7 @@ function initAdmin() {
   const submit = document.querySelector("[data-submit]");
   const dashboard = document.querySelector("[data-admin-dashboard]");
   const refresh = document.querySelector("[data-admin-refresh]");
+  const cancelEdit = document.querySelector("[data-admin-cancel-edit]");
   if (!form) return;
 
   const unlockAdmin = () => {
@@ -765,36 +767,102 @@ function initAdmin() {
     }
 
     const formData = new FormData(form);
+    const id = String(formData.get("id") || "").trim();
     const file = formData.get("archivo");
     const titulo = String(formData.get("titulo") || "").trim();
     const provincia = String(formData.get("provincia") || "").trim();
     const localidad = String(formData.get("localidad") || "").trim();
     const fecha = String(formData.get("fecha") || "").trim();
 
-    if (!file || !isPdfFile(file)) {
+    if (!id && (!file || !isPdfFile(file))) {
       status.textContent = "Selecciona un archivo PDF válido.";
       return;
     }
 
+    if (id && file?.size && !isPdfFile(file)) {
+      status.textContent = "Selecciona un archivo PDF vÃ¡lido o deja el archivo vacÃ­o para conservar el actual.";
+      return;
+    }
+
     submit.disabled = true;
-    submit.textContent = "Guardando...";
-    status.textContent = "Subiendo PDF y publicando metadata.";
+    submit.textContent = id ? "Actualizando..." : "Guardando...";
+    status.textContent = id ? "Actualizando radiografÃ­a." : "Subiendo PDF y publicando metadata.";
 
     try {
-      const { pdf_url } = await uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha });
+      const { pdf_url } = await saveRadiografiaReport({ id, file, titulo, provincia, localidad, fecha });
 
-      form.reset();
-      status.innerHTML = `PDF publicado. <a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`;
+      resetAdminForm();
+      status.innerHTML = id
+        ? `RadiografÃ­a actualizada. ${pdf_url ? `<a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}`
+        : `PDF publicado. <a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`;
       loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
       submit.disabled = false;
-      submit.textContent = "Guardar PDF";
+      submit.textContent = form.elements.id.value ? "Actualizar PDF" : "Guardar PDF";
     }
   });
 
   refresh?.addEventListener("click", loadAdminDashboard);
+  cancelEdit?.addEventListener("click", resetAdminForm);
+
+  document.querySelector("[data-admin-reports]")?.addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-admin-edit]");
+    const deleteButton = event.target.closest("[data-admin-delete]");
+    if (editButton) {
+      const report = adminReports.find((item) => item.id === editButton.dataset.adminEdit);
+      if (report) fillAdminEditForm(report);
+      return;
+    }
+
+    if (!deleteButton) return;
+    const report = adminReports.find((item) => item.id === deleteButton.dataset.adminDelete);
+    if (!report) return;
+    const confirmed = window.confirm(`Â¿Borrar "${report.titulo || "esta radiografÃ­a"}"? Esta acciÃ³n elimina la metadata y el PDF del bucket.`);
+    if (!confirmed) return;
+
+    deleteButton.disabled = true;
+    status.textContent = "Borrando radiografÃ­a.";
+    try {
+      await deleteRadiografiaReport(report.id);
+      if (form.elements.id.value === report.id) resetAdminForm();
+      status.textContent = "RadiografÃ­a borrada.";
+      loadAdminDashboard();
+    } catch (error) {
+      status.textContent = `No se pudo borrar: ${error.message}`;
+    } finally {
+      deleteButton.disabled = false;
+    }
+  });
+}
+
+function resetAdminForm() {
+  const form = document.querySelector("[data-admin-form]");
+  const submit = document.querySelector("[data-submit]");
+  const cancelEdit = document.querySelector("[data-admin-cancel-edit]");
+  if (!form) return;
+  form.reset();
+  form.elements.id.value = "";
+  form.querySelector('[name="archivo"]')?.setAttribute("required", "required");
+  if (submit) submit.textContent = "Guardar PDF";
+  cancelEdit?.classList.add("is-hidden");
+}
+
+function fillAdminEditForm(report) {
+  const form = document.querySelector("[data-admin-form]");
+  const submit = document.querySelector("[data-submit]");
+  const cancelEdit = document.querySelector("[data-admin-cancel-edit]");
+  if (!form) return;
+  form.elements.id.value = report.id || "";
+  form.elements.titulo.value = report.titulo || "";
+  form.elements.provincia.value = report.provincia || "";
+  form.elements.localidad.value = report.localidad || "";
+  form.elements.fecha.value = report.fecha || "";
+  form.querySelector('[name="archivo"]')?.removeAttribute("required");
+  if (submit) submit.textContent = "Actualizar PDF";
+  cancelEdit?.classList.remove("is-hidden");
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 async function loadAdminDashboard() {
@@ -818,10 +886,11 @@ async function loadAdminDashboard() {
 
   try {
     const data = await fetchAdminDashboard();
-    setAdminTotal("reports", data.reports?.length || 0);
-    setAdminTotal("downloads", data.downloads?.length || 0);
-    setAdminTotal("contacts", data.contacts?.length || 0);
-    setAdminTotal("events", data.events?.length || 0);
+    adminReports = data.reports || [];
+    setAdminTotal("reports", data.totals?.reports ?? adminReports.length);
+    setAdminTotal("downloads", data.totals?.downloads ?? data.downloads?.length ?? 0);
+    setAdminTotal("contacts", data.totals?.contacts ?? data.contacts?.length ?? 0);
+    setAdminTotal("events", data.totals?.events ?? data.events?.length ?? 0);
     renderAdminList(containers.reports, data.reports || [], "Todavía no hay radiografías cargadas.", renderAdminReportItem);
     renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", renderAdminDownloadItem);
     renderAdminList(containers.contacts, data.contacts || [], "Todavía no hay contactos.", renderAdminContactItem);
@@ -868,6 +937,11 @@ function renderAdminReportItem(item) {
       <strong>${escapeHtml(item.titulo || "Radiografía sin título")}</strong>
       <span>${escapeHtml([item.localidad, item.provincia].filter(Boolean).join(", ") || "Territorio")}</span>
       <small>${escapeHtml(item.fecha || item.created_at || "")}</small>
+      <div class="admin-list-actions">
+        ${item.pdf_url ? `<a class="admin-action-button" href="${escapeAttribute(item.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}
+        <button class="admin-action-button" type="button" data-admin-edit="${escapeAttribute(item.id || "")}">Modificar</button>
+        <button class="admin-action-button is-danger" type="button" data-admin-delete="${escapeAttribute(item.id || "")}">Borrar</button>
+      </div>
     </div>
   `;
 }
@@ -900,6 +974,53 @@ function renderAdminEventItem(item) {
       <small>${escapeHtml(item.created_at || "")}</small>
     </div>
   `;
+}
+
+async function saveRadiografiaReport({ id, file, titulo, provincia, localidad, fecha }) {
+  if (id) return updateRadiografiaReport({ id, file, titulo, provincia, localidad, fecha });
+  return uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha });
+}
+
+async function updateRadiografiaReport({ id, file, titulo, provincia, localidad, fecha }) {
+  const adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "";
+  const formData = new FormData();
+  formData.append("id", id);
+  formData.append("titulo", titulo);
+  formData.append("provincia", provincia);
+  formData.append("localidad", localidad);
+  formData.append("fecha", fecha);
+  if (file?.size) formData.append("archivo", file);
+
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-report`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+      "x-admin-key": adminKey,
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "No se pudo actualizar la radiografÃ­a.");
+  return data;
+}
+
+async function deleteRadiografiaReport(id) {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-report`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+      "x-admin-key": sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ id }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "No se pudo borrar la radiografÃ­a.");
+  return data;
 }
 
 async function uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha }) {
