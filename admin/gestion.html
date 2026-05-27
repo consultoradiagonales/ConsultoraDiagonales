@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Gestion de radiografias | Consultora Diagonales</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #071823;
+        --panel: #062d3e;
+        --line: rgba(139, 207, 241, 0.28);
+        --blue: #82d8ff;
+        --text: #f4fbff;
+        --muted: rgba(226, 240, 248, 0.72);
+        --danger: #ff8f8f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        background: linear-gradient(180deg, rgba(34, 166, 194, 0.68), rgba(3, 30, 45, 0.96)),
+          url("../assets/img/Fondo_Radigrafias_Registr_Contacto.png") center / cover fixed;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 48px 0;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        max-width: 780px;
+        font-size: clamp(2.2rem, 6vw, 4.4rem);
+        line-height: 0.95;
+        font-weight: 900;
+      }
+
+      .lead {
+        max-width: 720px;
+        margin-top: 18px;
+        color: rgba(4, 22, 34, 0.9);
+        font-size: 1rem;
+        line-height: 1.7;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+        gap: 24px;
+        align-items: start;
+        margin-top: 32px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(5, 44, 62, 0.92);
+        box-shadow: 0 24px 70px rgba(0, 14, 25, 0.22);
+      }
+
+      .panel-body {
+        display: grid;
+        gap: 16px;
+        padding: 22px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: var(--blue);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      input {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0 14px;
+        color: var(--text);
+        background: rgba(3, 8, 13, 0.72);
+        outline: none;
+      }
+
+      input[type="file"] {
+        padding-top: 12px;
+      }
+
+      button,
+      a.button {
+        display: inline-flex;
+        min-height: 40px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(139, 207, 241, 0.36);
+        border-radius: 999px;
+        padding: 0.68rem 1rem;
+        color: var(--text);
+        background: rgba(2, 39, 64, 0.44);
+        cursor: pointer;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+
+      button:hover,
+      a.button:hover {
+        border-color: rgba(255, 255, 255, 0.48);
+      }
+
+      button.danger {
+        border-color: rgba(255, 143, 143, 0.56);
+        color: #ffdede;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .status {
+        min-height: 22px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .list-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        border-bottom: 1px solid var(--line);
+        padding: 18px 22px;
+      }
+
+      .list-head h2 {
+        color: var(--blue);
+        font-size: 0.8rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .report-list {
+        display: grid;
+        gap: 0;
+        padding: 0 22px 18px;
+      }
+
+      .report-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: center;
+        border-bottom: 1px solid rgba(139, 207, 241, 0.16);
+        padding: 16px 0;
+      }
+
+      .report-title {
+        font-weight: 900;
+      }
+
+      .report-meta {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.86rem;
+        line-height: 1.5;
+      }
+
+      .empty {
+        padding: 18px 0;
+        color: var(--muted);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 860px) {
+        .grid,
+        .report-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Gestion de radiografias PDF.</h1>
+      <p class="lead">
+        Panel conectado a Supabase. Desde aca podes cargar un PDF, modificar datos, reemplazar el archivo o eliminar una radiografia.
+      </p>
+
+      <section class="grid">
+        <form class="panel" data-form>
+          <div class="panel-body">
+            <input name="id" type="hidden" />
+            <label>
+              Titulo
+              <input name="titulo" type="text" placeholder="Radiografia politica de..." required />
+            </label>
+            <label>
+              Provincia
+              <input name="provincia" type="text" placeholder="Buenos Aires" required />
+            </label>
+            <label>
+              Localidad
+              <input name="localidad" type="text" placeholder="La Plata" />
+            </label>
+            <label>
+              Fecha
+              <input name="fecha" type="date" required />
+            </label>
+            <label>
+              Archivo PDF
+              <input name="archivo" type="file" accept=".pdf,application/pdf" />
+            </label>
+            <div class="actions">
+              <button type="submit" data-submit>Guardar PDF</button>
+              <button class="hidden" type="button" data-cancel>Cancelar modificacion</button>
+            </div>
+            <p class="status" data-status></p>
+          </div>
+        </form>
+
+        <section class="panel">
+          <div class="list-head">
+            <h2>Radiografias cargadas</h2>
+            <button type="button" data-refresh>Actualizar</button>
+          </div>
+          <div class="report-list" data-list>
+            <p class="empty">Cargando radiografias...</p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="../assets/js/supabase-config.js?v=admin-gestion"></script>
+    <script>
+      const SUPABASE_URL = window.CD_SUPABASE?.url || "";
+      const SUPABASE_ANON_KEY = window.CD_SUPABASE?.anonKey || "";
+      const ADMIN_KEY = new URLSearchParams(location.search).get("admin_key") || window.CD_ADMIN?.uploadKey || "";
+      const endpoint = `${SUPABASE_URL}/functions/v1`;
+      let reports = [];
+
+      const form = document.querySelector("[data-form]");
+      const list = document.querySelector("[data-list]");
+      const status = document.querySelector("[data-status]");
+      const submit = document.querySelector("[data-submit]");
+      const cancel = document.querySelector("[data-cancel]");
+
+      function headers(extra = {}) {
+        return {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          apikey: SUPABASE_ANON_KEY,
+          "x-admin-key": ADMIN_KEY,
+          ...extra,
+        };
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function setStatus(message) {
+        status.textContent = message || "";
+      }
+
+      function resetForm() {
+        form.reset();
+        form.elements.id.value = "";
+        submit.textContent = "Guardar PDF";
+        cancel.classList.add("hidden");
+        setStatus("");
+      }
+
+      function renderReports() {
+        if (!reports.length) {
+          list.innerHTML = '<p class="empty">Todavia no hay radiografias cargadas.</p>';
+          return;
+        }
+
+        list.innerHTML = reports
+          .map((report) => {
+            const fileName = report.file_name ? `<div>Archivo: ${escapeHtml(report.file_name)}</div>` : "";
+            const pdf = report.pdf_url
+              ? `<a class="button" href="${escapeHtml(report.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`
+              : "";
+            return `
+              <article class="report-row">
+                <div>
+                  <div class="report-title">${escapeHtml(report.titulo)}</div>
+                  <div class="report-meta">
+                    <div>${escapeHtml([report.localidad, report.provincia].filter(Boolean).join(", "))}</div>
+                    <div>${escapeHtml(report.fecha || "")}</div>
+                    ${fileName}
+                  </div>
+                </div>
+                <div class="actions">
+                  ${pdf}
+                  <button type="button" data-edit="${escapeHtml(report.id)}">Modificar</button>
+                  <button class="danger" type="button" data-delete="${escapeHtml(report.id)}">Eliminar</button>
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      async function loadReports() {
+        list.innerHTML = '<p class="empty">Cargando radiografias...</p>';
+        const response = await fetch(`${endpoint}/admin-dashboard?v=${Date.now()}`, {
+          headers: headers(),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "No se pudo cargar el dashboard.");
+        reports = data.reports || [];
+        renderReports();
+      }
+
+      async function saveReport(event) {
+        event.preventDefault();
+        const id = form.elements.id.value.trim();
+        const file = form.elements.archivo.files[0];
+        if (!id && !file) {
+          setStatus("Selecciona un PDF para cargar.");
+          return;
+        }
+
+        const body = new FormData(form);
+        if (!file) body.delete("archivo");
+
+        submit.disabled = true;
+        submit.textContent = id ? "Actualizando..." : "Guardando...";
+        setStatus(id ? "Actualizando radiografia..." : "Subiendo PDF...");
+
+        try {
+          const response = await fetch(`${endpoint}/admin-upload-report`, {
+            method: id ? "PATCH" : "POST",
+            headers: headers(),
+            body,
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || "No se pudo guardar.");
+          resetForm();
+          setStatus(id ? "Radiografia modificada." : "Radiografia cargada.");
+          await loadReports();
+        } catch (error) {
+          setStatus(error.message);
+        } finally {
+          submit.disabled = false;
+          submit.textContent = form.elements.id.value ? "Actualizar radiografia" : "Guardar PDF";
+        }
+      }
+
+      function editReport(id) {
+        const report = reports.find((item) => item.id === id);
+        if (!report) return;
+        form.elements.id.value = report.id || "";
+        form.elements.titulo.value = report.titulo || "";
+        form.elements.provincia.value = report.provincia || "";
+        form.elements.localidad.value = report.localidad || "";
+        form.elements.fecha.value = report.fecha || "";
+        form.elements.archivo.value = "";
+        submit.textContent = "Actualizar radiografia";
+        cancel.classList.remove("hidden");
+        setStatus("Modificando: cambia los datos o selecciona un PDF nuevo para reemplazar el actual.");
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      async function deleteReport(id) {
+        const report = reports.find((item) => item.id === id);
+        if (!report) return;
+        if (!confirm(`Eliminar "${report.titulo}"?`)) return;
+        setStatus("Eliminando radiografia...");
+        const response = await fetch(`${endpoint}/admin-upload-report?id=${encodeURIComponent(id)}`, {
+          method: "DELETE",
+          headers: headers({ "content-type": "application/json" }),
+          body: JSON.stringify({ id }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setStatus(data.error || "No se pudo eliminar.");
+          return;
+        }
+        resetForm();
+        setStatus("Radiografia eliminada.");
+        await loadReports();
+      }
+
+      form.addEventListener("submit", saveReport);
+      cancel.addEventListener("click", resetForm);
+      document.querySelector("[data-refresh]").addEventListener("click", () => loadReports().catch((error) => setStatus(error.message)));
+      list.addEventListener("click", (event) => {
+        const edit = event.target.closest("[data-edit]");
+        const del = event.target.closest("[data-delete]");
+        if (edit) editReport(edit.dataset.edit);
+        if (del) deleteReport(del.dataset.delete);
+      });
+
+      loadReports().catch((error) => {
+        list.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
+      });
+    </script>
+  </body>
+</html>
