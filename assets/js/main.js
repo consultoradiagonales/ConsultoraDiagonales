@@ -968,6 +968,7 @@ function renderAdminReportItem(item) {
     <div class="admin-list-item">
       <strong>${escapeHtml(item.titulo || "Radiografía sin título")}</strong>
       <span>${escapeHtml([item.localidad, item.provincia].filter(Boolean).join(", ") || "Territorio")}</span>
+      ${item.file_name ? `<span>Archivo: ${escapeHtml(item.file_name)}</span>` : ""}
       <small>${escapeHtml(item.fecha || item.created_at || "")}</small>
       <div class="admin-list-actions">
         ${item.pdf_url ? `<a class="admin-action-button" href="${escapeAttribute(item.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}

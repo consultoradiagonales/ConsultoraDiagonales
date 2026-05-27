@@ -14,9 +14,46 @@ create table if not exists public.radiografias (
 alter table public.radiografias add column if not exists html_url text;
 alter table public.radiografias add column if not exists pdf_url text;
 alter table public.radiografias add column if not exists localidad text;
+alter table public.radiografias add column if not exists storage_path text;
+alter table public.radiografias add column if not exists file_name text;
+alter table public.radiografias add column if not exists file_size bigint;
+alter table public.radiografias add column if not exists mime_type text;
+alter table public.radiografias add column if not exists updated_at timestamp with time zone default now();
 alter table public.radiografias alter column pdf_url drop not null;
 
+update public.radiografias
+set
+  storage_path = coalesce(
+    storage_path,
+    nullif(split_part(pdf_url, '/storage/v1/object/public/radiografias/', 2), '')
+  ),
+  file_name = coalesce(
+    file_name,
+    nullif(regexp_replace(split_part(pdf_url, '/storage/v1/object/public/radiografias/', 2), '^.*/', ''), '')
+  ),
+  mime_type = coalesce(mime_type, case when pdf_url is not null then 'application/pdf' else null end),
+  updated_at = coalesce(updated_at, created_at, now())
+where pdf_url is not null;
+
 create index if not exists radiografias_fecha_idx on public.radiografias (fecha desc);
+create index if not exists radiografias_created_idx on public.radiografias (created_at desc);
+create index if not exists radiografias_storage_path_idx on public.radiografias (storage_path);
+
+create or replace function public.touch_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists radiografias_touch_updated_at on public.radiografias;
+create trigger radiografias_touch_updated_at
+before update on public.radiografias
+for each row
+execute function public.touch_updated_at();
 
 alter table public.radiografias enable row level security;
 
@@ -145,6 +182,11 @@ alter table public.pdf_downloads add column if not exists localidad text;
 alter table public.pdf_downloads add column if not exists user_agent text;
 alter table public.pdf_downloads add column if not exists downloaded_at timestamp with time zone default now();
 alter table public.admin_upload_events add column if not exists pdf_url text;
+alter table public.admin_upload_events add column if not exists radiografia_id uuid references public.radiografias(id) on delete set null;
+alter table public.admin_upload_events add column if not exists action text;
+alter table public.admin_upload_events add column if not exists storage_path text;
+alter table public.admin_upload_events add column if not exists file_name text;
+alter table public.admin_upload_events add column if not exists metadata jsonb default '{}'::jsonb;
 
 create index if not exists contactos_phone_idx on public.contactos (phone);
 create index if not exists contactos_email_idx on public.contactos (email);
@@ -152,15 +194,25 @@ create index if not exists whatsapp_verifications_phone_idx on public.whatsapp_v
 create index if not exists pdf_downloads_visitor_idx on public.pdf_downloads (visitor_id, created_at desc);
 create index if not exists pdf_downloads_radiografia_idx on public.pdf_downloads (radiografia_id, created_at desc);
 create index if not exists pdf_downloads_lugar_idx on public.pdf_downloads (lugar, created_at desc);
+create index if not exists admin_upload_events_radiografia_idx on public.admin_upload_events (radiografia_id, created_at desc);
+create index if not exists admin_upload_events_action_idx on public.admin_upload_events (action, created_at desc);
 
 alter table public.contactos enable row level security;
 alter table public.whatsapp_verifications enable row level security;
 alter table public.pdf_downloads enable row level security;
 alter table public.admin_upload_events enable row level security;
 
-create policy "Contactos anon upsert"
+drop policy if exists "Contactos anon upsert" on public.contactos;
+
+create policy "Contactos anon insert"
 on public.contactos
-for all
+for insert
+to anon
+with check (true);
+
+create policy "Contactos anon update"
+on public.contactos
+for update
 to anon
 using (true)
 with check (true);
@@ -183,9 +235,17 @@ for insert
 to anon
 with check (true);
 
-create policy "Visitor profile anon upsert"
+drop policy if exists "Visitor profile anon upsert" on public.visitor_profiles;
+
+create policy "Visitor profile anon insert"
 on public.visitor_profiles
-for all
+for insert
+to anon
+with check (true);
+
+create policy "Visitor profile anon update"
+on public.visitor_profiles
+for update
 to anon
 using (true)
 with check (true);
@@ -196,11 +256,7 @@ for insert
 to anon
 with check (true);
 
-create policy "Visitor events anon read"
-on public.visitor_events
-for select
-to anon
-using (true);
+drop policy if exists "Visitor events anon read" on public.visitor_events;
 
 create or replace function public.register_visitor_touch(p_visitor_id uuid)
 returns void
@@ -248,11 +304,11 @@ select
   d.lugar,
   d.provincia,
   d.localidad,
-  date_trunc('day', d.created_at) as dia,
+  date_trunc('day', coalesce(d.downloaded_at, d.created_at)) as dia,
   count(*) as descargas,
   count(distinct d.visitor_id) as usuarios_unicos,
   count(distinct d.phone) filter (where d.phone is not null) as telefonos_unicos,
-  max(d.created_at) as ultima_descarga
+  max(coalesce(d.downloaded_at, d.created_at)) as ultima_descarga
 from public.pdf_downloads d
 left join public.radiografias r on r.id = d.radiografia_id
-group by d.radiografia_id, r.titulo, d.lugar, d.provincia, d.localidad, date_trunc('day', d.created_at);
+group by d.radiografia_id, r.titulo, d.lugar, d.provincia, d.localidad, date_trunc('day', coalesce(d.downloaded_at, d.created_at));

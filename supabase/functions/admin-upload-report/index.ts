@@ -48,7 +48,7 @@ async function uploadPdf(supabase: Awaited<ReturnType<typeof getSupabaseClient>>
   if (uploadError) throw uploadError;
 
   const { data: publicData } = supabase.storage.from("radiografias").getPublicUrl(path);
-  return { pdf_url: publicData.publicUrl, path };
+  return { pdf_url: publicData.publicUrl, storage_path: path };
 }
 
 Deno.serve(async (req) => {
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
 
       const { data: current, error: currentError } = await supabase
         .from("radiografias")
-        .select("id, titulo, provincia, localidad, pdf_url")
+        .select("id, titulo, provincia, localidad, pdf_url, storage_path, file_name")
         .eq("id", id)
         .single();
 
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       const { error: deleteError } = await supabase.from("radiografias").delete().eq("id", id);
       if (deleteError) throw deleteError;
 
-      const storagePath = getStoragePathFromPublicUrl(current?.pdf_url);
+      const storagePath = current?.storage_path || getStoragePathFromPublicUrl(current?.pdf_url);
       if (storagePath) {
         await supabase.storage.from("radiografias").remove([storagePath]);
       }
@@ -94,6 +94,10 @@ Deno.serve(async (req) => {
         provincia: current?.provincia,
         localidad: current?.localidad,
         pdf_url: current?.pdf_url,
+        radiografia_id: current?.id,
+        action: "delete",
+        storage_path: storagePath,
+        file_name: current?.file_name,
         uploaded_by: "edge_admin_delete",
         user_agent: req.headers.get("user-agent"),
       });
@@ -110,6 +114,7 @@ Deno.serve(async (req) => {
     const fecha = String(formData.get("fecha") || "").trim();
     const hasPdf = file instanceof File && file.size > 0;
     const isPdf = hasPdf && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
+    const pdfFile = isPdf ? file as File : null;
 
     if (!titulo || !provincia || !fecha) {
       return Response.json({ error: "titulo, provincia y fecha son requeridos" }, { status: 400, headers: corsHeaders });
@@ -120,11 +125,21 @@ Deno.serve(async (req) => {
         return Response.json({ error: "archivo PDF requerido" }, { status: 400, headers: corsHeaders });
       }
 
-      const { pdf_url } = await uploadPdf(supabase, file, fecha);
+      const { pdf_url, storage_path } = await uploadPdf(supabase, pdfFile!, fecha);
       const { data: report, error: insertError } = await supabase
         .from("radiografias")
-        .insert({ titulo, provincia, localidad, fecha, pdf_url })
-        .select("id, titulo, provincia, localidad, fecha, pdf_url")
+        .insert({
+          titulo,
+          provincia,
+          localidad,
+          fecha,
+          pdf_url,
+          storage_path,
+          file_name: pdfFile!.name,
+          file_size: pdfFile!.size,
+          mime_type: pdfFile!.type || "application/pdf",
+        })
+        .select("id, titulo, provincia, localidad, fecha, pdf_url, storage_path, file_name, file_size, mime_type")
         .single();
 
       if (insertError) throw insertError;
@@ -134,6 +149,10 @@ Deno.serve(async (req) => {
         provincia,
         localidad,
         pdf_url,
+        radiografia_id: report.id,
+        action: "create",
+        storage_path,
+        file_name: pdfFile!.name,
         uploaded_by: "edge_admin",
         user_agent: req.headers.get("user-agent"),
       });
@@ -151,25 +170,40 @@ Deno.serve(async (req) => {
 
     const { data: current, error: currentError } = await supabase
       .from("radiografias")
-      .select("id, pdf_url")
+      .select("id, pdf_url, storage_path")
       .eq("id", id)
       .single();
 
     if (currentError) throw currentError;
 
     let pdf_url = current?.pdf_url || null;
+    let storage_path = current?.storage_path || null;
+    let file_name: string | undefined;
+    let file_size: number | undefined;
+    let mime_type: string | undefined;
     let oldStoragePath: string | null = null;
     if (isPdf) {
-      oldStoragePath = getStoragePathFromPublicUrl(pdf_url);
-      const uploaded = await uploadPdf(supabase, file, fecha);
+      oldStoragePath = storage_path || getStoragePathFromPublicUrl(pdf_url);
+      const uploaded = await uploadPdf(supabase, pdfFile!, fecha);
       pdf_url = uploaded.pdf_url;
+      storage_path = uploaded.storage_path;
+      file_name = pdfFile!.name;
+      file_size = pdfFile!.size;
+      mime_type = pdfFile!.type || "application/pdf";
+    }
+
+    const updatePayload: Record<string, unknown> = { titulo, provincia, localidad, fecha, pdf_url, storage_path };
+    if (isPdf) {
+      updatePayload.file_name = file_name;
+      updatePayload.file_size = file_size;
+      updatePayload.mime_type = mime_type;
     }
 
     const { data: report, error: updateError } = await supabase
       .from("radiografias")
-      .update({ titulo, provincia, localidad, fecha, pdf_url })
+      .update(updatePayload)
       .eq("id", id)
-      .select("id, titulo, provincia, localidad, fecha, pdf_url")
+      .select("id, titulo, provincia, localidad, fecha, pdf_url, storage_path, file_name, file_size, mime_type")
       .single();
 
     if (updateError) throw updateError;
@@ -183,6 +217,10 @@ Deno.serve(async (req) => {
       provincia,
       localidad,
       pdf_url,
+      radiografia_id: id,
+      action: isPdf ? "update_with_file" : "update_metadata",
+      storage_path,
+      file_name: file_name || report.file_name,
       uploaded_by: "edge_admin_update",
       user_agent: req.headers.get("user-agent"),
     });
