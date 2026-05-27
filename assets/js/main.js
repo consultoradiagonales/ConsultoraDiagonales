@@ -717,6 +717,13 @@ function initAdmin() {
   const cancelEdit = document.querySelector("[data-admin-cancel-edit]");
   if (!form) return;
 
+  const urlAdminKey = new URLSearchParams(window.location.search).get("admin_key");
+  const normalizedUrlAdminKey = normalizeAdminKey(urlAdminKey);
+  if (normalizedUrlAdminKey) {
+    sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+    sessionStorage.setItem(ADMIN_UPLOAD_KEY, normalizedUrlAdminKey);
+  }
+
   const unlockAdmin = () => {
     login?.classList.add("is-hidden");
     form.classList.remove("is-hidden");
@@ -730,21 +737,21 @@ function initAdmin() {
 
   login?.addEventListener("submit", (event) => {
     event.preventDefault();
-    const expectedKey = window.CD_ADMIN?.uploadKey || "";
     const providedKey = getFormValue(login, "admin_key");
+    const normalizedKey = normalizeAdminKey(providedKey);
 
     if (!providedKey) {
       loginStatus.textContent = "Ingresa la clave de administrador.";
       return;
     }
 
-    if (expectedKey && providedKey !== expectedKey) {
+    if (!normalizedKey) {
       loginStatus.textContent = "Clave incorrecta.";
       return;
     }
 
     sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
-    sessionStorage.setItem(ADMIN_UPLOAD_KEY, providedKey);
+    sessionStorage.setItem(ADMIN_UPLOAD_KEY, normalizedKey);
     login.reset();
     unlockAdmin();
   });
@@ -835,6 +842,16 @@ function initAdmin() {
       deleteButton.disabled = false;
     }
   });
+}
+
+function normalizeAdminKey(value) {
+  const key = String(value || "").trim();
+  const canonicalKey = window.CD_ADMIN?.uploadKey || "";
+  const aliases = window.CD_ADMIN?.uploadKeyAliases || [];
+  if (!key) return "";
+  if (!canonicalKey) return key;
+  if (key === canonicalKey || aliases.includes(key)) return canonicalKey;
+  return "";
 }
 
 function resetAdminForm() {
