@@ -893,7 +893,11 @@ async function loadAdminDashboard() {
     events: document.querySelector("[data-admin-events]"),
   };
 
+  setAdminDashboardStatus("Cargando radiografías/PDF.");
+  renderAdminList(containers.reports, [], "Cargando radiografías/PDF.");
+
   if (!supabaseClient) {
+    setAdminDashboardStatus("Supabase no está configurado para cargar radiografías.");
     renderAdminList(containers.reports, [], "Configura Supabase para ver radiografías cargadas.");
     renderAdminList(containers.downloads, JSON.parse(localStorage.getItem("cd:pdf_downloads") || "[]").slice(-8).reverse(), "Sin consumos locales.");
     renderAdminList(containers.contacts, [JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}")].filter((item) => item.phone || item.email), "Sin contactos locales.");
@@ -909,12 +913,19 @@ async function loadAdminDashboard() {
     setAdminTotal("contacts", data.totals?.contacts ?? data.contacts?.length ?? 0);
     setAdminTotal("events", data.totals?.events ?? data.events?.length ?? 0);
     renderAdminList(containers.reports, data.reports || [], "Todavía no hay radiografías cargadas.", renderAdminReportItem);
+    setAdminDashboardStatus(`${adminReports.length} radiografía${adminReports.length === 1 ? "" : "s"}/PDF cargado${adminReports.length === 1 ? "" : "s"}.`);
     renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", renderAdminDownloadItem);
     renderAdminList(containers.contacts, data.contacts || [], "Todavía no hay contactos.", renderAdminContactItem);
     renderAdminList(containers.events, data.events || [], "Todavía no hay eventos.", renderAdminEventItem);
   } catch (error) {
+    setAdminDashboardStatus(`No se pudo cargar el listado: ${error.message}`);
     Object.values(containers).forEach((container) => renderAdminList(container, [], `No se pudo cargar: ${error.message}`));
   }
+}
+
+function setAdminDashboardStatus(message) {
+  const target = document.querySelector("[data-admin-dashboard-status]");
+  if (target) target.textContent = message;
 }
 
 async function fetchAdminDashboard() {
@@ -1024,7 +1035,7 @@ async function updateRadiografiaReport({ id, file, titulo, provincia, localidad,
 }
 
 async function deleteRadiografiaReport(id) {
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-report`, {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-report?id=${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,

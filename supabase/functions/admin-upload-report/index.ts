@@ -67,7 +67,8 @@ Deno.serve(async (req) => {
 
     if (req.method === "DELETE") {
       const body = await req.json().catch(() => ({}));
-      const id = String(body.id || "").trim();
+      const url = new URL(req.url);
+      const id = String(body.id || url.searchParams.get("id") || "").trim();
       if (!id) {
         return Response.json({ error: "id requerido" }, { status: 400, headers: corsHeaders });
       }

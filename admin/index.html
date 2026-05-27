@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260527-admincrud2" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260527-admincrud3" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -98,8 +98,9 @@
         <section class="admin-dashboard is-hidden lg:col-span-2" data-admin-dashboard>
           <div class="admin-dashboard-header">
             <div>
-              <p class="eyebrow">Actividad</p>
-              <h2>RadiografÃ­as, contactos y consumos.</h2>
+              <p class="eyebrow">Gestión</p>
+              <h2>Radiografías/PDF cargados.</h2>
+              <p class="admin-dashboard-status" data-admin-dashboard-status>Listo para cargar, modificar o borrar radiografías.</p>
             </div>
             <button class="secondary-link" type="button" data-admin-refresh>Actualizar</button>
           </div>
@@ -112,8 +113,8 @@
           </div>
 
           <div class="admin-data-grid">
-            <article>
-              <h3>RadiografÃ­as cargadas</h3>
+            <article class="admin-reports-panel">
+              <h3>Radiografías/PDF cargados</h3>
               <div class="admin-list" data-admin-reports></div>
             </article>
             <article>
@@ -133,7 +134,7 @@
       </section>
     </main>
 
-    <script src="../assets/js/supabase-config.js?v=20260527-admincrud2"></script>
-    <script src="../assets/js/main.js?v=20260527-admincrud2"></script>
+    <script src="../assets/js/supabase-config.js?v=20260527-admincrud3"></script>
+    <script src="../assets/js/main.js?v=20260527-admincrud3"></script>
   </body>
 </html>
