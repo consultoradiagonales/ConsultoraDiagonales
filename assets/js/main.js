@@ -312,7 +312,7 @@ async function initRegistration() {
   if (!form) return;
 
   if (!supabaseClient) {
-    status.textContent = "Formulario listo en modo prueba. Conecta Supabase y las funciones de WhatsApp para enviar códigos reales.";
+    status.textContent = "Falta conectar Supabase para enviar códigos reales por WhatsApp.";
   }
 
   syncAuthContact(status);
@@ -323,21 +323,19 @@ async function initRegistration() {
     const fullName = getFormValue(form, "full_name");
 
     if (!phone) {
-      status.textContent = "Ingresa un teléfono para enviar el código por WhatsApp.";
+      status.textContent = "Ingresa un teléfono para validar por WhatsApp.";
       return;
     }
 
     sendCodeButton.disabled = true;
     sendCodeButton.textContent = "Enviando...";
-    status.textContent = "Solicitando código de WhatsApp.";
+    status.textContent = "Enviando código por WhatsApp.";
 
     try {
       await requestWhatsappCode({ phone, email, fullName });
-      status.textContent = supabaseClient
-        ? "Código solicitado. Revisá WhatsApp e ingresalo antes de descargar PDFs."
-        : "Solicitud registrada en modo prueba. Conecta WhatsApp para enviar el código real.";
+      status.textContent = "Código enviado. Revisá WhatsApp e ingresalo antes de descargar PDFs.";
     } catch (error) {
-      status.textContent = `No se pudo solicitar el código: ${error.message}`;
+      status.textContent = `No se pudo iniciar la validación: ${error.message}`;
     } finally {
       sendCodeButton.disabled = false;
       sendCodeButton.textContent = "Enviar código";
@@ -407,7 +405,7 @@ async function initRegistration() {
     }
 
     if (!(await verifyWhatsappCode(phone, whatsappCode))) {
-      status.textContent = "Solicita e ingresa el código de WhatsApp antes de continuar.";
+      status.textContent = "Primero enviá el código por WhatsApp e ingresalo para validar el teléfono.";
       return;
     }
 
@@ -425,7 +423,7 @@ async function initRegistration() {
         persistLocalContact(profile);
         trackEvent("registration_pending", { email, phone, organization });
         form.reset();
-        status.textContent = "Contacto validado localmente. Conecta Supabase para habilitar descargas reales.";
+        status.textContent = "Contacto guardado localmente. Conecta Supabase para habilitar descargas reales.";
         return;
       }
 
@@ -534,36 +532,31 @@ async function requestWhatsappCode({ phone, email, fullName }) {
 
   localStorage.setItem("cd:last_whatsapp_request", JSON.stringify({ ...request, created_at: new Date().toISOString() }));
 
-  if (!supabaseClient) return;
+  if (!supabaseClient) throw new Error("Supabase no esta configurado.");
 
+  localStorage.removeItem("cd:verification_id");
   const { data, error } = await supabaseClient.functions.invoke("send-whatsapp-code", { body: request });
   if (error) throw error;
-  if (data?.verification_id) localStorage.setItem("cd:verification_id", data.verification_id);
+  if (!data?.verification_id) throw new Error("La funcion de WhatsApp no devolvio un identificador de verificacion.");
+  localStorage.setItem("cd:verification_id", data.verification_id);
 }
 
-function isPhoneVerified(phone, code) {
+function isPhoneVerified(phone) {
   if (localStorage.getItem(PHONE_VERIFIED_KEY) === phone) return true;
-  if (!code) return false;
-
-  const request = JSON.parse(localStorage.getItem("cd:last_whatsapp_request") || "{}");
-  if (!supabaseClient && request.phone === phone) {
-    localStorage.setItem(PHONE_VERIFIED_KEY, phone);
-    return true;
-  }
-
   return false;
 }
 
 async function verifyWhatsappCode(phone, code) {
   if (isPhoneVerified(phone, code)) return true;
-  if (!supabaseClient || !code) return false;
+  const normalizedCode = String(code || "").replace(/\D/g, "");
+  if (!supabaseClient || normalizedCode.length !== 6) return false;
 
   const { data, error } = await supabaseClient.functions.invoke("verify-whatsapp-code", {
     body: {
       visitor_id: getVisitorId(),
       verification_id: localStorage.getItem("cd:verification_id"),
       phone,
-      code,
+      code: normalizedCode,
       purpose: "pdf_download",
     },
   });

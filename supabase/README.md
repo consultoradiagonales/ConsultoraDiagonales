@@ -58,3 +58,28 @@ supabase secrets set WHATSAPP_CODE_PEPPER="una-cadena-larga-secreta"
 ```
 
 `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` corresponden a WhatsApp Cloud API. `WHATSAPP_GRAPH_VERSION` permite actualizar la versión de Graph API sin editar código.
+
+Para enviar mensajes fuera de una conversacion iniciada por el usuario, WhatsApp Cloud API normalmente exige una plantilla aprobada. Si usan plantilla, configurar tambien:
+
+```bash
+supabase secrets set WHATSAPP_TEMPLATE_NAME="nombre_de_la_plantilla"
+supabase secrets set WHATSAPP_TEMPLATE_LANGUAGE="es_AR"
+```
+
+La plantilla debe tener un parametro en el cuerpo para recibir el codigo de 6 digitos. Si no se configura `WHATSAPP_TEMPLATE_NAME`, la funcion intenta enviar un mensaje de texto simple.
+
+## Conexion CLI
+
+Antes de desplegar desde esta carpeta:
+
+```bash
+supabase login
+supabase link --project-ref "PROJECT_REF"
+supabase db push
+supabase functions deploy send-whatsapp-code
+supabase functions deploy verify-whatsapp-code
+supabase functions deploy admin-upload-report
+supabase functions deploy admin-dashboard
+```
+
+Luego copiar la URL del proyecto y la anon key en `assets/js/supabase-config.js`.

@@ -9,6 +9,43 @@ async function sha256(value: string) {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+function normalizeWhatsappPhone(phone: string) {
+  return phone.replace(/\D/g, "");
+}
+
+function buildWhatsappPayload(to: string, code: string) {
+  const templateName = Deno.env.get("WHATSAPP_TEMPLATE_NAME");
+  const templateLanguage = Deno.env.get("WHATSAPP_TEMPLATE_LANGUAGE") || "es_AR";
+
+  if (templateName) {
+    return {
+      messaging_product: "whatsapp",
+      to,
+      type: "template",
+      template: {
+        name: templateName,
+        language: { code: templateLanguage },
+        components: [
+          {
+            type: "body",
+            parameters: [{ type: "text", text: code }],
+          },
+        ],
+      },
+    };
+  }
+
+  return {
+    messaging_product: "whatsapp",
+    to,
+    type: "text",
+    text: {
+      preview_url: false,
+      body: `Tu codigo de Consultora Diagonales es ${code}.`,
+    },
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -20,6 +57,18 @@ Deno.serve(async (req) => {
 
     if (!phone || !visitorId) {
       return Response.json({ error: "phone and visitor_id are required" }, { status: 400, headers: corsHeaders });
+    }
+
+    const token = Deno.env.get("WHATSAPP_TOKEN");
+    const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+
+    if (!token || !phoneNumberId) {
+      return Response.json({ error: "WhatsApp secrets are not configured" }, { status: 500, headers: corsHeaders });
+    }
+
+    const to = normalizeWhatsappPhone(phone);
+    if (to.length < 10) {
+      return Response.json({ error: "invalid WhatsApp phone" }, { status: 400, headers: corsHeaders });
     }
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
@@ -47,34 +96,23 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
-    const token = Deno.env.get("WHATSAPP_TOKEN");
-    const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    const graphVersion = Deno.env.get("WHATSAPP_GRAPH_VERSION") || "v21.0";
+    const whatsappResponse = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(buildWhatsappPayload(to, code)),
+    });
 
-    if (token && phoneNumberId) {
-      const graphVersion = Deno.env.get("WHATSAPP_GRAPH_VERSION") || "v21.0";
-      const whatsappResponse = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to: phone.replace(/\D/g, ""),
-          type: "text",
-          text: {
-            body: `Tu código de Consultora Diagonales es ${code}.`,
-          },
-        }),
-      });
-
-      if (!whatsappResponse.ok) {
-        const message = await whatsappResponse.text();
-        throw new Error(`WhatsApp API error: ${message}`);
-      }
+    if (!whatsappResponse.ok) {
+      await supabase.from("whatsapp_verifications").update({ status: "failed" }).eq("id", data.id);
+      const message = await whatsappResponse.text();
+      throw new Error(`WhatsApp API error: ${message}`);
     }
 
-    return Response.json({ verification_id: data.id, sent: Boolean(token && phoneNumberId) }, { headers: corsHeaders });
+    return Response.json({ verification_id: data.id, sent: true }, { headers: corsHeaders });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500, headers: corsHeaders });
   }

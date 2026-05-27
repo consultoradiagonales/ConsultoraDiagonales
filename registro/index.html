@@ -21,6 +21,7 @@
         <a href="../repositorio/index.html" data-nav="radiografias">Radiografías</a>
         <a href="index.html" data-nav="registro">Registro</a>
         <a href="../contacto/index.html" data-nav="contacto">Contacto</a>
+        <a href="../admin/index.html" data-nav="admin">Admin</a>
       </nav>
       <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle>
         <span></span>
@@ -35,6 +36,7 @@
       <a href="../repositorio/index.html">Radiografías</a>
       <a href="index.html">Registro</a>
       <a href="../contacto/index.html">Contacto</a>
+      <a href="../admin/index.html">Admin</a>
     </div>
 
     <main class="subpage">
@@ -70,10 +72,10 @@
           <div class="phone-verification" data-phone-verification>
             <div>
               <span>Validación por WhatsApp</span>
-              <p>Solicita el código y escribilo acá para habilitar descargas PDF.</p>
+              <p>Te enviamos un código de 6 dígitos por WhatsApp. Ingresalo acá para habilitar la descarga de PDFs.</p>
             </div>
             <div class="grid gap-3 md:grid-cols-[1fr_auto]">
-              <input name="whatsapp_code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código de WhatsApp" />
+              <input name="whatsapp_code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código de WhatsApp" maxlength="6" />
               <button class="secondary-link justify-center" type="button" data-send-whatsapp-code>Enviar código</button>
             </div>
           </div>
