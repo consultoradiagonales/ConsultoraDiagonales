@@ -59,16 +59,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: "phone and visitor_id are required" }, { status: 400, headers: corsHeaders });
     }
 
+    const to = normalizeWhatsappPhone(phone);
+    if (to.length < 10) {
+      return Response.json({ error: "invalid WhatsApp phone" }, { status: 400, headers: corsHeaders });
+    }
+
     const token = Deno.env.get("WHATSAPP_TOKEN");
     const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
     if (!token || !phoneNumberId) {
       return Response.json({ error: "WhatsApp secrets are not configured" }, { status: 500, headers: corsHeaders });
-    }
-
-    const to = normalizeWhatsappPhone(phone);
-    if (to.length < 10) {
-      return Response.json({ error: "invalid WhatsApp phone" }, { status: 400, headers: corsHeaders });
     }
 
     const code = String(Math.floor(100000 + Math.random() * 900000));

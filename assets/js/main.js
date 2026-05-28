@@ -453,6 +453,12 @@ async function initRegistration() {
       });
 
       form.reset();
+      const redirectTarget = getRegistrationRedirectTarget();
+      if (redirectTarget) {
+        status.textContent = "Teléfono validado. Te llevamos al informe solicitado.";
+        window.location.href = redirectTarget;
+        return;
+      }
       status.textContent = "Teléfono validado. Ya podés descargar radiografías PDF.";
     } catch (error) {
       status.textContent = `No se pudo completar el acceso: ${error.message}`;
@@ -461,6 +467,20 @@ async function initRegistration() {
       submit.textContent = "Validar acceso";
     }
   });
+}
+
+function getRegistrationRedirectTarget() {
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get("next");
+  if (!next) return "";
+
+  try {
+    const target = new URL(next, window.location.href);
+    if (target.origin !== window.location.origin) return "";
+    return target.href;
+  } catch (_) {
+    return "";
+  }
 }
 
 async function syncAuthContact(status) {
@@ -787,20 +807,20 @@ function initAdmin() {
     }
 
     if (id && file?.size && !isPdfFile(file)) {
-      status.textContent = "Selecciona un archivo PDF vÃ¡lido o deja el archivo vacÃ­o para conservar el actual.";
+      status.textContent = "Selecciona un archivo PDF válido o deja el archivo vacío para conservar el actual.";
       return;
     }
 
     submit.disabled = true;
     submit.textContent = id ? "Actualizando..." : "Guardando...";
-    status.textContent = id ? "Actualizando radiografÃ­a." : "Subiendo PDF y publicando metadata.";
+    status.textContent = id ? "Actualizando radiografía." : "Subiendo PDF y publicando metadata.";
 
     try {
       const { pdf_url } = await saveRadiografiaReport({ id, file, titulo, provincia, localidad, fecha });
 
       resetAdminForm();
       status.innerHTML = id
-        ? `RadiografÃ­a actualizada. ${pdf_url ? `<a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}`
+        ? `Radiografía actualizada. ${pdf_url ? `<a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}`
         : `PDF publicado. <a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`;
       loadAdminDashboard();
     } catch (error) {
@@ -826,15 +846,15 @@ function initAdmin() {
     if (!deleteButton) return;
     const report = adminReports.find((item) => item.id === deleteButton.dataset.adminDelete);
     if (!report) return;
-    const confirmed = window.confirm(`Â¿Borrar "${report.titulo || "esta radiografÃ­a"}"? Esta acciÃ³n elimina la metadata y el PDF del bucket.`);
+    const confirmed = window.confirm(`¿Borrar "${report.titulo || "esta radiografía"}"? Esta acción elimina la metadata y el PDF del bucket.`);
     if (!confirmed) return;
 
     deleteButton.disabled = true;
-    status.textContent = "Borrando radiografÃ­a.";
+    status.textContent = "Borrando radiografía.";
     try {
       await deleteRadiografiaReport(report.id);
       if (form.elements.id.value === report.id) resetAdminForm();
-      status.textContent = "RadiografÃ­a borrada.";
+      status.textContent = "Radiografía borrada.";
       loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo borrar: ${error.message}`;
@@ -1035,7 +1055,7 @@ async function updateRadiografiaReport({ id, file, titulo, provincia, localidad,
   });
 
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "No se pudo actualizar la radiografÃ­a.");
+  if (!response.ok) throw new Error(data.error || "No se pudo actualizar la radiografía.");
   return data;
 }
 
@@ -1052,7 +1072,7 @@ async function deleteRadiografiaReport(id) {
   });
 
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "No se pudo borrar la radiografÃ­a.");
+  if (!response.ok) throw new Error(data.error || "No se pudo borrar la radiografía.");
   return data;
 }
 
