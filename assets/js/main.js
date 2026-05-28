@@ -556,8 +556,22 @@ async function requestWhatsappCode({ phone, email, fullName }) {
   if (!supabaseClient) throw new Error("Supabase no esta configurado.");
 
   localStorage.removeItem("cd:verification_id");
-  const { data, error } = await supabaseClient.functions.invoke("send-whatsapp-code", { body: request });
-  if (error) throw error;
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp-code`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(request),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data.error === "WhatsApp secrets are not configured"
+      ? "WhatsApp todavía no está configurado en el servidor. Falta cargar el token y el número de Meta en Supabase."
+      : data.error || "No se pudo enviar el código de WhatsApp.";
+    throw new Error(message);
+  }
   if (!data?.verification_id) throw new Error("La funcion de WhatsApp no devolvio un identificador de verificacion.");
   localStorage.setItem("cd:verification_id", data.verification_id);
 }
