@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const pepper = Deno.env.get("WHATSAPP_CODE_PEPPER") || "";
-    const codeHash = await sha256(`${code}:${phone}:${pepper}`);
+    const codeHash = await sha256(`${code}:${to}:${pepper}`);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") || "",
@@ -84,14 +84,15 @@ Deno.serve(async (req) => {
       .from("whatsapp_verifications")
       .insert({
         visitor_id: visitorId,
-        phone,
+        phone: to,
         code_hash: codeHash,
         channel: "whatsapp",
         purpose: body.purpose || "pdf_download",
         status: "pending",
         sent_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
       })
-      .select("id")
+      .select("id, expires_at")
       .single();
 
     if (error) throw error;
@@ -112,7 +113,20 @@ Deno.serve(async (req) => {
       throw new Error(`WhatsApp API error: ${message}`);
     }
 
-    return Response.json({ verification_id: data.id, sent: true }, { headers: corsHeaders });
+    await supabase.from("contactos").upsert(
+      {
+        visitor_id: visitorId,
+        phone: to,
+        email: body.email || null,
+        full_name: body.full_name || null,
+        access_reason: body.purpose || "pdf_download",
+        phone_validation_status: "pending",
+        last_seen_at: new Date().toISOString(),
+      },
+      { onConflict: "visitor_id" },
+    );
+
+    return Response.json({ verification_id: data.id, sent: true, expires_at: data.expires_at }, { headers: corsHeaders });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500, headers: corsHeaders });
   }

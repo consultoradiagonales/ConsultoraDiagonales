@@ -9,6 +9,10 @@ async function sha256(value: string) {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+function normalizeWhatsappPhone(phone: string) {
+  return phone.replace(/\D/g, "");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -18,10 +22,13 @@ Deno.serve(async (req) => {
     const phone = String(body.phone || "").trim();
     const code = String(body.code || "").trim();
     const verificationId = String(body.verification_id || "").trim();
+    const visitorId = String(body.visitor_id || "").trim();
 
     if (!phone || !code || !verificationId) {
       return Response.json({ verified: false, error: "phone, code and verification_id are required" }, { status: 400, headers: corsHeaders });
     }
+
+    const normalizedPhone = normalizeWhatsappPhone(phone);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") || "",
@@ -30,9 +37,9 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from("whatsapp_verifications")
-      .select("id, phone, code_hash, expires_at, attempts, status")
+      .select("id, visitor_id, phone, code_hash, expires_at, attempts, status")
       .eq("id", verificationId)
-      .eq("phone", phone)
+      .eq("phone", normalizedPhone)
       .single();
 
     if (error || !data) return Response.json({ verified: false }, { headers: corsHeaders });
@@ -40,7 +47,7 @@ Deno.serve(async (req) => {
     const expired = new Date(data.expires_at).getTime() < Date.now();
     const locked = data.attempts >= 5 || data.status === "verified";
     const pepper = Deno.env.get("WHATSAPP_CODE_PEPPER") || "";
-    const codeHash = await sha256(`${code}:${phone}:${pepper}`);
+    const codeHash = await sha256(`${code}:${normalizedPhone}:${pepper}`);
     const verified = !expired && !locked && codeHash === data.code_hash;
 
     await supabase
@@ -51,6 +58,30 @@ Deno.serve(async (req) => {
         verified_at: verified ? new Date().toISOString() : null,
       })
       .eq("id", verificationId);
+
+    if (verified) {
+      const resolvedVisitorId = visitorId || data.visitor_id;
+      await supabase
+        .from("contactos")
+        .update({
+          phone_validation_status: "verified",
+          last_seen_at: new Date().toISOString(),
+        })
+        .eq("visitor_id", resolvedVisitorId)
+        .eq("phone", normalizedPhone);
+
+      await supabase
+        .from("visitor_profiles")
+        .upsert(
+          {
+            visitor_id: resolvedVisitorId,
+            phone: normalizedPhone,
+            last_seen_at: new Date().toISOString(),
+            tags: ["whatsapp_verified"],
+          },
+          { onConflict: "visitor_id" },
+        );
+    }
 
     return Response.json({ verified }, { headers: corsHeaders });
   } catch (error) {
