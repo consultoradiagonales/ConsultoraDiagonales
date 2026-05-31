@@ -380,6 +380,12 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+[functions.send-whatsapp-code]
+verify_jwt = false
+
+[functions.verify-whatsapp-code]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
