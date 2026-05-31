@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260527-admincrud7" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260529-adminsecure1" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -47,11 +47,6 @@
             Subí el PDF corregido, completá la metadata y publicá el informe. El archivo queda guardado en el bucket público
             <span class="font-semibold text-white">radiografías</span> y aparece en el repositorio.
           </p>
-          <div class="admin-note">
-            <span>Supabase conectado.</span> El panel lista todos los PDF cargados y permite modificar datos, reemplazar archivo o borrar.
-            <span>Versión admincrud7.</span>
-            <a class="primary-link" href="gestion.html?admin_key=diagonales-admin-2026">Abrir gestor simple</a>
-          </div>
         </div>
 
         <form class="admin-form" data-admin-login>
@@ -103,7 +98,10 @@
               <h2>Radiografías/PDF cargados.</h2>
               <p class="admin-dashboard-status" data-admin-dashboard-status>Listo para cargar, modificar o borrar radiografías.</p>
             </div>
-            <button class="secondary-link" type="button" data-admin-refresh>Actualizar</button>
+            <div class="admin-dashboard-actions">
+              <a class="secondary-link" href="gestion.html">Gestor simple</a>
+              <button class="secondary-link" type="button" data-admin-refresh>Actualizar</button>
+            </div>
           </div>
 
           <div class="admin-metrics">
@@ -135,7 +133,7 @@
       </section>
     </main>
 
-    <script src="../assets/js/supabase-config.js?v=20260527-admincrud7"></script>
-    <script src="../assets/js/main.js?v=20260527-admincrud7"></script>
+    <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
+    <script src="../assets/js/main.js?v=20260528-admincrud8"></script>
   </body>
 </html>

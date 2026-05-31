@@ -113,7 +113,7 @@ function initServiceRequests() {
 
   document.querySelectorAll("[data-service]").forEach((card) => {
     const message = whatsappMessages[card.dataset.service] || "Hola Consultora Diagonales. Quiero consultar por sus servicios.";
-    const href = `https://wa.me/5492214597940?text=${encodeURIComponent(message)}`;
+    const href = `https://wa.me/5492216765720?text=${encodeURIComponent(message)}`;
     card.setAttribute("href", href);
     card.addEventListener("click", (event) => {
       event.preventDefault();
@@ -165,7 +165,7 @@ function initServiceRequests() {
         ...answers.map((item) => `- ${item.question} ${item.answer}`),
       ].join("\n");
 
-      window.open(`https://wa.me/5492214597940?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+      window.open(`https://wa.me/5492216765720?text=${encodeURIComponent(message)}`, "_blank", "noopener");
     });
   });
 }
@@ -751,13 +751,6 @@ function initAdmin() {
   const cancelEdit = document.querySelector("[data-admin-cancel-edit]");
   if (!form) return;
 
-  const urlAdminKey = new URLSearchParams(window.location.search).get("admin_key");
-  const normalizedUrlAdminKey = normalizeAdminKey(urlAdminKey);
-  if (normalizedUrlAdminKey) {
-    sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
-    sessionStorage.setItem(ADMIN_UPLOAD_KEY, normalizedUrlAdminKey);
-  }
-
   const unlockAdmin = () => {
     login?.classList.add("is-hidden");
     form.classList.remove("is-hidden");
@@ -765,11 +758,14 @@ function initAdmin() {
     loadAdminDashboard();
   };
 
-  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "true") {
+  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "true" && sessionStorage.getItem(ADMIN_UPLOAD_KEY)) {
     unlockAdmin();
+  } else {
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    sessionStorage.removeItem(ADMIN_UPLOAD_KEY);
   }
 
-  login?.addEventListener("submit", (event) => {
+  login?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const providedKey = getFormValue(login, "admin_key");
     const normalizedKey = normalizeAdminKey(providedKey);
@@ -779,15 +775,29 @@ function initAdmin() {
       return;
     }
 
-    if (!normalizedKey) {
-      loginStatus.textContent = "Clave incorrecta.";
+    if (!supabaseClient) {
+      loginStatus.textContent = "Supabase no está disponible en esta pestaña.";
       return;
     }
 
-    sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
-    sessionStorage.setItem(ADMIN_UPLOAD_KEY, normalizedKey);
-    login.reset();
-    unlockAdmin();
+    const submitButton = login.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    loginStatus.textContent = "Validando clave.";
+
+    try {
+      await fetchAdminDashboard(normalizedKey);
+      sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+      sessionStorage.setItem(ADMIN_UPLOAD_KEY, normalizedKey);
+      login.reset();
+      loginStatus.textContent = "";
+      unlockAdmin();
+    } catch (error) {
+      sessionStorage.removeItem(ADMIN_SESSION_KEY);
+      sessionStorage.removeItem(ADMIN_UPLOAD_KEY);
+      loginStatus.textContent = error.message.includes("unauthorized") ? "Clave incorrecta." : `No se pudo validar: ${error.message}`;
+    } finally {
+      submitButton.disabled = false;
+    }
   });
 
   if (!supabaseClient) {
@@ -879,13 +889,7 @@ function initAdmin() {
 }
 
 function normalizeAdminKey(value) {
-  const key = String(value || "").trim();
-  const canonicalKey = window.CD_ADMIN?.uploadKey || "";
-  const aliases = window.CD_ADMIN?.uploadKeyAliases || [];
-  if (!key) return "";
-  if (!canonicalKey) return key;
-  if (key === canonicalKey || aliases.includes(key)) return canonicalKey;
-  return "";
+  return String(value || "").trim();
 }
 
 function resetAdminForm() {
@@ -966,12 +970,12 @@ function setAdminDashboardStatus(message) {
   if (target) target.textContent = message;
 }
 
-async function fetchAdminDashboard() {
+async function fetchAdminDashboard(adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "") {
   const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-dashboard`, {
     headers: {
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       apikey: SUPABASE_ANON_KEY,
-      "x-admin-key": sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "",
+      "x-admin-key": adminKey,
     },
   });
   const data = await response.json().catch(() => ({}));
@@ -1091,7 +1095,10 @@ async function deleteRadiografiaReport(id) {
 }
 
 async function uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha }) {
-  if (window.CD_ADMIN?.useEdgeUpload !== false) {
+  if (window.CD_ADMIN?.useEdgeUpload === false) {
+    throw new Error("La carga directa desde el navegador está deshabilitada. Usá la Edge Function admin-upload-report.");
+  }
+
     const adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "";
     const formData = new FormData();
     formData.append("archivo", file);
@@ -1113,45 +1120,6 @@ async function uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "No se pudo publicar el PDF.");
     return data;
-  }
-
-  const cleanName = file.name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9.]+/g, "-")
-    .replace(/-+/g, "-");
-  const path = `${fecha}/${crypto.randomUUID()}-${cleanName}`;
-
-  const { error: uploadError } = await supabaseClient.storage
-    .from("radiografias")
-    .upload(path, file, { cacheControl: "3600", upsert: false, contentType: "application/pdf" });
-
-  if (uploadError) throw uploadError;
-
-  const { data: publicData } = supabaseClient.storage.from("radiografias").getPublicUrl(path);
-  const pdf_url = publicData.publicUrl;
-
-  const { error: insertError } = await supabaseClient.from("radiografias").insert({
-    titulo,
-    provincia,
-    localidad,
-    fecha,
-    pdf_url,
-  });
-
-  if (insertError) throw insertError;
-
-  await supabaseClient.from("admin_upload_events").insert({
-    titulo,
-    provincia,
-    localidad,
-    pdf_url,
-    uploaded_by: "admin_key",
-    user_agent: navigator.userAgent,
-  });
-
-  return { pdf_url };
 }
 
 function isPdfFile(file) {

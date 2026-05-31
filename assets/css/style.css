@@ -933,6 +933,13 @@ body[data-page="servicios"] .subpage {
   gap: 1rem;
 }
 
+.admin-dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
 .admin-dashboard h2 {
   margin-top: 0.35rem;
   color: #fff;
@@ -1460,6 +1467,10 @@ body[data-page="servicios"] .subpage {
   .admin-dashboard-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .admin-dashboard-actions {
+    justify-content: flex-start;
   }
 
   .admin-metrics {

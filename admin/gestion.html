@@ -30,6 +30,65 @@
         font-family: Arial, Helvetica, sans-serif;
       }
 
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        min-height: 74px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        border-bottom: 1px solid rgba(139, 207, 241, 0.24);
+        padding: 12px clamp(16px, 4vw, 42px);
+        background: rgba(3, 20, 31, 0.88);
+        backdrop-filter: blur(16px);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text);
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+
+      .brand img {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+      }
+
+      .topnav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .topnav a {
+        border: 1px solid transparent;
+        border-radius: 999px;
+        padding: 0.62rem 0.82rem;
+        color: rgba(244, 251, 255, 0.82);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+
+      .topnav a:hover,
+      .topnav a[aria-current="page"] {
+        border-color: rgba(139, 207, 241, 0.34);
+        color: var(--text);
+        background: rgba(130, 216, 255, 0.1);
+      }
+
       main {
         width: min(1120px, calc(100% - 32px));
         margin: 0 auto;
@@ -198,6 +257,16 @@
       }
 
       @media (max-width: 860px) {
+        .topbar {
+          position: static;
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .topnav {
+          justify-content: flex-start;
+        }
+
         .grid,
         .report-row {
           grid-template-columns: 1fr;
@@ -206,6 +275,20 @@
     </style>
   </head>
   <body>
+    <header class="topbar">
+      <a class="brand" href="../index.html" aria-label="Consultora Diagonales">
+        <img src="../assets/img/isotipo.png" alt="" aria-hidden="true" />
+        <span>Consultora Diagonales</span>
+      </a>
+      <nav class="topnav" aria-label="Navegacion principal">
+        <a href="../index.html">Inicio</a>
+        <a href="../servicios/index.html">Servicios</a>
+        <a href="../repositorio/index.html">Radiografias</a>
+        <a href="../contacto/index.html">Contacto</a>
+        <a href="index.html" aria-current="page">Admin</a>
+      </nav>
+    </header>
+
     <main>
       <h1>Gestion de radiografias PDF.</h1>
       <p class="lead">
@@ -260,7 +343,7 @@
     <script>
       const SUPABASE_URL = window.CD_SUPABASE?.url || "";
       const SUPABASE_ANON_KEY = window.CD_SUPABASE?.anonKey || "";
-      const ADMIN_KEY = new URLSearchParams(location.search).get("admin_key") || window.CD_ADMIN?.uploadKey || "";
+      let ADMIN_KEY = sessionStorage.getItem("cd:admin_upload_key") || "";
       const endpoint = `${SUPABASE_URL}/functions/v1`;
       let reports = [];
 
@@ -269,6 +352,11 @@
       const status = document.querySelector("[data-status]");
       const submit = document.querySelector("[data-submit]");
       const cancel = document.querySelector("[data-cancel]");
+
+      if (!ADMIN_KEY) {
+        ADMIN_KEY = prompt("Clave de administrador") || "";
+        if (ADMIN_KEY) sessionStorage.setItem("cd:admin_upload_key", ADMIN_KEY);
+      }
 
       function headers(extra = {}) {
         return {
