@@ -392,7 +392,7 @@ async function initRegistration() {
 function getRegistrationRedirectTarget() {
   const params = new URLSearchParams(window.location.search);
   const next = params.get("next");
-  if (!next) return "";
+  if (!next) return "../repositorio/index.html?v=gmail-validated";
 
   try {
     const target = new URL(next, window.location.href);
@@ -442,7 +442,7 @@ async function syncAuthContact(status) {
 
   const redirectTarget = getRegistrationRedirectTarget();
   if (redirectTarget) {
-    status.textContent = "Gmail validado. Te llevamos al informe solicitado.";
+    status.textContent = "Gmail validado. Te llevamos a las radiografías.";
     window.location.href = redirectTarget;
     return;
   }
