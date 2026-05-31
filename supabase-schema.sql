@@ -60,7 +60,7 @@ alter table public.radiografias enable row level security;
 create policy "Radiografias public read"
 on public.radiografias
 for select
-to anon
+to anon, authenticated
 using (true);
 
 insert into storage.buckets (id, name, public)
@@ -70,7 +70,7 @@ on conflict (id) do update set public = true;
 create policy "Radiografias storage public read"
 on storage.objects
 for select
-to anon
+to anon, authenticated
 using (bucket_id = 'radiografias');
 
 create table if not exists public.visitor_profiles (
@@ -207,13 +207,13 @@ drop policy if exists "Contactos anon upsert" on public.contactos;
 create policy "Contactos anon insert"
 on public.contactos
 for insert
-to anon
+to anon, authenticated
 with check (true);
 
 create policy "Contactos anon update"
 on public.contactos
 for update
-to anon
+to anon, authenticated
 using (true)
 with check (true);
 
@@ -226,7 +226,7 @@ with check (true);
 create policy "PDF downloads anon insert"
 on public.pdf_downloads
 for insert
-to anon
+to anon, authenticated
 with check (true);
 
 create policy "Admin upload events anon insert"
@@ -240,20 +240,20 @@ drop policy if exists "Visitor profile anon upsert" on public.visitor_profiles;
 create policy "Visitor profile anon insert"
 on public.visitor_profiles
 for insert
-to anon
+to anon, authenticated
 with check (true);
 
 create policy "Visitor profile anon update"
 on public.visitor_profiles
 for update
-to anon
+to anon, authenticated
 using (true)
 with check (true);
 
 create policy "Visitor events anon insert"
 on public.visitor_events
 for insert
-to anon
+to anon, authenticated
 with check (true);
 
 drop policy if exists "Visitor events anon read" on public.visitor_events;
