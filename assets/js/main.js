@@ -33,6 +33,7 @@ const supabaseClient = isConfigured && window.supabase
   : null;
 const CONTACT_STORAGE_KEY = "cd:contact";
 const PHONE_VERIFIED_KEY = "cd:phone_verified";
+const GMAIL_VERIFIED_KEY = "cd:gmail_verified";
 const ADMIN_SESSION_KEY = "cd:admin_unlocked";
 const ADMIN_UPLOAD_KEY = "cd:admin_upload_key";
 let adminReports = [];
@@ -309,163 +310,82 @@ async function initRegistration() {
   const status = document.querySelector("[data-registration-status]");
   const submit = document.querySelector("[data-registration-submit]");
   const socialButtons = document.querySelectorAll("[data-social-provider]");
-  const sendCodeButton = document.querySelector("[data-send-whatsapp-code]");
   if (!form) return;
 
   if (!supabaseClient) {
-    status.textContent = "Falta conectar Supabase para enviar códigos reales por WhatsApp.";
+    status.textContent = "Falta conectar Supabase para validar el acceso con Gmail.";
   }
 
-  syncAuthContact(status);
+  await syncAuthContact(status);
 
-  sendCodeButton?.addEventListener("click", async () => {
+  const startGmailValidation = async () => {
+    const fullName = getFormValue(form, "full_name");
     const phone = getFormValue(form, "phone");
     const email = getFormValue(form, "email").toLowerCase();
-    const fullName = getFormValue(form, "full_name");
+    const organization = getFormValue(form, "organization");
 
-    if (!phone) {
-      status.textContent = "Ingresa un teléfono para validar por WhatsApp.";
+    if (!fullName) {
+      status.textContent = "Ingresa tu nombre y apellido para registrar el acceso.";
       return;
     }
 
-    sendCodeButton.disabled = true;
-    sendCodeButton.textContent = "Enviando...";
-    status.textContent = "Enviando código por WhatsApp.";
+    if (!phone) {
+      status.textContent = "Ingresa tu celular. Es obligatorio antes de validar con Gmail.";
+      return;
+    }
+
+    if (!form.elements.terms.checked) {
+      status.textContent = "Acepta el uso de datos para guardar el contacto y habilitar descargas.";
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = "Abriendo Gmail...";
+    status.textContent = "Guardando contacto y abriendo validación con Gmail.";
 
     try {
-      await requestWhatsappCode({ phone, email, fullName });
-      status.textContent = "Código enviado. Revisá WhatsApp e ingresalo antes de descargar PDFs.";
+      const contact = buildContactProfile({ fullName, phone, email, organization, provider: "google" });
+      contact.phone_validation_status = "gmail_pending";
+      persistLocalContact(contact);
+      await upsertContact(contact);
+      await upsertVisitorProfile(contact);
+      trackEvent("gmail_validation_requested", { email, phone, organization });
+
+      if (!supabaseClient) {
+        status.textContent = "Contacto guardado localmente. Falta conectar Supabase Auth para validar con Gmail.";
+        submit.disabled = false;
+        submit.textContent = "Continuar con Gmail";
+        return;
+      }
+
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.href,
+          queryParams: {
+            access_type: "offline",
+            prompt: "select_account",
+          },
+        },
+      });
+
+      if (error) throw error;
     } catch (error) {
-      status.textContent = `No se pudo iniciar la validación: ${error.message}`;
-    } finally {
-      sendCodeButton.disabled = false;
-      sendCodeButton.textContent = "Enviar código";
+      status.textContent = `No se pudo iniciar Gmail: ${error.message}`;
+      submit.disabled = false;
+      submit.textContent = "Continuar con Gmail";
     }
-  });
+  };
 
   socialButtons.forEach((button) => {
     button.addEventListener("click", async () => {
-      const provider = button.dataset.socialProvider;
-      const phone = getFormValue(form, "phone");
-      const email = getFormValue(form, "email").toLowerCase();
-      const fullName = getFormValue(form, "full_name");
-      const organization = getFormValue(form, "organization");
-
-      if (!phone) {
-        status.textContent = "Primero ingresa tu teléfono. Es obligatorio para validar por WhatsApp.";
-        return;
-      }
-
-      if (!form.elements.terms.checked) {
-        status.textContent = "Acepta el uso de datos para guardar el contacto y solicitar el código.";
-        return;
-      }
-
-      try {
-        const contact = buildContactProfile({ fullName, phone, email, organization, provider });
-        persistLocalContact(contact);
-        await upsertContact(contact);
-        await requestWhatsappCode({ phone, email, fullName });
-
-        if (provider === "tiktok") {
-          status.textContent = "TikTok requiere configurarlo como OAuth/OIDC personalizado en Supabase. Dejamos el contacto guardado y el código solicitado.";
-          return;
-        }
-
-        if (!supabaseClient) {
-          status.textContent = "Contacto guardado. Configura Supabase Auth y WhatsApp para activar el ingreso social.";
-          return;
-        }
-
-        const { error } = await supabaseClient.auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: `${location.origin}${location.pathname}`,
-          },
-        });
-
-        if (error) status.textContent = `No se pudo iniciar sesión con ${provider}: ${error.message}`;
-      } catch (error) {
-        status.textContent = `No se pudo iniciar el ingreso social: ${error.message}`;
-      }
+      if (button.dataset.socialProvider === "google") await startGmailValidation();
     });
   });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-
-    const fullName = getFormValue(form, "full_name");
-    const phone = getFormValue(form, "phone");
-    const email = getFormValue(form, "email").toLowerCase();
-    const organization = getFormValue(form, "organization");
-    const whatsappCode = getFormValue(form, "whatsapp_code");
-
-    if (!phone) {
-      status.textContent = "El teléfono es obligatorio para validar por WhatsApp.";
-      return;
-    }
-
-    if (!(await verifyWhatsappCode(phone, whatsappCode))) {
-      status.textContent = "Primero enviá el código por WhatsApp e ingresalo para validar el teléfono.";
-      return;
-    }
-
-    submit.disabled = true;
-    submit.textContent = "Validando...";
-    status.textContent = "Validando teléfono y guardando contacto.";
-
-    const profile = buildContactProfile({ fullName, phone, email, organization, provider: "email" });
-
-    try {
-      if (!supabaseClient) {
-        const pending = JSON.parse(localStorage.getItem("cd:pending_registrations") || "[]");
-        pending.push({ ...profile, created_at: new Date().toISOString() });
-        localStorage.setItem("cd:pending_registrations", JSON.stringify(pending.slice(-50)));
-        persistLocalContact(profile);
-        trackEvent("registration_pending", { email, phone, organization });
-        form.reset();
-        status.textContent = "Contacto guardado localmente. Conecta Supabase para habilitar descargas reales.";
-        return;
-      }
-
-      const { data: sessionData } = await supabaseClient.auth.getSession();
-      profile.auth_user_id = sessionData.session?.user?.id || null;
-      await upsertContact(profile);
-      await supabaseClient.from("visitor_profiles").upsert(
-        {
-          visitor_id: profile.visitor_id,
-          email,
-          phone,
-          full_name: fullName,
-          organization,
-          social_provider: "email",
-          auth_user_id: profile.auth_user_id,
-          last_seen_at: new Date().toISOString(),
-          tags: ["registro_pdf"],
-        },
-        { onConflict: "visitor_id" },
-      );
-      trackEvent("phone_access_validated", {
-        email,
-        phone,
-        organization,
-        user_id: profile.auth_user_id,
-      });
-
-      form.reset();
-      const redirectTarget = getRegistrationRedirectTarget();
-      if (redirectTarget) {
-        status.textContent = "Teléfono validado. Te llevamos al informe solicitado.";
-        window.location.href = redirectTarget;
-        return;
-      }
-      status.textContent = "Teléfono validado. Ya podés descargar radiografías PDF.";
-    } catch (error) {
-      status.textContent = `No se pudo completar el acceso: ${error.message}`;
-    } finally {
-      submit.disabled = false;
-      submit.textContent = "Validar acceso";
-    }
+    await startGmailValidation();
   });
 }
 
@@ -492,21 +412,41 @@ async function syncAuthContact(status) {
 
   const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
   if (!contact.phone) {
-    status.textContent = "Sesión iniciada. Ingresa tu teléfono para recibir el código de WhatsApp y descargar PDFs.";
+    status.textContent = "Gmail validado. Ingresá tu celular para terminar de habilitar las descargas.";
     return;
   }
 
-  const provider = user.app_metadata?.provider || contact.social_provider || "email";
-  await upsertContact({
+  const provider = user.app_metadata?.provider || contact.social_provider || "google";
+  const verifiedContact = {
     ...contact,
     auth_user_id: user.id,
     email: user.email || contact.email,
     full_name: contact.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "",
     avatar_url: user.user_metadata?.avatar_url || contact.avatar_url || null,
     social_provider: provider,
+    phone_validation_status: "gmail_verified",
     last_seen_at: new Date().toISOString(),
+    tags: Array.from(new Set([...(contact.tags || []), "gmail_validado", "descarga_pdf"])),
+  };
+
+  localStorage.setItem(GMAIL_VERIFIED_KEY, verifiedContact.visitor_id);
+  localStorage.setItem(PHONE_VERIFIED_KEY, verifiedContact.phone);
+  await upsertContact(verifiedContact);
+  await upsertVisitorProfile(verifiedContact);
+  trackEvent("gmail_access_validated", {
+    email: verifiedContact.email,
+    phone: verifiedContact.phone,
+    organization: verifiedContact.organization,
+    user_id: verifiedContact.auth_user_id,
   });
-  status.textContent = "Sesión iniciada. Validá el código de WhatsApp para descargar PDFs.";
+
+  const redirectTarget = getRegistrationRedirectTarget();
+  if (redirectTarget) {
+    status.textContent = "Gmail validado. Te llevamos al informe solicitado.";
+    window.location.href = redirectTarget;
+    return;
+  }
+  status.textContent = "Gmail validado. Ya podés descargar radiografías PDF.";
 }
 
 function buildContactProfile({ fullName, phone, email, organization, provider }) {
@@ -519,7 +459,7 @@ function buildContactProfile({ fullName, phone, email, organization, provider })
     organization,
     social_provider: provider,
     access_reason: "pdf_download",
-    phone_validation_status: localStorage.getItem(PHONE_VERIFIED_KEY) === phone ? "verified" : "pending",
+    phone_validation_status: localStorage.getItem(GMAIL_VERIFIED_KEY) === getVisitorId() ? "gmail_verified" : "pending",
     consent_terms: true,
     last_seen_at: new Date().toISOString(),
     tags: ["descarga_pdf"],
@@ -539,6 +479,33 @@ async function upsertContact(contact) {
   persistLocalContact(contact);
   if (!supabaseClient) return;
   await supabaseClient.from("contactos").upsert(contact, { onConflict: "visitor_id" });
+}
+
+async function upsertVisitorProfile(contact) {
+  if (!supabaseClient) return;
+  try {
+    const payload = {
+      email: contact.email || null,
+      phone: contact.phone || null,
+      full_name: contact.full_name || null,
+      organization: contact.organization || null,
+      social_provider: contact.social_provider || null,
+      auth_user_id: contact.auth_user_id || null,
+      avatar_url: contact.avatar_url || null,
+      last_seen_at: new Date().toISOString(),
+      tags: contact.tags || ["descarga_pdf"],
+    };
+
+    const { error } = await supabaseClient
+      .from("visitor_profiles")
+      .update(payload)
+      .eq("visitor_id", contact.visitor_id);
+
+    if (!error) return;
+    await supabaseClient.from("visitor_profiles").insert({ visitor_id: contact.visitor_id, ...payload });
+  } catch (_) {
+    // El contacto y la descarga quedan registrados aunque el perfil agregado no pueda actualizarse por RLS.
+  }
 }
 
 async function requestWhatsappCode({ phone, email, fullName }) {
@@ -680,7 +647,7 @@ function renderReports(reports, container, count) {
 
 function hasPdfAccess() {
   const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
-  return Boolean(contact.phone && localStorage.getItem(PHONE_VERIFIED_KEY) === contact.phone);
+  return Boolean(contact.phone && contact.email && localStorage.getItem(GMAIL_VERIFIED_KEY) === contact.visitor_id);
 }
 
 function getPdfDownloadHref(report) {

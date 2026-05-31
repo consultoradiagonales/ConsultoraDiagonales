@@ -45,8 +45,8 @@
           <p class="eyebrow">Descarga de PDFs</p>
           <h1 class="page-title">Registrate para descargar radiografías PDF.</h1>
           <p class="mt-6 max-w-xl text-base leading-8 text-slate-300">
-            El registro se usa solo para validar contactos y habilitar descargas. Siempre pedimos teléfono para enviar
-            un código de validación por WhatsApp antes de permitir el acceso a PDFs.
+            El registro se usa para validar contactos y habilitar descargas. Pedimos nombre y teléfono, y confirmamos
+            el acceso con Gmail antes de permitir la descarga de PDFs.
           </p>
         </div>
 
@@ -63,20 +63,16 @@
           </div>
           <label>
             <span>Correo electrónico</span>
-            <input name="email" type="email" autocomplete="email" placeholder="nombre@dominio.com" />
+            <input name="email" type="email" autocomplete="email" placeholder="nombre@gmail.com" />
           </label>
           <label>
             <span>Organización o rol</span>
             <input name="organization" type="text" autocomplete="organization" placeholder="Consultora, medio, equipo..." />
           </label>
-          <div class="phone-verification" data-phone-verification>
+          <div class="phone-verification" data-gmail-verification>
             <div>
-              <span>Validación por WhatsApp</span>
-              <p>Te enviamos un código de 6 dígitos por WhatsApp. Ingresalo acá para habilitar la descarga de PDFs.</p>
-            </div>
-            <div class="grid gap-3 md:grid-cols-[1fr_auto]">
-              <input name="whatsapp_code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código de WhatsApp" maxlength="6" />
-              <button class="secondary-link justify-center" type="button" data-send-whatsapp-code>Enviar código</button>
+              <span>Validación con Gmail</span>
+              <p>Guardamos tu nombre y teléfono, y después validamos tu identidad con Gmail para habilitar las descargas.</p>
             </div>
           </div>
 
@@ -84,15 +80,12 @@
             <input name="terms" type="checkbox" required />
             <span>Acepto el uso de mis datos para gestionar mi acceso y comunicaciones de Consultora Diagonales.</span>
           </label>
-          <button class="primary-link justify-center" type="submit" data-registration-submit>Validar acceso</button>
+          <button class="primary-link justify-center" type="submit" data-registration-submit>Continuar con Gmail</button>
 
           <div class="social-login-panel">
-            <span>O ingresar con una cuenta social</span>
+            <span>Validación requerida</span>
             <div class="social-login-grid">
-              <button type="button" data-social-provider="google">Gmail</button>
-              <button type="button" data-social-provider="facebook">Facebook</button>
-              <button type="button" data-social-provider="twitter">X / Twitter</button>
-              <button type="button" data-social-provider="tiktok">TikTok</button>
+              <button type="button" data-social-provider="google">Validar con Gmail</button>
             </div>
           </div>
 
