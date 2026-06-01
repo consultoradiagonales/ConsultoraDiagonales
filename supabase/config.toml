@@ -395,6 +395,12 @@ verify_jwt = false
 [functions.verify-whatsapp-code]
 verify_jwt = false
 
+[functions.admin-dashboard]
+verify_jwt = false
+
+[functions.admin-upload-report]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
