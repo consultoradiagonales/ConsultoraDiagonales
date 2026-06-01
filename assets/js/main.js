@@ -45,10 +45,15 @@ initFooterText();
 initLoginModal();
 initTracking();
 
-if (page === "repo") loadReports();
+if (page === "repo") initRepository();
 if (page === "admin") initAdmin();
 if (page === "registro") initRegistration();
 if (page === "servicios") initServiceRequests();
+
+async function initRepository() {
+  await syncStoredAuthContact();
+  await loadReports();
+}
 
 function initNavigation() {
   const header = document.querySelector("[data-header]");
@@ -449,6 +454,35 @@ async function syncAuthContact(status) {
   status.textContent = "Gmail validado. Ya podés descargar radiografías PDF.";
 }
 
+async function syncStoredAuthContact() {
+  if (!supabaseClient) return null;
+
+  const { data } = await supabaseClient.auth.getSession();
+  const user = data.session?.user;
+  if (!user) return null;
+
+  const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
+  if (!contact.phone) return contact;
+
+  const verifiedContact = {
+    ...contact,
+    auth_user_id: user.id,
+    email: user.email || contact.email,
+    full_name: contact.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "",
+    avatar_url: user.user_metadata?.avatar_url || contact.avatar_url || null,
+    social_provider: user.app_metadata?.provider || contact.social_provider || "google",
+    phone_validation_status: "gmail_verified",
+    last_seen_at: new Date().toISOString(),
+    tags: Array.from(new Set([...(contact.tags || []), "gmail_validado", "descarga_pdf"])),
+  };
+
+  localStorage.setItem(GMAIL_VERIFIED_KEY, verifiedContact.visitor_id);
+  localStorage.setItem(PHONE_VERIFIED_KEY, verifiedContact.phone);
+  await upsertContact(verifiedContact);
+  await upsertVisitorProfile(verifiedContact);
+  return verifiedContact;
+}
+
 function buildContactProfile({ fullName, phone, email, organization, provider }) {
   return {
     visitor_id: getVisitorId(),
@@ -647,7 +681,9 @@ function renderReports(reports, container, count) {
 
 function hasPdfAccess() {
   const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
-  return Boolean(contact.phone && contact.email && localStorage.getItem(GMAIL_VERIFIED_KEY) === contact.visitor_id);
+  const gmailValidated = localStorage.getItem(GMAIL_VERIFIED_KEY) === contact.visitor_id;
+  const phoneValidated = localStorage.getItem(PHONE_VERIFIED_KEY) === contact.phone;
+  return Boolean(contact.phone && (gmailValidated || phoneValidated || contact.phone_validation_status === "gmail_verified"));
 }
 
 function getPdfDownloadHref(report) {
