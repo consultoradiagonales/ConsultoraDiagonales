@@ -19,7 +19,7 @@ initFooterText();
 initLoginModal();
 initTracking();
 
-if (page === "repo") initRepository();
+if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
 if (page === "registro") initRegistration();
 if (page === "servicios") initServiceRequests();
@@ -619,13 +619,16 @@ function renderReports(reports, container, count) {
       const href = escapeAttribute(report.html_url || "#");
       const pdfHref = escapeAttribute(getPdfDownloadHref(report));
       const pdfLabel = hasPdfAccess() && report.pdf_url ? "Abrir PDF" : "Validar acceso";
+      const primaryHref = report.html_url ? href : pdfHref;
+      const primaryLabel = report.html_url ? "Ver informe" : pdfLabel;
+      const pdfAttributes = report.html_url ? "" : ` data-pdf-download data-report-index="${index}"`;
 
       if (isCompactList) {
         return `
-          <a href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">
+          <a href="${primaryHref}"${pdfAttributes} data-track="${report.html_url ? "open_report" : "request_pdf"}">
             <time datetime="${escapeAttribute(report.fecha || "")}">${date}</time>
             <span>${title}</span>
-            <strong>${pdfLabel}</strong>
+            <strong>${primaryLabel}</strong>
           </a>
         `;
       }

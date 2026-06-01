@@ -6,6 +6,7 @@
     <title>Últimos análisis | Consultora Diagonales</title>
     <link rel="stylesheet" href="../assets/css/style.css" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="bg-[#080d14] text-white antialiased" data-page="analisis">
     <header class="site-header is-solid" data-header>
@@ -25,13 +26,12 @@
           </div>
           <a class="primary-link" href="../registro/index.html">Validar acceso</a>
         </div>
-        <div class="latest-list gated">
-          <a href="../registro/index.html"><time>2026-05-17</time><span>Intendencia La Plata 2027</span><strong>Validar acceso</strong></a>
-          <a href="../registro/index.html"><time>2026-05-17</time><span>Provincia de Buenos Aires y La Plata</span><strong>Validar acceso</strong></a>
+        <div class="latest-list gated" data-reports>
+          <div class="empty-state">Cargando radiografías publicadas.</div>
         </div>
       </section>
     </main>
     <script src="../assets/js/supabase-config.js?v=20260527"></script>
-    <script src="../assets/js/main.js?v=20260527"></script>
+    <script src="../assets/js/main.js?v=20260601-live-reports"></script>
   </body>
 </html>
