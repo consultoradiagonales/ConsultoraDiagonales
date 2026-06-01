@@ -1,31 +1,5 @@
 const SUPABASE_URL = window.CD_SUPABASE?.url || "https://TU-PROYECTO.supabase.co";
 const SUPABASE_ANON_KEY = window.CD_SUPABASE?.anonKey || "TU_SUPABASE_ANON_KEY";
-const RENDER_SAMPLE_DATA_WHEN_UNCONFIGURED = true;
-
-const sampleReports = [
-  {
-    titulo: "Radiografía Intendencia La Plata 2027",
-    provincia: "Buenos Aires",
-    localidad: "La Plata",
-    fecha: "2026-05-17",
-    html_url: "../radiografias/radiografia-intendencia-la-plata-2027.html",
-  },
-  {
-    titulo: "Radiografía PBA y La Plata",
-    provincia: "Buenos Aires",
-    localidad: "La Plata",
-    fecha: "2026-05-17",
-    html_url: "../radiografias/radiografia-pba-la-plata.html",
-  },
-  {
-    titulo: "Escenarios electorales provinciales",
-    provincia: "Córdoba",
-    localidad: "Córdoba",
-    fecha: "2026-03-28",
-    html_url: "#",
-  },
-];
-
 const page = document.body.dataset.page;
 const isConfigured = !SUPABASE_URL.includes("TU-PROYECTO") && !SUPABASE_ANON_KEY.includes("TU_SUPABASE");
 const supabaseClient = isConfigured && window.supabase
@@ -608,7 +582,7 @@ async function loadReports() {
   if (!container) return;
 
   try {
-    let reports = sampleReports;
+    let reports = [];
 
     if (supabaseClient) {
       const { data, error } = await supabaseClient
@@ -619,8 +593,6 @@ async function loadReports() {
 
       if (error) throw error;
       reports = data || [];
-    } else if (!RENDER_SAMPLE_DATA_WHEN_UNCONFIGURED) {
-      reports = [];
     }
 
     renderReports(reports, container, count);
