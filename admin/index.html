@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260529-adminsecure1" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260601-mobile-html-upload" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -81,11 +81,11 @@
             </label>
           </div>
           <label>
-            <span>Archivo PDF</span>
-            <input name="archivo" type="file" accept=".pdf,application/pdf" />
+            <span>Archivo PDF o HTML</span>
+            <input name="archivo" type="file" accept=".pdf,.html,.htm,application/pdf,text/html" />
           </label>
           <div class="admin-form-actions">
-            <button class="primary-link justify-center" type="submit" data-submit>Guardar PDF</button>
+            <button class="primary-link justify-center" type="submit" data-submit>Guardar archivo</button>
             <button class="secondary-link justify-center is-hidden" type="button" data-admin-cancel-edit>Cancelar edición</button>
           </div>
           <p class="form-status" data-form-status role="status"></p>
@@ -134,6 +134,6 @@
     </main>
 
     <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
-    <script src="../assets/js/main.js?v=20260528-admincrud8"></script>
+    <script src="../assets/js/main.js?v=20260601-mobile-html-upload"></script>
   </body>
 </html>

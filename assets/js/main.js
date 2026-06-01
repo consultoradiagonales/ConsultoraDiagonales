@@ -828,33 +828,35 @@ function initAdmin() {
     const localidad = String(formData.get("localidad") || "").trim();
     const fecha = String(formData.get("fecha") || "").trim();
 
-    if (!id && (!file || !isPdfFile(file))) {
-      status.textContent = "Selecciona un archivo PDF válido.";
+    if (!id && (!file || !isReportFile(file))) {
+      status.textContent = "Selecciona un archivo PDF o HTML válido.";
       return;
     }
 
-    if (id && file?.size && !isPdfFile(file)) {
-      status.textContent = "Selecciona un archivo PDF válido o deja el archivo vacío para conservar el actual.";
+    if (id && file?.size && !isReportFile(file)) {
+      status.textContent = "Selecciona un archivo PDF o HTML válido o deja el archivo vacío para conservar el actual.";
       return;
     }
 
     submit.disabled = true;
     submit.textContent = id ? "Actualizando..." : "Guardando...";
-    status.textContent = id ? "Actualizando radiografía." : "Subiendo PDF y publicando metadata.";
+    status.textContent = id ? "Actualizando radiografía." : "Subiendo archivo y publicando metadata.";
 
     try {
-      const { pdf_url } = await saveRadiografiaReport({ id, file, titulo, provincia, localidad, fecha });
+      const data = await saveRadiografiaReport({ id, file, titulo, provincia, localidad, fecha });
+      const publicUrl = data.pdf_url || data.html_url;
+      const fileLabel = data.html_url ? "HTML" : "archivo";
 
       resetAdminForm();
       status.innerHTML = id
-        ? `Radiografía actualizada. ${pdf_url ? `<a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}`
-        : `PDF publicado. <a href="${escapeAttribute(pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`;
+        ? `Radiografía actualizada. ${publicUrl ? `<a href="${escapeAttribute(publicUrl)}" target="_blank" rel="noopener">Abrir ${fileLabel}</a>` : ""}`
+        : `Archivo publicado. <a href="${escapeAttribute(publicUrl)}" target="_blank" rel="noopener">Abrir ${fileLabel}</a>`;
       loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
       submit.disabled = false;
-      submit.textContent = form.elements.id.value ? "Actualizar PDF" : "Guardar PDF";
+      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar archivo";
     }
   });
 
@@ -1012,9 +1014,10 @@ function renderAdminReportItem(item) {
       ${item.file_name ? `<span>Archivo: ${escapeHtml(item.file_name)}</span>` : ""}
       <small>${escapeHtml(item.fecha || item.created_at || "")}</small>
       <div class="admin-list-actions">
+        ${item.html_url ? `<a class="admin-action-button" href="${escapeAttribute(item.html_url)}" target="_blank" rel="noopener">Abrir HTML</a>` : ""}
         ${item.pdf_url ? `<a class="admin-action-button" href="${escapeAttribute(item.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}
-        <button class="admin-action-button" type="button" data-admin-edit="${escapeAttribute(item.id || "")}">Modificar datos / reemplazar PDF</button>
-        <button class="admin-action-button is-danger" type="button" data-admin-delete="${escapeAttribute(item.id || "")}">Borrar PDF</button>
+        <button class="admin-action-button" type="button" data-admin-edit="${escapeAttribute(item.id || "")}">Modificar datos / reemplazar archivo</button>
+        <button class="admin-action-button is-danger" type="button" data-admin-delete="${escapeAttribute(item.id || "")}">Borrar archivo</button>
       </div>
     </div>
   `;
@@ -1121,13 +1124,13 @@ async function uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha 
     });
 
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || "No se pudo publicar el PDF.");
+    if (!response.ok) throw new Error(data.error || "No se pudo publicar el archivo.");
     return data;
 }
 
-function isPdfFile(file) {
+function isReportFile(file) {
   const name = file.name.toLowerCase();
-  return file.type === "application/pdf" || name.endsWith(".pdf");
+  return file.type === "application/pdf" || file.type === "text/html" || name.endsWith(".pdf") || name.endsWith(".html") || name.endsWith(".htm");
 }
 
 function buildPdfRequestLink(report) {

@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     const [reports, downloads, contacts, events, metrics] = await Promise.all([
       supabase
         .from("radiografias")
-        .select("id, titulo, provincia, localidad, fecha, pdf_url, storage_path, file_name, file_size, mime_type, created_at, updated_at")
+        .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type, created_at, updated_at")
         .order("created_at", { ascending: false })
         .limit(1000),
       supabase

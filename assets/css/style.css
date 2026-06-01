@@ -1107,6 +1107,7 @@ body[data-page="servicios"] .subpage {
 .admin-form input,
 .registration-form input {
   width: 100%;
+  max-width: 100%;
   min-height: 52px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1114,6 +1115,24 @@ body[data-page="servicios"] .subpage {
   color: #fff;
   background: rgba(3, 7, 12, 0.68);
   outline: none;
+}
+
+.admin-form input[type="file"] {
+  height: auto;
+  min-height: 56px;
+  padding: 0.85rem 1rem;
+  line-height: 1.4;
+}
+
+.admin-form input[type="file"]::file-selector-button {
+  min-height: 38px;
+  margin-right: 0.85rem;
+  border: 1px solid rgba(139, 207, 241, 0.38);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  color: #fff;
+  background: rgba(10, 86, 124, 0.5);
+  font-weight: 800;
 }
 
 .admin-form input:focus,
@@ -1457,6 +1476,29 @@ body[data-page="servicios"] .subpage {
   .registration-form,
   .admin-form {
     padding: 1rem;
+  }
+
+  .admin-form-actions,
+  .admin-dashboard-actions,
+  .admin-list-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .admin-form-actions .primary-link,
+  .admin-form-actions .secondary-link,
+  .admin-dashboard-actions .secondary-link,
+  .admin-list-actions .admin-action-button {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .admin-list {
+    max-height: none;
+    overflow: visible;
   }
 
   .admin-dashboard-header,

@@ -36,19 +36,33 @@ function requireAdmin(req: Request) {
   return Boolean(expectedAdminKey && providedAdminKey === expectedAdminKey);
 }
 
-async function uploadPdf(supabase: Awaited<ReturnType<typeof getSupabaseClient>>, file: File, fecha: string) {
-  const cleanName = slugifyFileName(file.name || "radiografia.pdf");
+function getReportFileKind(file: File) {
+  const name = file.name.toLowerCase();
+  if (file.type === "application/pdf" || name.endsWith(".pdf")) {
+    return { kind: "pdf", contentType: "application/pdf" };
+  }
+  if (file.type === "text/html" || name.endsWith(".html") || name.endsWith(".htm")) {
+    return { kind: "html", contentType: "text/html; charset=utf-8" };
+  }
+  return null;
+}
+
+async function uploadReportFile(supabase: Awaited<ReturnType<typeof getSupabaseClient>>, file: File, fecha: string) {
+  const fileKind = getReportFileKind(file);
+  if (!fileKind) throw new Error("archivo PDF o HTML requerido");
+
+  const cleanName = slugifyFileName(file.name || `radiografia.${fileKind.kind}`);
   const path = `${fecha}/${crypto.randomUUID()}-${cleanName}`;
   const bytes = await file.arrayBuffer();
 
   const { error: uploadError } = await supabase.storage
     .from("radiografias")
-    .upload(path, bytes, { cacheControl: "3600", contentType: "application/pdf", upsert: false });
+    .upload(path, bytes, { cacheControl: "3600", contentType: fileKind.contentType, upsert: false });
 
   if (uploadError) throw uploadError;
 
   const { data: publicData } = supabase.storage.from("radiografias").getPublicUrl(path);
-  return { pdf_url: publicData.publicUrl, storage_path: path };
+  return { public_url: publicData.publicUrl, storage_path: path, ...fileKind };
 }
 
 Deno.serve(async (req) => {
@@ -112,20 +126,22 @@ Deno.serve(async (req) => {
     const provincia = String(formData.get("provincia") || "").trim();
     const localidad = String(formData.get("localidad") || "").trim();
     const fecha = String(formData.get("fecha") || "").trim();
-    const hasPdf = file instanceof File && file.size > 0;
-    const isPdf = hasPdf && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
-    const pdfFile = isPdf ? file as File : null;
+    const hasReportFile = file instanceof File && file.size > 0;
+    const fileKind = hasReportFile ? getReportFileKind(file as File) : null;
+    const reportFile = fileKind ? file as File : null;
 
     if (!titulo || !provincia || !fecha) {
       return Response.json({ error: "titulo, provincia y fecha son requeridos" }, { status: 400, headers: corsHeaders });
     }
 
     if (req.method === "POST") {
-      if (!isPdf) {
-        return Response.json({ error: "archivo PDF requerido" }, { status: 400, headers: corsHeaders });
+      if (!reportFile || !fileKind) {
+        return Response.json({ error: "archivo PDF o HTML requerido" }, { status: 400, headers: corsHeaders });
       }
 
-      const { pdf_url, storage_path } = await uploadPdf(supabase, pdfFile!, fecha);
+      const uploaded = await uploadReportFile(supabase, reportFile, fecha);
+      const pdf_url = uploaded.kind === "pdf" ? uploaded.public_url : null;
+      const html_url = uploaded.kind === "html" ? uploaded.public_url : null;
       const { data: report, error: insertError } = await supabase
         .from("radiografias")
         .insert({
@@ -133,13 +149,14 @@ Deno.serve(async (req) => {
           provincia,
           localidad,
           fecha,
+          html_url,
           pdf_url,
-          storage_path,
-          file_name: pdfFile!.name,
-          file_size: pdfFile!.size,
-          mime_type: pdfFile!.type || "application/pdf",
+          storage_path: uploaded.storage_path,
+          file_name: reportFile.name,
+          file_size: reportFile.size,
+          mime_type: uploaded.contentType,
         })
-        .select("id, titulo, provincia, localidad, fecha, pdf_url, storage_path, file_name, file_size, mime_type")
+        .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type")
         .single();
 
       if (insertError) throw insertError;
@@ -151,49 +168,51 @@ Deno.serve(async (req) => {
         pdf_url,
         radiografia_id: report.id,
         action: "create",
-        storage_path,
-        file_name: pdfFile!.name,
+        storage_path: uploaded.storage_path,
+        file_name: reportFile.name,
         uploaded_by: "edge_admin",
         user_agent: req.headers.get("user-agent"),
       });
 
-      return Response.json({ report, pdf_url }, { headers: corsHeaders });
+      return Response.json({ report, html_url, pdf_url }, { headers: corsHeaders });
     }
 
     if (!id) {
       return Response.json({ error: "id requerido" }, { status: 400, headers: corsHeaders });
     }
 
-    if (hasPdf && !isPdf) {
-      return Response.json({ error: "archivo PDF requerido" }, { status: 400, headers: corsHeaders });
+    if (hasReportFile && !fileKind) {
+      return Response.json({ error: "archivo PDF o HTML requerido" }, { status: 400, headers: corsHeaders });
     }
 
     const { data: current, error: currentError } = await supabase
       .from("radiografias")
-      .select("id, pdf_url, storage_path")
+      .select("id, html_url, pdf_url, storage_path")
       .eq("id", id)
       .single();
 
     if (currentError) throw currentError;
 
+    let html_url = current?.html_url || null;
     let pdf_url = current?.pdf_url || null;
     let storage_path = current?.storage_path || null;
     let file_name: string | undefined;
     let file_size: number | undefined;
     let mime_type: string | undefined;
     let oldStoragePath: string | null = null;
-    if (isPdf) {
-      oldStoragePath = storage_path || getStoragePathFromPublicUrl(pdf_url);
-      const uploaded = await uploadPdf(supabase, pdfFile!, fecha);
-      pdf_url = uploaded.pdf_url;
+    if (reportFile && fileKind) {
+      oldStoragePath = storage_path || getStoragePathFromPublicUrl(pdf_url || html_url);
+      const uploaded = await uploadReportFile(supabase, reportFile, fecha);
+      html_url = uploaded.kind === "html" ? uploaded.public_url : null;
+      pdf_url = uploaded.kind === "pdf" ? uploaded.public_url : null;
       storage_path = uploaded.storage_path;
-      file_name = pdfFile!.name;
-      file_size = pdfFile!.size;
-      mime_type = pdfFile!.type || "application/pdf";
+      file_name = reportFile.name;
+      file_size = reportFile.size;
+      mime_type = uploaded.contentType;
     }
 
-    const updatePayload: Record<string, unknown> = { titulo, provincia, localidad, fecha, pdf_url, storage_path };
-    if (isPdf) {
+    const updatePayload: Record<string, unknown> = { titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path };
+    if (reportFile && fileKind) {
       updatePayload.file_name = file_name;
       updatePayload.file_size = file_size;
       updatePayload.mime_type = mime_type;
@@ -203,7 +222,7 @@ Deno.serve(async (req) => {
       .from("radiografias")
       .update(updatePayload)
       .eq("id", id)
-      .select("id, titulo, provincia, localidad, fecha, pdf_url, storage_path, file_name, file_size, mime_type")
+      .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type")
       .single();
 
     if (updateError) throw updateError;
@@ -218,14 +237,14 @@ Deno.serve(async (req) => {
       localidad,
       pdf_url,
       radiografia_id: id,
-      action: isPdf ? "update_with_file" : "update_metadata",
+      action: reportFile ? "update_with_file" : "update_metadata",
       storage_path,
       file_name: file_name || report.file_name,
       uploaded_by: "edge_admin_update",
       user_agent: req.headers.get("user-agent"),
     });
 
-    return Response.json({ report, pdf_url }, { headers: corsHeaders });
+    return Response.json({ report, html_url, pdf_url }, { headers: corsHeaders });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500, headers: corsHeaders });
   }
