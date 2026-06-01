@@ -234,14 +234,7 @@ function initTracking() {
 }
 
 async function trackEvent(eventType, metadata = {}, useBeacon = false) {
-  const event = {
-    visitor_id: getVisitorId(),
-    event_type: eventType,
-    page,
-    path: location.pathname,
-    metadata,
-    user_agent: navigator.userAgent,
-  };
+  const event = buildVisitorEvent(eventType, metadata);
 
   const events = JSON.parse(localStorage.getItem("cd:events") || "[]");
   events.push({ ...event, at: new Date().toISOString() });
@@ -249,11 +242,56 @@ async function trackEvent(eventType, metadata = {}, useBeacon = false) {
 
   if (!supabaseClient) return;
   try {
-    await supabaseClient.from("visitor_events").insert(event);
+    if (useBeacon) {
+      await persistVisitorEventWithKeepalive(event);
+    } else {
+      await supabaseClient.from("visitor_events").insert(event);
+    }
     await supabaseClient.rpc("register_visitor_touch", { p_visitor_id: event.visitor_id });
   } catch (_) {
     if (useBeacon) return;
   }
+}
+
+function buildVisitorEvent(eventType, metadata = {}) {
+  const contact = getStoredContactSummary();
+  return {
+    visitor_id: getVisitorId(),
+    event_type: eventType,
+    page,
+    path: location.pathname,
+    metadata: {
+      ...metadata,
+      contact,
+    },
+    user_agent: navigator.userAgent,
+  };
+}
+
+function getStoredContactSummary() {
+  const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
+  return {
+    visitor_id: getVisitorId(),
+    email: contact.email || null,
+    phone: contact.phone || null,
+    full_name: contact.full_name || null,
+    organization: contact.organization || null,
+    phone_validation_status: contact.phone_validation_status || null,
+  };
+}
+
+async function persistVisitorEventWithKeepalive(event) {
+  await fetch(`${SUPABASE_URL}/rest/v1/visitor_events`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+      "content-type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify(event),
+    keepalive: true,
+  });
 }
 
 async function saveLead({ email, phone }) {
@@ -621,11 +659,12 @@ function renderReports(reports, container, count) {
       const pdfLabel = hasPdfAccess() && report.pdf_url ? "Abrir PDF" : "Validar acceso";
       const primaryHref = report.html_url ? href : pdfHref;
       const primaryLabel = report.html_url ? "Ver informe" : pdfLabel;
-      const pdfAttributes = report.html_url ? "" : ` data-pdf-download data-report-index="${index}"`;
+      const reportIndexAttribute = ` data-report-index="${index}"`;
+      const pdfAttributes = report.html_url ? "" : " data-pdf-download";
 
       if (isCompactList) {
         return `
-          <a href="${primaryHref}"${pdfAttributes} data-track="${report.html_url ? "open_report" : "request_pdf"}">
+          <a href="${primaryHref}"${reportIndexAttribute}${pdfAttributes}${report.html_url ? " data-report-open" : ""} data-track="${report.html_url ? "open_report" : "request_pdf"}">
             <time datetime="${escapeAttribute(report.fecha || "")}">${date}</time>
             <span>${title}</span>
             <strong>${primaryLabel}</strong>
@@ -643,7 +682,7 @@ function renderReports(reports, container, count) {
             <h2>${title}</h2>
           </div>
           <div class="report-actions">
-            <a class="download-link" href="${href}" target="_blank" rel="noopener" data-track="open_report">Ver informe</a>
+            ${report.html_url ? `<a class="download-link" href="${href}" target="_blank" rel="noopener" data-report-open data-report-index="${index}" data-track="open_report">Ver informe</a>` : ""}
             <a class="request-link" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>
           </div>
         </article>
@@ -652,6 +691,7 @@ function renderReports(reports, container, count) {
     .join("");
 
   bindPdfDownloadLinks(container, reports);
+  bindReportOpenLinks(container, reports);
 }
 
 function hasPdfAccess() {
@@ -672,13 +712,45 @@ function bindPdfDownloadLinks(container, reports) {
   container.querySelectorAll("[data-pdf-download]").forEach((link) => {
     link.addEventListener("click", async (event) => {
       const report = reports[Number(link.dataset.reportIndex)];
-      if (!report || !hasPdfAccess() || !report.pdf_url) return;
+      if (!report) return;
 
       event.preventDefault();
-      logPdfDownload(report);
+      if (!hasPdfAccess() || !report.pdf_url) {
+        await logReportInterest(report, "report_access_requested", link.href);
+        window.location.href = link.href;
+        return;
+      }
+
+      await logPdfDownload(report);
       window.open(report.pdf_url, "_blank", "noopener");
     });
   });
+}
+
+function bindReportOpenLinks(container, reports) {
+  container.querySelectorAll("[data-report-open]").forEach((link) => {
+    link.addEventListener("click", async (event) => {
+      const report = reports[Number(link.dataset.reportIndex)];
+      if (!report) return;
+
+      event.preventDefault();
+      await logReportInterest(report, "report_open", report.html_url || link.href);
+      window.open(link.href, link.target || "_self", "noopener");
+    });
+  });
+}
+
+async function logReportInterest(report, eventType, targetUrl) {
+  await trackEvent(eventType, {
+    radiografia_id: report.id || null,
+    title: report.titulo || null,
+    html_url: report.html_url || null,
+    pdf_url: report.pdf_url || null,
+    target_url: targetUrl || report.html_url || report.pdf_url || null,
+    lugar: report.localidad || report.provincia || null,
+    provincia: report.provincia || null,
+    localidad: report.localidad || null,
+  }, true);
 }
 
 async function logPdfDownload(report) {
@@ -696,7 +768,8 @@ async function logPdfDownload(report) {
     user_agent: navigator.userAgent,
   };
 
-  trackEvent("download_report", {
+  await trackEvent("download_report", {
+    radiografia_id: report.id || null,
     title: report.titulo,
     pdf_url: report.pdf_url,
     lugar: payload.lugar,
@@ -932,12 +1005,12 @@ async function loadAdminDashboard() {
     adminReports = data.reports || [];
     setAdminTotal("reports", data.totals?.reports ?? adminReports.length);
     setAdminTotal("downloads", data.totals?.downloads ?? data.downloads?.length ?? 0);
-    setAdminTotal("contacts", data.totals?.contacts ?? data.contacts?.length ?? 0);
+    setAdminTotal("contacts", data.totals?.audience ?? data.totals?.contacts ?? data.contacts?.length ?? 0);
     setAdminTotal("events", data.totals?.events ?? data.events?.length ?? 0);
     renderAdminList(containers.reports, data.reports || [], "Todavía no hay radiografías cargadas.", renderAdminReportItem);
     setAdminDashboardStatus(`${adminReports.length} radiografía${adminReports.length === 1 ? "" : "s"}/PDF cargado${adminReports.length === 1 ? "" : "s"}.`);
     renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", renderAdminDownloadItem);
-    renderAdminList(containers.contacts, data.contacts || [], "Todavía no hay contactos.", renderAdminContactItem);
+    renderAdminList(containers.contacts, data.audience || data.contacts || [], "Todavía no hay contactos o intereses registrados.", renderAdminAudienceItem);
     renderAdminList(containers.events, data.events || [], "Todavía no hay eventos.", renderAdminEventItem);
   } catch (error) {
     setAdminDashboardStatus(`No se pudo cargar el listado: ${error.message}`);
@@ -1014,6 +1087,30 @@ function renderAdminContactItem(item) {
       <strong>${escapeHtml(item.full_name || item.email || item.phone || "Contacto")}</strong>
       <span>${escapeHtml([item.organization, item.phone_validation_status].filter(Boolean).join(" | "))}</span>
       <small>${escapeHtml(item.last_seen_at || item.created_at || "")}</small>
+    </div>
+  `;
+}
+
+function renderAdminAudienceItem(item) {
+  const reports = (item.interested_reports || [])
+    .map((report) => report.title || report.radiografia_id)
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(" | ");
+  const contact = [item.full_name, item.organization, item.email, item.phone].filter(Boolean).join(" | ");
+  const activity = [
+    item.report_views ? `${item.report_views} vistas` : "",
+    item.report_requests ? `${item.report_requests} pedidos` : "",
+    item.downloads ? `${item.downloads} descargas` : "",
+    item.visit_count ? `${item.visit_count} visitas` : "",
+  ].filter(Boolean).join(" | ");
+
+  return `
+    <div class="admin-list-item">
+      <strong>${escapeHtml(contact || item.visitor_id || "Visitante")}</strong>
+      ${activity ? `<span>${escapeHtml(activity)}</span>` : ""}
+      ${reports ? `<span>Interés: ${escapeHtml(reports)}</span>` : ""}
+      <small>${escapeHtml(item.last_interest_at || item.last_seen_at || item.created_at || "")}</small>
     </div>
   `;
 }
