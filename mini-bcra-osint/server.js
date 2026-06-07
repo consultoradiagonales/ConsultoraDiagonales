@@ -40,9 +40,18 @@ async function readJsonLines(file) {
 async function listArtifacts() {
   const files = await fs.readdir(OUT_DIR).catch(() => []);
   const records = await readJsonLines(LOG_FILE);
+  const usefulRecords = records.filter(record =>
+    record.result?.riskSignal !== "consulta_fallida" &&
+    !record.result?.deudas?.error
+  );
   return {
-    records: records.slice(-20).reverse(),
-    files: files.sort().reverse().slice(0, 40).map((name) => ({
+    records: usefulRecords.slice(-20).reverse(),
+    files: files
+      .filter(name => name.includes(".wrapper.osint.json"))
+      .sort()
+      .reverse()
+      .slice(0, 40)
+      .map((name) => ({
       name,
       path: path.join(OUT_DIR, name)
     }))

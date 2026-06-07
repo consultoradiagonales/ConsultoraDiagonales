@@ -14,6 +14,40 @@ function normalizeIdentifier(value) {
   return String(value || "").replace(/\D/g, "");
 }
 
+function cuitCheckDigit(prefix, dni) {
+  const base = `${prefix}${dni.padStart(8, "0")}`;
+  const weights = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+  const sum = base.split("").reduce((total, digit, index) => total + Number(digit) * weights[index], 0);
+  const mod = 11 - (sum % 11);
+  if (mod === 11) return "0";
+  if (mod === 10) return null;
+  return String(mod);
+}
+
+function validateCuit(value) {
+  const numeric = normalizeIdentifier(value);
+  if (!/^\d{11}$/.test(numeric)) return false;
+  const expected = cuitCheckDigit(numeric.slice(0, 2), numeric.slice(2, 10));
+  return expected === numeric.slice(10);
+}
+
+function cuitVariantsFromDni(value) {
+  const numeric = normalizeIdentifier(value);
+  if (!/^\d{7,8}$/.test(numeric)) return [];
+  const dni = numeric.padStart(8, "0");
+  return [...new Set(["20", "23", "24", "27"].map(prefix => {
+    const check = cuitCheckDigit(prefix, dni);
+    return check ? `${prefix}${dni}${check}` : null;
+  }).filter(Boolean))];
+}
+
+function candidateIdentifiers(value) {
+  const numeric = normalizeIdentifier(value);
+  if (/^\d{11}$/.test(numeric)) return [numeric];
+  if (/^\d{7,8}$/.test(numeric)) return cuitVariantsFromDni(numeric);
+  return [];
+}
+
 function timestamp() {
   return new Date().toISOString().replace(/[:.]/g, "-");
 }
@@ -143,9 +177,30 @@ function summarize(results) {
 }
 
 async function queryBcraWrapper(identifier) {
-  const normalized = normalizeIdentifier(identifier);
-  if (!/^\d{11}$/.test(normalized)) {
-    throw new Error("Ingresar CUIT/CUIL/CDI de 11 digitos.");
+  const candidates = candidateIdentifiers(identifier);
+  if (!candidates.length) {
+    throw new Error("Ingresar CUIT/CUIL/CDI de 11 digitos o DNI de 7/8 digitos.");
+  }
+
+  let lastFailure = null;
+  for (const candidate of candidates) {
+    try {
+      const record = await querySingleBcraIdentifier(identifier, candidate);
+      if (record.result?.riskSignal !== "consulta_fallida" || record.servedFromCache) return record;
+      lastFailure = record;
+    } catch (error) {
+      lastFailure = error;
+    }
+    await wait(2500);
+  }
+
+  if (lastFailure instanceof Error) throw lastFailure;
+  return lastFailure;
+}
+
+async function querySingleBcraIdentifier(inputIdentifier, normalized) {
+  if (!validateCuit(normalized)) {
+    throw new Error(`CUIT/CUIL/CDI invalido: ${normalized}`);
   }
 
   await fs.mkdir(OUT_DIR, { recursive: true });
@@ -189,6 +244,11 @@ async function queryBcraWrapper(identifier) {
     if (cached) {
       return {
         ...cached,
+        query: {
+          ...(cached.query || {}),
+          input: inputIdentifier,
+          normalized
+        },
         servedFromCache: true,
         cacheReason: "BCRA no respondio en vivo; se devuelve el ultimo registro exitoso para este identificador.",
         liveFailure: {
@@ -214,7 +274,7 @@ async function queryBcraWrapper(identifier) {
     identifierType: "CUIT_CUIL_CDI",
     consultedIdentifier: normalized,
     query: {
-      input: identifier,
+      input: inputIdentifier,
       normalized
     },
     endpoints: {
