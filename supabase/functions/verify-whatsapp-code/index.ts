@@ -1,7 +1,43 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const allowedOrigins = new Set([
+  "https://consultoradiagonales.com.ar",
+  "https://www.consultoradiagonales.com.ar",
+  "https://consultoradiagonales.github.io",
+]);
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigins.has(origin) ? origin : "https://consultoradiagonales.com.ar",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
+
+function clientIp(req: Request) {
+  return (req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown").split(",")[0].trim();
+}
+
+function checkRateLimit(key: string, limit: number, windowMs: number) {
+  const now = Date.now();
+  const current = rateBuckets.get(key);
+  if (!current || current.resetAt <= now) {
+    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return { ok: true, retryAfter: 0 };
+  }
+  if (current.count >= limit) {
+    return { ok: false, retryAfter: Math.ceil((current.resetAt - now) / 1000) };
+  }
+  current.count += 1;
+  return { ok: true, retryAfter: 0 };
+}
+
+function rateLimitedResponse(retryAfter: number, headers: HeadersInit) {
+  return Response.json(
+    { verified: false, error: "rate_limited", message: "Demasiados intentos. Intenta de nuevo mas tarde." },
+    { status: 429, headers: { ...headers, "Retry-After": String(retryAfter) } },
+  );
+}
 
 async function sha256(value: string) {
   const data = new TextEncoder().encode(value);
@@ -14,11 +50,16 @@ function normalizeWhatsappPhone(phone: string) {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    if (req.method !== "POST") {
+      return Response.json({ verified: false, error: "method not allowed" }, { status: 405, headers: corsHeaders });
+    }
+
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const phone = String(body.phone || "").trim();
     const code = String(body.code || "").trim();
     const verificationId = String(body.verification_id || "").trim();
@@ -29,6 +70,10 @@ Deno.serve(async (req) => {
     }
 
     const normalizedPhone = normalizeWhatsappPhone(phone);
+    const ipLimit = checkRateLimit(`verify-wa:ip:${clientIp(req)}`, 30, 10 * 60 * 1000);
+    if (!ipLimit.ok) return rateLimitedResponse(ipLimit.retryAfter, corsHeaders);
+    const verificationLimit = checkRateLimit(`verify-wa:id:${verificationId}`, 6, 10 * 60 * 1000);
+    if (!verificationLimit.ok) return rateLimitedResponse(verificationLimit.retryAfter, corsHeaders);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") || "",

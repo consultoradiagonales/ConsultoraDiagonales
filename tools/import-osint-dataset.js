@@ -1,8 +1,8 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://fmtjbfufuprkfwneokuk.supabase.co";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_uyzkF055kqQYzmTY1mJaRQ_53M35zXL";
+const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "";
 
 const IMPORTERS = {
   igj: {
@@ -224,6 +224,10 @@ function buildPayload(record) {
 }
 
 async function store(payload) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error("Configurar SUPABASE_URL y SUPABASE_ANON_KEY antes de importar.");
+  }
+
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/store_osint_run`, {
     method: "POST",
     headers: {

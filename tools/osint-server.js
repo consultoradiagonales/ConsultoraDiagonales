@@ -11,8 +11,8 @@ const DATA_DIR = path.join(ROOT, "osint-data");
 const RUNS_FILE = path.join(DATA_DIR, "runs.jsonl");
 const SUBJECTS_FILE = path.join(DATA_DIR, "subjects.jsonl");
 const QUERY_LOG_FILE = path.join(DATA_DIR, "query-log.jsonl");
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://fmtjbfufuprkfwneokuk.supabase.co";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_uyzkF055kqQYzmTY1mJaRQ_53M35zXL";
+const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "";
 
 const SOURCE_CATALOG = [
   {

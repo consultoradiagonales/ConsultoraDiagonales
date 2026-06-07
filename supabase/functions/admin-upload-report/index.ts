@@ -1,8 +1,37 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-key",
-  "Access-Control-Allow-Methods": "POST, PATCH, DELETE, OPTIONS",
-};
+const allowedOrigins = new Set([
+  "https://consultoradiagonales.com.ar",
+  "https://www.consultoradiagonales.com.ar",
+  "https://consultoradiagonales.github.io",
+]);
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigins.has(origin) ? origin : "https://consultoradiagonales.com.ar",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-key",
+    "Access-Control-Allow-Methods": "POST, PATCH, DELETE, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+
+function clientIp(req: Request) {
+  return (req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown").split(",")[0].trim();
+}
+
+function checkRateLimit(key: string, limit: number, windowMs: number) {
+  const now = Date.now();
+  const current = rateBuckets.get(key);
+  if (!current || current.resetAt <= now) {
+    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return { ok: true, retryAfter: 0 };
+  }
+  if (current.count >= limit) {
+    return { ok: false, retryAfter: Math.ceil((current.resetAt - now) / 1000) };
+  }
+  current.count += 1;
+  return { ok: true, retryAfter: 0 };
+}
 
 function slugifyFileName(name: string) {
   return name
@@ -66,11 +95,21 @@ async function uploadReportFile(supabase: Awaited<ReturnType<typeof getSupabaseC
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     if (!["POST", "PATCH", "DELETE"].includes(req.method)) {
       return Response.json({ error: "method not allowed" }, { status: 405, headers: corsHeaders });
+    }
+
+    const adminKey = req.headers.get("x-admin-key") || "";
+    const adminLimit = checkRateLimit(`admin-upload:${clientIp(req)}:${adminKey.slice(0, 8)}`, 10, 60 * 1000);
+    if (!adminLimit.ok) {
+      return Response.json(
+        { error: "rate_limited", message: "Demasiadas operaciones administrativas." },
+        { status: 429, headers: { ...corsHeaders, "Retry-After": String(adminLimit.retryAfter) } },
+      );
     }
 
     if (!requireAdmin(req)) {

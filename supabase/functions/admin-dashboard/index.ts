@@ -1,9 +1,39 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-key",
-};
+const allowedOrigins = new Set([
+  "https://consultoradiagonales.com.ar",
+  "https://www.consultoradiagonales.com.ar",
+  "https://consultoradiagonales.github.io",
+]);
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigins.has(origin) ? origin : "https://consultoradiagonales.com.ar",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-key",
+    "Vary": "Origin",
+  };
+}
+
+function clientIp(req: Request) {
+  return (req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown").split(",")[0].trim();
+}
+
+function checkRateLimit(key: string, limit: number, windowMs: number) {
+  const now = Date.now();
+  const current = rateBuckets.get(key);
+  if (!current || current.resetAt <= now) {
+    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return { ok: true, retryAfter: 0 };
+  }
+  if (current.count >= limit) {
+    return { ok: false, retryAfter: Math.ceil((current.resetAt - now) / 1000) };
+  }
+  current.count += 1;
+  return { ok: true, retryAfter: 0 };
+}
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -13,6 +43,13 @@ Deno.serve(async (req) => {
 
     const expectedAdminKey = Deno.env.get("ADMIN_UPLOAD_KEY") || "";
     const providedAdminKey = req.headers.get("x-admin-key") || "";
+    const adminLimit = checkRateLimit(`admin-dashboard:${clientIp(req)}:${providedAdminKey.slice(0, 8)}`, 30, 60 * 1000);
+    if (!adminLimit.ok) {
+      return Response.json(
+        { error: "rate_limited", message: "Demasiadas solicitudes al panel." },
+        { status: 429, headers: { ...corsHeaders, "Retry-After": String(adminLimit.retryAfter) } },
+      );
+    }
 
     if (!expectedAdminKey || providedAdminKey !== expectedAdminKey) {
       return Response.json({ error: "unauthorized" }, { status: 401, headers: corsHeaders });
@@ -29,7 +66,7 @@ Deno.serve(async (req) => {
         .from("radiografias")
         .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type, created_at, updated_at")
         .order("created_at", { ascending: false })
-        .limit(1000),
+        .limit(250),
       supabase
         .from("pdf_downloads")
         .select("id, visitor_id, radiografia_id, pdf_url, email, phone, full_name, lugar, provincia, localidad, downloaded_at, created_at")
@@ -39,17 +76,17 @@ Deno.serve(async (req) => {
         .from("contactos")
         .select("id, visitor_id, email, phone, full_name, organization, phone_validation_status, created_at, last_seen_at")
         .order("last_seen_at", { ascending: false })
-        .limit(1000),
+        .limit(250),
       supabase
         .from("visitor_profiles")
         .select("visitor_id, email, phone, full_name, organization, first_seen_at, last_seen_at, visit_count, tags")
         .order("last_seen_at", { ascending: false })
-        .limit(1000),
+        .limit(250),
       supabase
         .from("visitor_events")
         .select("id, visitor_id, event_type, page, path, metadata, created_at")
         .order("created_at", { ascending: false })
-        .limit(500),
+        .limit(100),
       supabase
         .from("pdf_download_metrics")
         .select("radiografia_id, titulo, lugar, provincia, localidad, dia, descargas, usuarios_unicos, telefonos_unicos, ultima_descarga")

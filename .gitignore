@@ -1,7 +1,14 @@
 WEB DIAGONALES/
 .claude/worktrees/
 supabase/.temp/
+.env
+.env.*
+!.env.example
+*.pem
+*service-role*
+*service_role*
 node_modules/
+dist/
 exportados/
 tools/osint-data/*.jsonl
 BCRA-Wrapper/
