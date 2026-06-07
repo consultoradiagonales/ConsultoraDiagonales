@@ -1,6 +1,18 @@
 WEB DIAGONALES/
 .claude/worktrees/
+.claude/
+.codex/
+.github/
 supabase/.temp/
+supabase/
+tools/
+mini-bcra-osint/
+scripts/
+package.json
+package-lock.json
+supabase-schema.sql
+SECURITY-LAUNCH.md
+Captura.JPG
 .env
 .env.*
 !.env.example
