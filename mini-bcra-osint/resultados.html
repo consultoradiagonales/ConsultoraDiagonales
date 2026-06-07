@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resultados BCRA OSINT</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --panel: #fff;
+      --ink: #17202a;
+      --muted: #657386;
+      --line: #d7dee8;
+      --blue: #1f6fb8;
+      --green: #137a52;
+      --amber: #956000;
+      --red: #a33434;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    header {
+      background: #102338;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 22px; }
+    header a {
+      color: white;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,.45);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-weight: 700;
+    }
+    main {
+      width: min(1240px, calc(100vw - 28px));
+      margin: 18px auto 32px;
+      display: grid;
+      gap: 16px;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+    select, button {
+      min-height: 40px;
+      border-radius: 6px;
+      border: 1px solid #b7c1cf;
+      background: #fff;
+      padding: 0 10px;
+      font-size: 14px;
+    }
+    button {
+      border-color: #174f84;
+      background: var(--blue);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+      min-height: 86px;
+    }
+    .card small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .card strong {
+      display: block;
+      font-size: 17px;
+      overflow-wrap: anywhere;
+    }
+    .pill {
+      display: inline-flex;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      background: #edf1f6;
+      color: #334155;
+    }
+    .pill.ok { background: #dff3e9; color: var(--green); }
+    .pill.warn { background: #fff3cd; color: var(--amber); }
+    .pill.bad { background: #f7dddd; color: var(--red); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid #e5eaf2;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: #4b5563;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0e1722;
+      color: #dce8f5;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 280px;
+      overflow: auto;
+      font-size: 13px;
+    }
+    .muted { color: var(--muted); font-size: 14px; }
+    .empty {
+      padding: 18px;
+      color: var(--muted);
+      background: #f8fafc;
+      border: 1px dashed #c8d2df;
+      border-radius: 8px;
+    }
+    @media (max-width: 980px) {
+      .cards, .grid2, .toolbar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Resultados BCRA OSINT</h1>
+    <div>
+      <a href="/visor">Visor editable</a>
+      <a href="/">Nueva consulta</a>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="toolbar">
+        <select id="recordSelect"></select>
+        <button id="reload">Actualizar</button>
+        <button id="copyBrief">Copiar brief</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Resumen</h2>
+      <div id="summary" class="cards"></div>
+    </section>
+
+    <section>
+      <h2>Periodo Actual</h2>
+      <div id="current"></div>
+    </section>
+
+    <section>
+      <h2>Histórico</h2>
+      <div id="history"></div>
+    </section>
+
+    <div class="grid2">
+      <section>
+        <h2>Evidencia</h2>
+        <pre id="evidence"></pre>
+      </section>
+      <section>
+        <h2>Brief OSINT</h2>
+        <pre id="brief"></pre>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    let records = [];
+    let selected = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function money(value) {
+      const n = Number(value || 0);
+      return new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 }).format(n);
+    }
+
+    function signalClass(signal) {
+      if (/riesgo|judicial|rechaz/i.test(signal || "")) return "bad";
+      if (/moderado|clasificar/i.test(signal || "")) return "warn";
+      return "ok";
+    }
+
+    function currentEntities(record) {
+      return record?.result?.deudas?.results?.periodos?.flatMap(p =>
+        (p.entidades || []).map(e => ({ periodo: p.periodo, ...e }))
+      ) || [];
+    }
+
+    function historicRows(record) {
+      return record?.result?.historicas?.results?.periodos?.map(period => {
+        const entidades = period.entidades || [];
+        return {
+          periodo: period.periodo,
+          entidades: entidades.length,
+          monto: entidades.reduce((sum, item) => sum + Number(item.monto || 0), 0),
+          situacionMaxima: entidades.reduce((max, item) => Math.max(max, Number(item.situacion || 0)), 0),
+          judicial: entidades.some(item => item.procesoJud)
+        };
+      }) || [];
+    }
+
+    function table(rows, columns) {
+      if (!rows.length) return `<div class="empty">Sin datos para mostrar.</div>`;
+      return `
+        <table>
+          <thead><tr>${columns.map(c => `<th>${c.label}</th>`).join("")}</tr></thead>
+          <tbody>
+            ${rows.map(row => `<tr>${columns.map(c => `<td>${c.render ? c.render(row) : (row[c.key] ?? "")}</td>`).join("")}</tr>`).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function buildBrief(record) {
+      if (!record) return "Sin registro seleccionado.";
+      return [
+        `# Brief BCRA OSINT`,
+        ``,
+        `Fuente: ${record.source}`,
+        `Consulta: ${record.consultedAt}`,
+        `Identificador: ${record.consultedIdentifier}`,
+        `Denominacion: ${record.result?.denominacion || "-"}`,
+        `Confianza: ${record.confidence || "-"}`,
+        `Senal: ${record.result?.riskSignal || "-"}`,
+        ``,
+        `## Lectura`,
+        `- Periodos actuales: ${record.result?.currentPeriods ?? 0}`,
+        `- Entidades actuales: ${record.result?.currentEntities ?? 0}`,
+        `- Periodos historicos: ${record.result?.historicPeriods ?? 0}`,
+        `- Situacion maxima: ${record.result?.maxSituation ?? "-"}`,
+        `- Deuda total actual: ${money(record.result?.totalDebt)}`,
+        `- Cheques rechazados: ${record.result?.rejectedChecks ?? 0}`,
+        `- Proceso judicial: ${record.result?.hasJudicial ? "si" : "no"}`,
+        ``,
+        `## Caveats`,
+        `- ${record.caveats || "Validar contra fuente oficial."}`,
+        `- ${record.compliance || ""}`
+      ].join("\n");
+    }
+
+    function render() {
+      selected = records[Number($("recordSelect").value)] || records[0] || null;
+      if (!selected) {
+        $("summary").innerHTML = `<div class="empty">No hay registros. Primero ejecutá una consulta.</div>`;
+        $("current").innerHTML = `<div class="empty">Sin datos.</div>`;
+        $("history").innerHTML = `<div class="empty">Sin datos.</div>`;
+        $("evidence").textContent = "";
+        $("brief").textContent = "";
+        return;
+      }
+
+      $("summary").innerHTML = `
+        <div class="card"><small>Denominación</small><strong>${selected.result?.denominacion || "-"}</strong></div>
+        <div class="card"><small>Señal</small><strong><span class="pill ${signalClass(selected.result?.riskSignal)}">${selected.result?.riskSignal || "-"}</span></strong></div>
+        <div class="card"><small>Confianza</small><strong>${selected.confidence || "-"}</strong></div>
+        <div class="card"><small>Situación máxima</small><strong>${selected.result?.maxSituation ?? "-"}</strong></div>
+        <div class="card"><small>Deuda total actual</small><strong>${money(selected.result?.totalDebt)}</strong></div>
+      `;
+
+      $("current").innerHTML = table(currentEntities(selected), [
+        { key: "periodo", label: "Periodo" },
+        { key: "entidad", label: "Entidad" },
+        { key: "situacion", label: "Situación" },
+        { key: "monto", label: "Monto", render: row => money(row.monto) },
+        { key: "diasAtrasoPago", label: "Días atraso" },
+        { key: "procesoJud", label: "Judicial", render: row => row.procesoJud ? "Sí" : "No" }
+      ]);
+
+      $("history").innerHTML = table(historicRows(selected), [
+        { key: "periodo", label: "Periodo" },
+        { key: "entidades", label: "Entidades" },
+        { key: "situacionMaxima", label: "Sit. máxima" },
+        { key: "monto", label: "Monto total", render: row => money(row.monto) },
+        { key: "judicial", label: "Judicial", render: row => row.judicial ? "Sí" : "No" }
+      ]);
+
+      $("evidence").textContent = JSON.stringify(selected.evidence || {}, null, 2);
+      $("brief").textContent = buildBrief(selected);
+    }
+
+    async function load() {
+      const response = await fetch("/api/status");
+      const data = await response.json();
+      records = (data.artifacts.records || []).filter(record =>
+        record.module === "bcra_wrapper_api" &&
+        record.result?.riskSignal !== "consulta_fallida"
+      );
+      $("recordSelect").innerHTML = records.length
+        ? records.map((record, index) => `<option value="${index}">${record.consultedAt || ""} - ${record.consultedIdentifier || ""} - ${record.result?.denominacion || ""}</option>`).join("")
+        : `<option>Sin registros</option>`;
+      render();
+    }
+
+    $("recordSelect").addEventListener("change", render);
+    $("reload").addEventListener("click", load);
+    $("copyBrief").addEventListener("click", async () => {
+      await navigator.clipboard.writeText($("brief").textContent);
+    });
+
+    load();
+  </script>
+</body>
+</html>

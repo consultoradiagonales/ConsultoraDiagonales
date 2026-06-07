@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OSINT Google Launcher</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f6f7f9;
+      color: #15171a;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+    main {
+      width: min(920px, calc(100vw - 32px));
+      background: #fff;
+      border: 1px solid #d8dde6;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(20, 28, 38, .08);
+    }
+    h1 {
+      margin: 0 0 16px;
+      font-size: 24px;
+    }
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-weight: 700;
+    }
+    input, select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #bdc5d1;
+      border-radius: 6px;
+      padding: 11px 12px;
+      font-size: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    button, a.button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border-radius: 6px;
+      border: 1px solid #1c5f9f;
+      background: #1f6fb8;
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 0 14px;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #fff;
+      color: #1f4e79;
+      border-color: #aeb8c5;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .results {
+      margin-top: 22px;
+      display: grid;
+      gap: 10px;
+    }
+    .query {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid #e0e4ea;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfe;
+    }
+    code {
+      overflow-wrap: anywhere;
+      font-size: 14px;
+    }
+    .note {
+      margin-top: 14px;
+      color: #5b6470;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    @media (max-width: 720px) {
+      .grid, .query {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>OSINT Google Launcher</h1>
+
+    <label for="target">Dato o frase a buscar</label>
+    <input id="target" autocomplete="off" placeholder="Nombre, empresa, expediente, dominio, DNI propio, etc.">
+
+    <div class="grid">
+      <div>
+        <label for="jurisdiction">Jurisdicción</label>
+        <input id="jurisdiction" value="Argentina" autocomplete="off">
+      </div>
+      <div>
+        <label for="mode">Modo</label>
+        <select id="mode">
+          <option value="general">General</option>
+          <option value="official">Fuentes oficiales</option>
+          <option value="docs">PDFs y documentos</option>
+          <option value="gazette">Boletines y actos</option>
+          <option value="procurement">Contrataciones</option>
+          <option value="media">Medios y archivo web</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="build">Generar búsquedas</button>
+      <button class="secondary" id="clear">Limpiar</button>
+    </div>
+
+    <p class="note">
+      Este archivo solo arma enlaces de búsqueda en Google. No scrapea, no salta captchas, no entra a cuentas y no guarda datos.
+    </p>
+
+    <section class="results" id="results" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const target = document.getElementById('target');
+    const jurisdiction = document.getElementById('jurisdiction');
+    const mode = document.getElementById('mode');
+    const results = document.getElementById('results');
+
+    const templates = {
+      general: [
+        '"{q}"',
+        '"{q}" "{j}"',
+        '"{q}" (expediente OR resolucion OR decreto OR disposicion)',
+        '"{q}" (denuncia OR sancion OR auditoria OR tribunal)'
+      ],
+      official: [
+        '"{q}" site:gov.ar',
+        '"{q}" site:gob.ar',
+        '"{q}" site:argentina.gob.ar',
+        '"{q}" site:jus.gob.ar'
+      ],
+      docs: [
+        '"{q}" filetype:pdf',
+        '"{q}" filetype:xls OR filetype:xlsx',
+        '"{q}" filetype:doc OR filetype:docx',
+        '"{q}" "{j}" filetype:pdf'
+      ],
+      gazette: [
+        '"{q}" site:boletinoficial.gob.ar',
+        '"{q}" "Boletin Oficial"',
+        '"{q}" (decreto OR resolucion OR disposicion) "Boletin Oficial"'
+      ],
+      procurement: [
+        '"{q}" (licitacion OR contratacion OR adjudicacion OR proveedor)',
+        '"{q}" site:comprar.gob.ar',
+        '"{q}" site:contrataciones.gov.ar',
+        '"{q}" "orden de compra"'
+      ],
+      media: [
+        '"{q}" (medio OR diario OR noticia)',
+        '"{q}" "{j}" (denuncia OR investigacion OR entrevista)',
+        '"{q}" "archive.org"',
+        '"{q}" "webcache"'
+      ]
+    };
+
+    function googleUrl(query) {
+      return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    }
+
+    function render() {
+      const q = target.value.trim();
+      const j = jurisdiction.value.trim() || 'Argentina';
+      results.innerHTML = '';
+      if (!q) return;
+
+      const queries = templates[mode.value].map(t => t.replaceAll('{q}', q).replaceAll('{j}', j));
+      for (const query of queries) {
+        const row = document.createElement('div');
+        row.className = 'query';
+
+        const code = document.createElement('code');
+        code.textContent = query;
+
+        const link = document.createElement('a');
+        link.className = 'button';
+        link.href = googleUrl(query);
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'Abrir Google';
+
+        row.append(code, link);
+        results.append(row);
+      }
+    }
+
+    document.getElementById('build').addEventListener('click', render);
+    document.getElementById('clear').addEventListener('click', () => {
+      target.value = '';
+      results.innerHTML = '';
+      target.focus();
+    });
+    target.addEventListener('keydown', event => {
+      if (event.key === 'Enter') render();
+    });
+  </script>
+</body>
+</html>

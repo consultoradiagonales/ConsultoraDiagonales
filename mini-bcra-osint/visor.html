@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visor BCRA OSINT</title>
+  <style>
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #eef2f6; color: #17202a; }
+    header { background: #102338; color: #fff; padding: 16px 22px; }
+    header h1 { margin: 0; font-size: 22px; }
+    main { width: min(1120px, calc(100vw - 28px)); margin: 18px auto; display: grid; gap: 14px; }
+    section { background: #fff; border: 1px solid #d7dee8; border-radius: 8px; padding: 16px; }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    input, button { min-height: 40px; border: 1px solid #b7c1cf; border-radius: 6px; padding: 0 10px; font-size: 14px; }
+    button { background: #1f6fb8; color: #fff; border-color: #174f84; font-weight: 700; cursor: pointer; }
+    .row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; }
+    .cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #fbfcfe; }
+    .card small { display: block; color: #657386; margin-bottom: 8px; font-size: 12px; }
+    .card strong { display: block; overflow-wrap: anywhere; font-size: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px solid #e5eaf2; padding: 8px; text-align: left; vertical-align: top; }
+    th { color: #4b5563; font-size: 12px; text-transform: uppercase; }
+    pre { white-space: pre-wrap; word-break: break-word; background: #0e1722; color: #dce8f5; border-radius: 8px; padding: 12px; max-height: 300px; overflow: auto; }
+    .muted { color: #657386; font-size: 14px; }
+    .pill { display: inline-flex; padding: 4px 9px; border-radius: 999px; font-weight: 700; background: #edf1f6; }
+    .ok { background: #dff3e9; color: #137a52; }
+    .bad { background: #f7dddd; color: #a33434; }
+    .warn { background: #fff3cd; color: #956000; }
+    @media (max-width: 900px) { .cards, .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header><h1>Visor BCRA OSINT</h1></header>
+  <main>
+    <section>
+      <h2>Cargar resultado</h2>
+      <div class="row">
+        <input id="file" type="file" accept=".json,application/json">
+        <button id="loadLatest">Cargar ultimo valido</button>
+        <button id="demo">Usar ejemplo</button>
+      </div>
+      <p class="muted">Elegir un archivo *.wrapper.osint.json, cargar el ultimo resultado valido del servidor o pegar JSON manualmente.</p>
+    </section>
+    <section>
+      <h2>JSON manual</h2>
+      <pre id="manual" contenteditable="true"></pre>
+      <p><button id="parse">Visualizar JSON</button></p>
+    </section>
+    <section><h2>Resumen</h2><div id="summary" class="cards"></div></section>
+    <section><h2>Periodo actual</h2><div id="current"></div></section>
+    <section><h2>Historico</h2><div id="history"></div></section>
+    <section><h2>Brief</h2><pre id="brief"></pre></section>
+  </main>
+  <script>
+    const $ = id => document.getElementById(id);
+    const money = value => new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 }).format(Number(value || 0));
+    const cls = signal => /fallida|riesgo/i.test(signal || "") ? "bad" : /moderado|clasificar/i.test(signal || "") ? "warn" : "ok";
+    function currentEntities(record) {
+      return record?.result?.deudas?.results?.periodos?.flatMap(period => (period.entidades || []).map(entity => ({ periodo: period.periodo, ...entity }))) || [];
+    }
+    function historyRows(record) {
+      return record?.result?.historicas?.results?.periodos?.map(period => {
+        const entities = period.entidades || [];
+        return {
+          periodo: period.periodo,
+          entidades: entities.length,
+          monto: entities.reduce((sum, entity) => sum + Number(entity.monto || 0), 0),
+          situacion: entities.reduce((max, entity) => Math.max(max, Number(entity.situacion || 0)), 0),
+          judicial: entities.some(entity => entity.procesoJud)
+        };
+      }) || [];
+    }
+    function table(rows, columns) {
+      if (!rows.length) return '<p class="muted">Sin datos.</p>';
+      return `<table><thead><tr>${columns.map(column => `<th>${column.label}</th>`).join("")}</tr></thead><tbody>${rows.map(row => `<tr>${columns.map(column => `<td>${column.render ? column.render(row) : (row[column.key] ?? "")}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    }
+    function render(record) {
+      $("summary").innerHTML = `
+        <div class="card"><small>Denominacion</small><strong>${record.result?.denominacion || "-"}</strong></div>
+        <div class="card"><small>Identificador</small><strong>${record.consultedIdentifier || "-"}</strong></div>
+        <div class="card"><small>Senal</small><strong><span class="pill ${cls(record.result?.riskSignal)}">${record.result?.riskSignal || "-"}</span></strong></div>
+        <div class="card"><small>Confianza</small><strong>${record.confidence || "-"}</strong></div>
+        <div class="card"><small>Deuda actual</small><strong>${money(record.result?.totalDebt)}</strong></div>
+      `;
+      $("current").innerHTML = table(currentEntities(record), [
+        { key: "periodo", label: "Periodo" },
+        { key: "entidad", label: "Entidad" },
+        { key: "situacion", label: "Situacion" },
+        { key: "monto", label: "Monto", render: row => money(row.monto) },
+        { key: "diasAtrasoPago", label: "Dias atraso" },
+        { key: "procesoJud", label: "Judicial", render: row => row.procesoJud ? "Si" : "No" }
+      ]);
+      $("history").innerHTML = table(historyRows(record), [
+        { key: "periodo", label: "Periodo" },
+        { key: "entidades", label: "Entidades" },
+        { key: "situacion", label: "Sit. maxima" },
+        { key: "monto", label: "Monto", render: row => money(row.monto) },
+        { key: "judicial", label: "Judicial", render: row => row.judicial ? "Si" : "No" }
+      ]);
+      $("brief").textContent = [
+        `Fuente: ${record.source || "-"}`,
+        `Fecha: ${record.consultedAt || "-"}`,
+        `Identificador: ${record.consultedIdentifier || "-"}`,
+        `Denominacion: ${record.result?.denominacion || "-"}`,
+        `Senal: ${record.result?.riskSignal || "-"}`,
+        `Confianza: ${record.confidence || "-"}`,
+        `Caveats: ${record.caveats || "-"}`
+      ].join("\n");
+    }
+    $("file").addEventListener("change", async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      $("manual").textContent = text;
+      render(JSON.parse(text));
+    });
+    $("loadLatest").addEventListener("click", async () => {
+      const response = await fetch("/api/latest-success");
+      const data = await response.json();
+      if (!data.record) {
+        $("manual").textContent = "No hay registros exitosos todavia.";
+        return;
+      }
+      $("manual").textContent = JSON.stringify(data.record, null, 2);
+      render(data.record);
+    });
+    $("parse").addEventListener("click", () => render(JSON.parse($("manual").textContent)));
+    $("demo").addEventListener("click", () => {
+      const demo = {
+        source: "BCRA Central de Deudores API v1.0",
+        consultedAt: new Date().toISOString(),
+        consultedIdentifier: "27329234083",
+        confidence: "Alta",
+        caveats: "Ejemplo local de visualizacion.",
+        result: {
+          denominacion: "ANNA YANINA SOLEDAD",
+          totalDebt: 1135,
+          riskSignal: "situacion_1_o_normal_visible",
+          deudas: { results: { periodos: [{ periodo: "202604", entidades: [{ entidad: "BANCO DE LA PROVINCIA DE BUENOS AIRES", situacion: 1, monto: 1135, diasAtrasoPago: 0, procesoJud: false }] }] } },
+          historicas: { results: { periodos: [{ periodo: "202604", entidades: [{ situacion: 1, monto: 1135, procesoJud: false }] }] } }
+        }
+      };
+      $("manual").textContent = JSON.stringify(demo, null, 2);
+      render(demo);
+    });
+    $("loadLatest").click();
+  </script>
+</body>
+</html>

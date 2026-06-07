@@ -1,3 +1,7 @@
 WEB DIAGONALES/
 .claude/worktrees/
 supabase/.temp/
+node_modules/
+exportados/
+tools/osint-data/*.jsonl
+BCRA-Wrapper/

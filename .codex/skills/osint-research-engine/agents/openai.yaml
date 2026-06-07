@@ -1,0 +1,3 @@
+display_name: OSINT Research Engine
+short_description: OSINT legal con evidencia verificable
+default_prompt: Usa esta skill para investigar un objetivo con fuentes abiertas, mapa de entidades, trazabilidad de evidencia y control de riesgos legales.

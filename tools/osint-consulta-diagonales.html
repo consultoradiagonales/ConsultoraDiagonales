@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consultora Diagonales | Data Analytics</title>
+  <style>
+    :root {
+      --ink: #18202a;
+      --muted: #637083;
+      --line: #d9e0e8;
+      --panel: #ffffff;
+      --soft: #f4f7fb;
+      --brand: #0d5f8f;
+      --brand-2: #18836b;
+      --warn: #9b5d00;
+      --bad: #9f2f2f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef3f8;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.4;
+    }
+
+    header {
+      background: #0f2536;
+      color: #fff;
+      padding: 22px 28px;
+      border-bottom: 5px solid var(--brand-2);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 4px;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    header p {
+      margin: 0;
+      color: #c8d5df;
+      font-size: 13px;
+    }
+
+    main {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    section, aside {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .stack { display: grid; gap: 14px; }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #2f3947;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #c8d2dc;
+      border-radius: 6px;
+      padding: 10px 11px;
+      color: var(--ink);
+      background: #fff;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    button, .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border: 1px solid #b9c5d0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #12202c;
+      background: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    button.primary {
+      border-color: var(--brand);
+      color: #fff;
+      background: var(--brand);
+    }
+
+    button.secondary {
+      border-color: var(--brand-2);
+      color: #fff;
+      background: var(--brand-2);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .tab.active {
+      border-color: var(--brand);
+      color: #fff;
+      background: var(--brand);
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .hidden { display: none !important; }
+    .backend-field { display: none !important; }
+    .print-only { display: none !important; }
+    .screen-hidden { display: none !important; }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .module {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfe;
+    }
+
+    .module strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #173247;
+      font-size: 13px;
+    }
+
+    .module span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .module small {
+      display: inline-flex;
+      margin-top: 8px;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: #eef3f8;
+      color: #435266;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .module.ok small { background: #e8f7ef; color: #167045; }
+    .module.sin_resultados small, .module.sin_datos small { background: #f2f5f8; color: #56657a; }
+    .module.requiere_validacion small { background: #fff4dd; color: #8a5a00; }
+    .module.error small { background: #fde8e8; color: #9f2f2f; }
+    .module.cache small { background: #e8eef8; color: #265b91; }
+
+    .history-note {
+      border: 1px solid #c9d7e5;
+      border-left: 4px solid var(--brand);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 12px 0;
+      background: #f7fbff;
+      color: #31465c;
+      font-size: 13px;
+    }
+
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .source-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .source-card h3 {
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+
+    .source-card p {
+      min-height: 40px;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .source-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 25px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      background: var(--soft);
+      color: #405064;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .note {
+      border-left: 4px solid var(--brand-2);
+      padding: 10px 12px;
+      color: #334155;
+      background: #edf8f5;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 7px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #314050;
+      background: #f5f7fa;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .report {
+      background: #fff;
+    }
+
+    .report-cover {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: start;
+      border-bottom: 3px solid var(--brand);
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+    }
+
+    .brand-title {
+      color: var(--brand);
+      font-size: 22px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .report-meta {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      color: var(--brand);
+    }
+
+    .section-title {
+      margin: 18px 0 8px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--line);
+      color: #102334;
+      font-size: 16px;
+    }
+
+    .risk-bajo { color: var(--brand-2); }
+    .risk-medio { color: var(--warn); }
+    .risk-alto { color: var(--bad); }
+
+    @media (max-width: 880px) {
+      .workspace { grid-template-columns: 1fr; }
+      .metric-row { grid-template-columns: repeat(2, 1fr); }
+      .module-grid { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      header, aside, .tabs, .no-print { display: none !important; }
+      main { max-width: none; padding: 0; }
+      .workspace { display: block; }
+      section { border: 0; padding: 0; }
+      .view { display: none !important; }
+      #reporte { display: block !important; }
+      .print-only { display: block !important; }
+      .screen-hidden { display: table-row-group !important; }
+      a { color: #000; text-decoration: none; }
+      .source-card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CONSULTORA DIAGONALES | Data Analytics</h1>
+    <p>Motor de informes comerciales, reputacionales y societarios sobre fuentes abiertas</p>
+  </header>
+
+  <main>
+    <div class="workspace">
+      <aside class="stack">
+        <section class="stack">
+          <div class="backend-field">
+            <label for="idType">Tipo de identificador</label>
+            <select id="idType">
+              <option value="cuit">CUIT / CUIL / CDI</option>
+              <option value="dni">Documento Nacional</option>
+              <option value="pasaporte">Pasaporte</option>
+              <option value="le">Libreta de Enrolamiento</option>
+              <option value="lc">Libreta Civica</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="identifier">DNI / CUIT / CUIL</label>
+            <input id="identifier" autocomplete="off" placeholder="Ej. 26534279 o 20-26534279-6">
+          </div>
+
+          <div class="backend-field">
+            <label for="fullName">Nombre / razon social</label>
+            <input id="fullName" autocomplete="off" placeholder="Opcional, mejora busquedas textuales">
+          </div>
+
+          <div class="backend-field">
+            <label for="province">Jurisdiccion principal</label>
+            <select id="province">
+              <option value="">Sin definir</option>
+              <option>Buenos Aires</option>
+              <option>CABA</option>
+              <option>Catamarca</option>
+              <option>Chaco</option>
+              <option>Chubut</option>
+              <option>Cordoba</option>
+              <option>Corrientes</option>
+              <option>Entre Rios</option>
+              <option>Formosa</option>
+              <option>Jujuy</option>
+              <option>La Pampa</option>
+              <option>La Rioja</option>
+              <option>Mendoza</option>
+              <option>Misiones</option>
+              <option>Neuquen</option>
+              <option>Rio Negro</option>
+              <option>Salta</option>
+              <option>San Juan</option>
+              <option>San Luis</option>
+              <option>Santa Cruz</option>
+              <option>Santa Fe</option>
+              <option>Santiago del Estero</option>
+              <option>Tierra del Fuego</option>
+              <option>Tucuman</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button class="primary" id="autoScanBtn">Rastrear OSINT</button>
+            <button class="secondary" id="printBtn">Descargar PDF</button>
+          </div>
+
+          <div id="variantBox" class="note">Ingrese un identificador para generar variantes de busqueda.</div>
+          <div id="scanStatus" class="note hidden"></div>
+        </section>
+      </aside>
+
+      <section>
+        <div class="tabs no-print hidden">
+          <button class="tab active" data-view="fuentes">Fuentes</button>
+          <button class="tab" data-view="hallazgos">Hallazgos</button>
+          <button class="tab" data-view="reporte">Reporte</button>
+        </div>
+
+        <div id="fuentes" class="view">
+          <div class="source-grid" id="sourceGrid"></div>
+        </div>
+
+        <div id="hallazgos" class="view">
+          <h2>Hallazgos registrados</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Fuente</th>
+                <th>Dato</th>
+                <th>Confianza</th>
+                <th>Evidencia</th>
+              </tr>
+            </thead>
+            <tbody id="findingsTable"></tbody>
+          </table>
+        </div>
+
+        <div id="reporte" class="view report active">
+          <div class="report-cover">
+            <div>
+              <div class="brand-title">CONSULTORA DIAGONALES | Data Analytics</div>
+              <h2>Informe comercial y OSINT consolidado</h2>
+              <p id="reportSubject">Sin sujeto cargado</p>
+            </div>
+            <div class="report-meta">
+              <div>Fecha: <span id="reportDate"></span></div>
+              <div>Alcance: Argentina</div>
+              <div>Metodo: OSINT asistido</div>
+            </div>
+          </div>
+
+          <div class="metric-row">
+            <div class="metric"><strong id="metricSources">0</strong><span>Modulos ejecutados</span></div>
+            <div class="metric"><strong id="metricFindings">0</strong><span>Hallazgos</span></div>
+            <div class="metric"><strong id="metricConfidence">-</strong><span>Confianza media</span></div>
+            <div class="metric"><strong id="metricRisk">-</strong><span>Lectura preliminar</span></div>
+          </div>
+
+          <h3 class="section-title">Resumen ejecutivo</h3>
+          <p id="executiveSummary">Ingrese un identificador o nombre y ejecute el rastreo OSINT para generar el informe automatico.</p>
+          <div id="historyNote" class="history-note hidden"></div>
+
+          <h3 class="section-title">Modulos de analisis</h3>
+          <div class="module-grid" id="moduleGrid"></div>
+
+          <h3 class="section-title print-only">Fuentes consultadas</h3>
+          <table class="print-only">
+            <thead>
+              <tr>
+                <th>Fuente</th>
+                <th>Tipo de dato</th>
+                <th>Modo</th>
+                <th>URL</th>
+              </tr>
+            </thead>
+            <tbody id="reportSources"></tbody>
+          </table>
+
+          <h3 class="section-title">Hallazgos y evidencias</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Fuente</th>
+                <th>Hallazgo</th>
+                <th>Confianza</th>
+                <th>Evidencia</th>
+              </tr>
+            </thead>
+            <tbody id="reportFindings"></tbody>
+          </table>
+
+          <h3 class="section-title print-only">Criterio metodologico</h3>
+          <p class="print-only">El informe se basa en fuentes abiertas y portales oficiales. Los datos deben verificarse contra la fuente primaria al momento de uso, porque los padrones, boletines, registros crediticios y estados administrativos pueden cambiar.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const state = {
+      sources: [],
+      scanned: false,
+      identifiers: {
+        raw: "",
+        numeric: "",
+        query: "",
+        detectedType: "",
+        variants: []
+      },
+      discoveredNames: [],
+      findings: [],
+      moduleResults: [],
+      history: null
+    };
+
+    const API_URL = `${location.protocol === "http:" ? location.origin : "http://localhost:4317"}/api/osint`;
+    const REPORT_MODULES = [
+      ["Identidad fiscal", "CUIT/CUIL/CDI, variantes y razon social"],
+      ["Dateas / padrones abiertos", "Nombre, apellido, CUIT/CUIL y domicilio cuando exista evidencia publica"],
+      ["ANSES Constancia de CUIL", "Constancia de CUIL y datos laborales si el portal lo permite"],
+      ["Riesgo financiero", "Central crediticia y senales comerciales"],
+      ["Societario", "Boletines, edictos, cargos y relaciones"],
+      ["Judicial", "Causas, sentencias y menciones procesales"],
+      ["Contrataciones", "Compras, licitaciones y proveedor estatal"],
+      ["Medios", "Cobertura periodistica nacional y regional"],
+      ["Redes y reputacion", "Presencia digital y senales publicas"],
+      ["Archivo web", "Historial de dominios y evidencia preservable"],
+      ["Scoring", "Lectura preliminar, confianza y alertas"]
+    ];
+
+    const baseSources = [
+      {
+        name: "BCRA - Situacion crediticia",
+        category: "Financiero",
+        mode: "API publica integrada + cache OSINT",
+        description: "Central de Deudores, entidades informantes, situacion crediticia y deuda bancaria. Usa API BCRA Wrapper y cache local si la API corta conexion.",
+        url: "http://localhost:4321/visor",
+        search: () => "http://localhost:4321/visor"
+      },
+      {
+        name: "BCRA - Cheques rechazados",
+        category: "Financiero",
+        mode: "Consulta asistida",
+        description: "Central de cheques rechazados informados al Banco Central.",
+        url: "https://www.bcra.gob.ar/BCRAyVos/Central-de-cheques-rechazados.asp",
+        search: () => "https://www.bcra.gob.ar/BCRAyVos/Central-de-cheques-rechazados.asp"
+      },
+      {
+        name: "ARCA - Constancia de inscripcion",
+        category: "Fiscal",
+        mode: "Consulta asistida por CUIT",
+        description: "Constancia, actividad declarada, domicilio fiscal e impuestos visibles.",
+        url: "https://seti.arca.gob.ar/padron-puc-constancia-internet/ConsultaConstanciaAction.do",
+        search: () => "https://seti.arca.gob.ar/padron-puc-constancia-internet/ConsultaConstanciaAction.do"
+      },
+      {
+        name: "SSSalud",
+        category: "Salud / seguridad social",
+        mode: "Portal oficial",
+        description: "Obra social, beneficiarios y registros vinculados segun disponibilidad publica.",
+        url: "https://www.sssalud.gob.ar/",
+        search: () => "https://www.sssalud.gob.ar/"
+      },
+      {
+        name: "ANSES",
+        category: "Seguridad social",
+        mode: "Portal oficial",
+        description: "Tramites y constancias previsionales disponibles para consulta permitida.",
+        url: "https://www.anses.gob.ar/",
+        search: () => "https://www.anses.gob.ar/"
+      },
+      {
+        name: "SRT",
+        category: "Laboral",
+        mode: "Portal oficial",
+        description: "Registros laborales y cobertura de riesgos del trabajo cuando corresponda.",
+        url: "https://www.srt.gob.ar/",
+        search: () => "https://www.srt.gob.ar/"
+      },
+      {
+        name: "BORA - Busqueda avanzada",
+        category: "Boletin oficial",
+        mode: "Busqueda por texto",
+        description: "Leyes, avisos oficiales, sociedades, edictos y contrataciones.",
+        url: "https://www.boletinoficial.gob.ar/busquedaAvanzada/all",
+        search: ({ bestQuery }) => `https://www.boletinoficial.gob.ar/busquedaAvanzada/all?palabra=${encodeURIComponent(bestQuery)}`
+      },
+      {
+        name: "BORA - Segunda seccion",
+        category: "Societario",
+        mode: "Busqueda por texto",
+        description: "Sociedades y avisos judiciales publicados a nivel nacional.",
+        url: "https://www.boletinoficial.gob.ar/seccion/segunda",
+        search: () => "https://www.boletinoficial.gob.ar/seccion/segunda"
+      },
+      {
+        name: "Timeline societario BORA",
+        category: "Societario",
+        mode: "Reconstruccion historica",
+        description: "Historial de publicaciones societarias y personas vinculadas.",
+        url: "https://timeline.boletinoficial.gob.ar/",
+        search: () => "https://timeline.boletinoficial.gob.ar/"
+      },
+      {
+        name: "Registro Nacional de Sociedades",
+        category: "Societario",
+        mode: "Consulta por CUIT/CDI o razon social",
+        description: "Directorio nacional de personas juridicas y registros locales.",
+        url: "https://www.argentina.gob.ar/justicia/registro-nacional-sociedades",
+        search: () => "https://www.argentina.gob.ar/justicia/registro-nacional-sociedades"
+      },
+      {
+        name: "Google - busqueda dirigida",
+        category: "Web abierta",
+        mode: "Busqueda externa",
+        description: "Cruce por identificador, nombre, boletines, edictos, sociedades y PDFs.",
+        url: "https://www.google.com/",
+        search: ({ webQuery }) => `https://www.google.com/search?q=${encodeURIComponent(`${webQuery} ("Boletin Oficial" OR edicto OR sociedad OR gerente OR CUIT OR CUIL) filetype:pdf OR site:boletinoficial.gob.ar`)}`
+      },
+      {
+        name: "Bing - busqueda dirigida",
+        category: "Web abierta",
+        mode: "Busqueda externa",
+        description: "Motor alternativo para ampliar cobertura de resultados indexados.",
+        url: "https://www.bing.com/",
+        search: ({ webQuery }) => `https://www.bing.com/search?q=${encodeURIComponent(`${webQuery} "Boletin Oficial" edicto sociedad CUIT`)}`
+      }
+    ];
+
+    const provincialSources = {
+      "Buenos Aires": ["Boletin Oficial PBA", "https://boletinoficial.gba.gob.ar/", "DPPJ Buenos Aires", "https://www.gba.gob.ar/dppj"],
+      "CABA": ["Boletin Oficial CABA", "https://boletinoficial.buenosaires.gob.ar/", "IGJ", "https://www.argentina.gob.ar/justicia/igj"],
+      "Catamarca": ["Boletin Oficial Catamarca", "https://portal.catamarca.gob.ar/boletin/", "Registro Publico Catamarca", "https://juscatamarca.gob.ar/registro-publico-de-comercio/"],
+      "Chaco": ["Boletin Oficial Chaco", "https://boletin.chaco.gob.ar/", "Personas Juridicas Chaco", "https://personasjuridicas.chaco.gov.ar"],
+      "Chubut": ["Boletin Oficial Chubut", "https://boletin.chubut.gov.ar/", "IGJ Chubut", "https://www.gobierno.chubut.gov.ar/igj"],
+      "Cordoba": ["Boletin Oficial Cordoba", "https://boletinoficial.cba.gov.ar/", "IPJ Cordoba", "https://ipj.cba.gov.ar/"],
+      "Corrientes": ["Boletin Oficial Corrientes", "https://boletinoficial.corrientes.gob.ar/", "Ministerio de Justicia Corrientes", "https://minjus.corrientes.gob.ar"],
+      "Entre Rios": ["Boletin Oficial Entre Rios", "https://www.entrerios.gov.ar/boletin/", "Personas Juridicas Entre Rios", "https://portal.entrerios.gov.ar/seguridadyjusticia/personasjuridicas/inicio"],
+      "Formosa": ["Boletin Oficial Formosa", "https://www.formosa.gob.ar/boletinoficial", "Personas Juridicas Formosa", "https://www.formosa.gob.ar/personasjuridicas"],
+      "Jujuy": ["Boletin Oficial Jujuy", "https://boletinoficial.jujuy.gob.ar/", "Registro Publico Jujuy", "https://fiscalia.jujuy.gob.ar/registro-publico/direccion-provincial-de-sociedades-comerciales"],
+      "La Pampa": ["Boletin Oficial La Pampa", "https://boletinoficial.lapampa.gob.ar/", "Personas Juridicas La Pampa", "https://dgpersonasjuridicas.lapampa.gob.ar/"],
+      "La Rioja": ["Boletin Oficial La Rioja", "https://www.boletinoflarioja.com.ar/", "Gobierno La Rioja", "https://www.larioja.gov.ar/"],
+      "Mendoza": ["Boletin Oficial Mendoza", "https://boletinoficial.mendoza.gov.ar/", "DPJ Mendoza", "https://atencionciudadana.mendoza.gob.ar/dpj/"],
+      "Misiones": ["Boletin Oficial Misiones", "https://www.boletin.misiones.gov.ar/", "Personas Juridicas Misiones", "https://personasjuridicas.misiones.gob.ar/"],
+      "Neuquen": ["Boletin Oficial Neuquen", "https://boficial.neuquen.gov.ar/", "Personas Juridicas Neuquen", "https://personasjuridicas.neuquen.gov.ar/"],
+      "Rio Negro": ["Boletin Oficial Rio Negro", "https://boletinoficial.rionegro.gov.ar/", "Personas Juridicas Rio Negro", "https://personasjuridicas.rionegro.gov.ar/"],
+      "Salta": ["Boletin Oficial Salta", "https://boletinoficialsalta.gob.ar/", "Personas Juridicas Salta", "https://personasjuridicas.salta.gob.ar/"],
+      "San Juan": ["Boletin Oficial San Juan", "https://boletinoficial.sanjuan.gob.ar/", "Personas Juridicas San Juan", "https://tramite.sanjuan.gov.ar/index.php/tramite/org/150"],
+      "San Luis": ["Boletin Oficial San Luis", "https://boletinoficial.sanluis.gov.ar/", "Personaria Juridica San Luis", "https://sanluis.gov.ar/gobierno/personaria-juridica/"],
+      "Santa Cruz": ["Boletin Oficial Santa Cruz", "https://boletinoficial.santacruz.gob.ar/", "URP Santa Cruz", "https://urp.santacruz.gob.ar/"],
+      "Santa Fe": ["Boletin Oficial Santa Fe", "https://www.santafe.gob.ar/boletinoficial/", "Registro Publico Santa Fe", "https://www.santafe.gov.ar/index.php/web/content/view/full/237328/"],
+      "Santiago del Estero": ["Boletin Oficial Santiago del Estero", "https://www.boletinsde.gov.ar/", "Registro Publico Santiago del Estero", "https://www.jussantiago.gov.ar/jusnueva/RegistroPublicoComercio/index-registro.php"],
+      "Tierra del Fuego": ["Boletin Oficial Tierra del Fuego", "https://www.tierradelfuego.gob.ar/boletin-oficial/", "IGJ Tierra del Fuego", "https://www.tierradelfuego.gob.ar/inspeccion-general-de-justicia/"],
+      "Tucuman": ["Boletin Oficial Tucuman", "https://boletin.tucuman.gov.ar/", "Personas Juridicas Tucuman", "https://www.fiscaliatucuman.gob.ar/direccion-de-personas-juridicas/"]
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function cleanIdentifier() {
+      return $("identifier").value.trim();
+    }
+
+    function numericIdentifier() {
+      return cleanIdentifier().replace(/\D/g, "");
+    }
+
+    function cuitCheckDigit(prefix, dni) {
+      const base = `${prefix}${dni.padStart(8, "0")}`;
+      const weights = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+      const sum = base.split("").reduce((total, digit, index) => total + Number(digit) * weights[index], 0);
+      const mod = 11 - (sum % 11);
+      if (mod === 11) return "0";
+      if (mod === 10) return null;
+      return String(mod);
+    }
+
+    function cuitVariantsFromDni(dni) {
+      if (!/^\d{7,8}$/.test(dni)) return [];
+
+      const padded = dni.padStart(8, "0");
+      const candidates = [];
+
+      ["20", "23", "24", "27", "30", "33", "34"].forEach(prefix => {
+        const check = cuitCheckDigit(prefix, padded);
+        if (check) candidates.push(`${prefix}${padded}${check}`);
+      });
+
+      return [...new Set(candidates)];
+    }
+
+    function formatCuit(value) {
+      return value.replace(/^(\d{2})(\d{8})(\d)$/, "$1-$2-$3");
+    }
+
+    function buildIdentifierContext() {
+      const raw = cleanIdentifier();
+      const numeric = numericIdentifier();
+      const type = $("idType").value;
+      const name = $("fullName").value.trim();
+      let variants = [];
+      let detectedType = $("idType").selectedOptions[0].textContent;
+
+      if (/^\d{11}$/.test(numeric)) {
+        variants = [numeric];
+        detectedType = "CUIT / CUIL / CDI";
+      }
+
+      if (!variants.length && ["dni", "le", "lc"].includes(type) && /^\d{7,8}$/.test(numeric)) {
+        variants = cuitVariantsFromDni(numeric);
+        detectedType = type === "dni" ? "Documento Nacional" : $("idType").selectedOptions[0].textContent;
+      }
+
+      if (!variants.length && type === "cuit" && /^\d{7,8}$/.test(numeric)) {
+        variants = cuitVariantsFromDni(numeric);
+        detectedType = "Documento Nacional detectado";
+      }
+
+      const quotedParts = [raw, numeric, ...variants.map(formatCuit), ...variants, name]
+        .filter(Boolean)
+        .map(item => `"${item}"`);
+
+      const bestQuery = name || raw || numeric || variants[0] || "";
+      const webQuery = [...new Set(quotedParts)].join(" OR ") || `"${bestQuery}"`;
+
+      state.identifiers = { raw, numeric, query: bestQuery, webQuery, variants, detectedType };
+      renderVariants();
+      return state.identifiers;
+    }
+
+    function renderVariants() {
+      const { raw, numeric, variants } = state.identifiers;
+      if (!raw) {
+        $("variantBox").textContent = "Ingrese un identificador para generar variantes de busqueda.";
+        return;
+      }
+
+      if (variants.length) {
+        if (/^\d{11}$/.test(numeric)) {
+          $("variantBox").innerHTML = `<strong>CUIT/CUIL reconocido:</strong><br>${variants.map(formatCuit).join("<br>")}`;
+          return;
+        }
+
+        $("variantBox").innerHTML = `<strong>Documento detectado. CUIT/CUIL posibles:</strong><br>${variants.map(formatCuit).join("<br>")}`;
+        return;
+      }
+
+      if (numeric) {
+        $("variantBox").innerHTML = `<strong>Busqueda textual:</strong><br>${escapeHtml(raw)}<br><small>No se generaron CUIT/CUIL porque el formato no corresponde a DNI de 7/8 digitos o CUIT de 11 digitos.</small>`;
+        return;
+      }
+
+      $("variantBox").innerHTML = `<strong>Busqueda textual:</strong><br>${escapeHtml(raw)}<br><small>Para pasaporte u otros documentos no hay conversion automatica a CUIT/CUIL. Se preparan busquedas por texto.</small>`;
+    }
+
+    function subjectQuery() {
+      const name = $("fullName").value.trim();
+      const id = cleanIdentifier();
+      return name ? `${name} ${id}`.trim() : id;
+    }
+
+    function buildSources() {
+      const province = $("province").value;
+      const identifiers = buildIdentifierContext();
+      const query = subjectQuery();
+      const bestQuery = identifiers.query || query;
+      const webQuery = identifiers.webQuery || `"${query}"`;
+
+      const sources = [...baseSources];
+      const provinceData = provincialSources[province];
+
+      if (identifiers.variants.length > 1) {
+        identifiers.variants.forEach((variant) => {
+          sources.push({
+            name: `BCRA - variante ${formatCuit(variant)}`,
+            category: "Financiero",
+            mode: "Consulta asistida por CUIT/CUIL derivado de DNI",
+            description: "Abrir BCRA y cargar esta variante si el portal requiere CUIT/CUIL/CDI.",
+            url: "https://www.bcra.gob.ar/BCRAyVos/Situacion_Crediticia.asp",
+            resolvedHint: formatCuit(variant),
+            search: () => "https://www.bcra.gob.ar/BCRAyVos/Situacion_Crediticia.asp"
+          });
+        });
+      }
+
+      if (provinceData) {
+        sources.push({
+          name: provinceData[0],
+          category: "Boletin provincial",
+          mode: "Busqueda provincial",
+          description: "Boletin oficial de la jurisdiccion seleccionada.",
+          url: provinceData[1],
+          search: () => provinceData[1]
+        });
+        sources.push({
+          name: provinceData[2],
+          category: "Registro local",
+          mode: "Personas juridicas",
+          description: "Registro publico o direccion provincial de personas juridicas.",
+          url: provinceData[3],
+          search: () => provinceData[3]
+        });
+      }
+
+      state.sources = sources.map((source) => ({
+        ...source,
+        resolvedUrl: source.search({ query, bestQuery, webQuery, identifiers })
+      }));
+    }
+
+    function renderSources() {
+      const grid = $("sourceGrid");
+      grid.innerHTML = "";
+    }
+
+    function renderFindings() {
+      const rows = state.findings.map(finding => `
+        <tr>
+          <td>${escapeHtml(finding.source || "-")}</td>
+          <td>${escapeHtml(finding.text || finding.summary || finding.title || "-")}</td>
+          <td>${escapeHtml(finding.confidence)}</td>
+          <td>${finding.url ? `<a href="${finding.url}" target="_blank" rel="noreferrer">Evidencia</a>` : "-"}</td>
+        </tr>
+      `).join("");
+
+      $("findingsTable").innerHTML = rows || `<tr><td colspan="4">Todavia no hay hallazgos registrados.</td></tr>`;
+      $("reportFindings").innerHTML = rows || `<tr><td colspan="4">Sin hallazgos cargados.</td></tr>`;
+    }
+
+    function renderReport() {
+      const idType = state.identifiers.detectedType || $("idType").selectedOptions[0].textContent;
+      const id = cleanIdentifier() || "Sin identificador";
+      const name = $("fullName").value.trim() || state.discoveredNames[0] || "";
+      const province = $("province").value || "Sin jurisdiccion principal";
+      const subject = `${name ? `${name} - ` : ""}${idType}: ${id}`;
+      const variantsText = state.identifiers.variants.length
+        ? (/^\d{11}$/.test(state.identifiers.numeric)
+          ? ` CUIT/CUIL normalizado: ${state.identifiers.variants.map(formatCuit).join(", ")}.`
+          : ` Variantes CUIT/CUIL calculadas: ${state.identifiers.variants.map(formatCuit).join(", ")}.`)
+        : "";
+
+      $("reportDate").textContent = new Date().toLocaleString("es-AR");
+      $("reportSubject").textContent = `${subject}. Jurisdiccion: ${province}.${variantsText}`;
+      $("metricSources").textContent = state.scanned ? String(REPORT_MODULES.length) : "0";
+      $("metricFindings").textContent = String(state.findings.length);
+      $("metricConfidence").textContent = averageConfidence();
+      $("metricRisk").textContent = riskLabel();
+      $("metricRisk").className = riskClass();
+      const moduleDetails = Object.fromEntries(REPORT_MODULES.map(([name, detail]) => [name, detail]));
+      const modulesToRender = state.moduleResults.length
+        ? state.moduleResults
+        : REPORT_MODULES.map(([name, detail]) => ({ name, summary: detail, status: "pendiente" }));
+
+      $("moduleGrid").innerHTML = modulesToRender.map(module => `
+        <div class="module ${escapeHtml(module.servedFromCache ? "cache" : (module.status || "pendiente"))}">
+          <strong>${escapeHtml(module.name)}</strong>
+          <span>${escapeHtml(cleanModuleSummary(module.summary || moduleDetails[module.name] || ""))}</span>
+          <small>${escapeHtml(module.servedFromCache ? "Cache valido" : labelStatus(module.status || "pendiente"))}</small>
+        </div>
+      `).join("");
+
+      $("executiveSummary").textContent = state.findings.length
+        ? `El rastreo automatico registro ${state.findings.length} hallazgos verificables. La lectura preliminar es ${riskLabel().toLowerCase()} y debe validarse contra la evidencia citada en el PDF.`
+        : `Ingrese un identificador o nombre y ejecute el rastreo OSINT para generar el informe automatico.`;
+
+      if (state.history && state.history.runsCount) {
+        $("historyNote").classList.remove("hidden");
+        $("historyNote").textContent = `Base propia: ${state.history.runsCount} rastreo(s) previo(s), ${state.history.findingsCount} hallazgo(s) historico(s). Ultimo rastreo: ${state.history.lastRunAt || "sin fecha"}.`;
+      } else {
+        $("historyNote").classList.add("hidden");
+        $("historyNote").textContent = "";
+      }
+
+      $("reportSources").innerHTML = state.sources.map(source => `
+        <tr>
+          <td>${escapeHtml(source.name)}</td>
+          <td>${escapeHtml(source.category)}</td>
+          <td>${escapeHtml(source.resolvedHint ? `${source.mode}: ${source.resolvedHint}` : source.mode)}</td>
+          <td><a href="${source.resolvedUrl}" target="_blank" rel="noreferrer">${escapeHtml(source.url)}</a></td>
+        </tr>
+      `).join("");
+
+      renderFindings();
+    }
+
+    function averageConfidence() {
+      if (!state.findings.length) return "-";
+      const score = state.findings.reduce((sum, item) => sum + ({ Alta: 3, "Alta sobre estado de acceso": 3, Media: 2, "Baja-Media": 1.5, Baja: 1 }[item.confidence] || 1), 0) / state.findings.length;
+      if (score >= 2.5) return "Alta";
+      if (score >= 1.6) return "Media";
+      return "Baja";
+    }
+
+    function riskLabel() {
+      const text = state.findings.map(item => item.text.toLowerCase()).join(" ");
+      if (/situacion\s*[3-6]|cheque rechazado|juicio|quiebra|inhibicion|embargo|deuda vencida/.test(text)) return "Alto";
+      if (/deuda|mora|sociedad|edicto|empleador|banco|monotributo/.test(text)) return "Medio";
+      if (state.findings.length) return "Bajo";
+      return "-";
+    }
+
+    function riskClass() {
+      return {
+        Alto: "risk-alto",
+        Medio: "risk-medio",
+        Bajo: "risk-bajo"
+      }[riskLabel()] || "";
+    }
+
+    function labelStatus(status) {
+      return {
+        ok: "Ejecutado",
+        sin_resultados: "Sin resultados",
+        sin_datos: "Sin datos",
+        requiere_validacion: "Validacion requerida",
+        error: "Error",
+        pendiente: "Pendiente"
+      }[status] || status;
+    }
+
+    function cleanModuleSummary(summary) {
+      return String(summary || "")
+        .replace("No se intento evadirlo.", "Se conserva como acceso protegido.")
+        .replace("requiere verificacion humana o control anti-abuso", "requiere validacion del portal");
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function activateView(id) {
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === id));
+      document.querySelectorAll(".view").forEach(view => view.classList.toggle("active", view.id === id));
+    }
+
+    $("autoScanBtn").addEventListener("click", async () => {
+      buildSources();
+      renderSources();
+      state.scanned = true;
+      renderReport();
+      $("scanStatus").classList.remove("hidden");
+      $("scanStatus").innerHTML = "Rastreo OSINT en curso. Consultando fuentes abiertas accesibles...";
+      $("autoScanBtn").disabled = true;
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idType: $("idType").value,
+            identifier: cleanIdentifier(),
+            name: $("fullName").value.trim(),
+            province: $("province").value
+          })
+        });
+
+        if (!response.ok) throw new Error(`Servidor OSINT respondio ${response.status}`);
+        const result = await response.json();
+
+        if (result.subject) {
+          state.identifiers.variants = result.subject.variants || state.identifiers.variants;
+          state.discoveredNames = result.subject.discoveredNames || [];
+          renderVariants();
+        }
+
+        state.findings = (result.findings || []).map(item => ({
+          source: item.source,
+          text: `[${item.module}] ${item.title || item.summary}`,
+          url: item.url,
+          confidence: item.confidence || "Media",
+          status: item.status
+        }));
+        state.moduleResults = result.moduleResults || [];
+        state.history = result.history || null;
+        state.scanned = true;
+
+        $("scanStatus").innerHTML = `Rastreo terminado. Hallazgos: <strong>${state.findings.length}</strong>. Riesgo preliminar: <strong>${escapeHtml(result.score?.label || "-")}</strong>.`;
+        renderReport();
+        activateView("reporte");
+      } catch (error) {
+        $("scanStatus").innerHTML = `No se pudo ejecutar el rastreo automatico. Detalle: ${escapeHtml(error.message)}`;
+      } finally {
+        $("autoScanBtn").disabled = false;
+      }
+    });
+
+    $("printBtn").addEventListener("click", () => {
+      buildSources();
+      renderSources();
+      renderReport();
+      activateView("reporte");
+      window.print();
+    });
+
+    document.querySelector(".tabs").addEventListener("click", (event) => {
+      const button = event.target.closest(".tab");
+      if (button) activateView(button.dataset.view);
+    });
+
+    buildSources();
+    renderSources();
+    renderReport();
+  </script>
+</body>
+</html>

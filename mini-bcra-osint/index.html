@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BCRA OSINT Demo</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #627084;
+      --line: #d6dde7;
+      --blue: #1f6fb8;
+      --blue-dark: #174f84;
+      --green: #177a50;
+      --amber: #9a6100;
+      --red: #a93737;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    header {
+      background: #102338;
+      color: white;
+      padding: 16px 24px;
+      border-bottom: 4px solid #6aa4d9;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+    header p {
+      margin: 6px 0 0;
+      color: #c8d6e5;
+      font-size: 14px;
+    }
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 20px auto 32px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    input {
+      width: 100%;
+      border: 1px solid #b7c1cf;
+      border-radius: 6px;
+      padding: 11px 12px;
+      font-size: 16px;
+      background: #fff;
+    }
+    button {
+      min-height: 42px;
+      border: 1px solid var(--blue-dark);
+      border-radius: 6px;
+      background: var(--blue);
+      color: #fff;
+      font-weight: 700;
+      padding: 0 14px;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #fff;
+      color: var(--blue-dark);
+      border-color: #aeb8c5;
+    }
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .steps {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 9px;
+      background: #f7f9fc;
+      border: 1px solid #e2e7ef;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .num {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #d9e8f6;
+      color: #174f84;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .metric {
+      border: 1px solid #e1e7ef;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+      min-height: 76px;
+    }
+    .metric small {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .metric strong {
+      display: block;
+      font-size: 16px;
+      overflow-wrap: anywhere;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #e9edf3;
+      color: #334155;
+    }
+    .pill.running { background: #fff3cd; color: var(--amber); }
+    .pill.finished { background: #dff3e9; color: var(--green); }
+    .pill.failed { background: #f7dddd; color: var(--red); }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0e1722;
+      color: #dce8f5;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 170px;
+      max-height: 320px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid #e5eaf2;
+      padding: 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: #4b5563;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .artifact-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .artifact {
+      border: 1px solid #e1e7ef;
+      border-radius: 6px;
+      padding: 9px;
+      background: #fbfcfe;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 360px;
+      background: #102338;
+      color: white;
+      padding: 12px 14px;
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+      display: none;
+      font-size: 14px;
+    }
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BCRA OSINT Demo</h1>
+    <p>Consulta automática vía API pública BCRA Wrapper, evidencia local y registro OSINT.</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>Nueva Consulta</h2>
+      <p class="muted">Ingresá un CUIT/CUIL/CDI de 11 dígitos. La consulta automática usa la API pública del BCRA que implementa el repo BCRA-Wrapper.</p>
+
+      <label for="identifier">CUIT/CUIL/CDI</label>
+      <input id="identifier" placeholder="20-12345678-9" autocomplete="off">
+
+      <div class="actions">
+        <button id="apiRun">Consultar API BCRA Wrapper</button>
+        <button class="secondary" id="health">Probar conexión BCRA</button>
+        <button class="secondary" id="viewResults">Ver resultados</button>
+        <button class="secondary" id="viewStatic">Visor editable</button>
+        <button class="secondary" id="run">Modo manual con navegador</button>
+        <button class="secondary" id="enter">Continuar modo manual</button>
+        <button class="secondary" id="refresh">Actualizar estado</button>
+      </div>
+
+      <div class="steps">
+        <div class="step"><div class="num">1</div><div>Usar Consultar API BCRA Wrapper.</div></div>
+        <div class="step"><div class="num">2</div><div>El backend consulta Deudas, Deudas Históricas y Cheques Rechazados.</div></div>
+        <div class="step"><div class="num">3</div><div>El sistema calcula señal preliminar, confianza y caveats.</div></div>
+        <div class="step"><div class="num">4</div><div>Se guardan JSON crudo, reporte OSINT y línea histórica.</div></div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section>
+        <h2>Estado</h2>
+        <div class="cards">
+          <div class="metric">
+            <small>Proceso</small>
+            <strong id="runState"><span class="pill">sin consulta</span></strong>
+          </div>
+          <div class="metric">
+            <small>Identificador</small>
+            <strong id="runIdentifier">-</strong>
+          </div>
+          <div class="metric">
+            <small>Última salida</small>
+            <strong id="runExit">-</strong>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Respuesta API BCRA Wrapper</h2>
+        <pre id="apiResult">Sin consulta API todavía.</pre>
+      </section>
+
+      <section>
+        <h2>Consola</h2>
+        <pre id="console">Sin salida todavía.</pre>
+      </section>
+
+      <section>
+        <h2>Registros OSINT</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Identificador</th>
+              <th>Confianza</th>
+              <th>Resultado</th>
+            </tr>
+          </thead>
+          <tbody id="records"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Artefactos Recientes</h2>
+        <div id="artifacts" class="artifact-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(message) {
+      $("toast").textContent = message;
+      $("toast").style.display = "block";
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => {
+        $("toast").style.display = "none";
+      }, 3600);
+    }
+
+    function pill(status) {
+      const value = status || "sin consulta";
+      return `<span class="pill ${value}">${value}</span>`;
+    }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json" },
+        ...options
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Error");
+      return json;
+    }
+
+    async function refresh() {
+      const data = await api("/api/status");
+      const run = data.run;
+
+      $("runState").innerHTML = pill(run?.status);
+      $("runIdentifier").textContent = run?.identifier || "-";
+      $("runExit").textContent = run?.exitCode === undefined ? "-" : String(run.exitCode);
+      $("console").textContent = run?.output?.trim() || "Sin salida todavía.";
+      $("enter").disabled = !run || run.status !== "running";
+
+      const records = data.artifacts.records || [];
+      $("records").innerHTML = records.length ? records.map((record) => `
+        <tr>
+          <td>${record.consultedAt || ""}</td>
+          <td>${record.consultedIdentifier || ""}</td>
+          <td>${record.confidence || ""}</td>
+          <td>${record.result?.riskSignal || ""}</td>
+        </tr>
+      `).join("") : `<tr><td colspan="4" class="muted">Todavía no hay registros.</td></tr>`;
+
+      const files = data.artifacts.files || [];
+      $("artifacts").innerHTML = files.length ? files.slice(0, 12).map((file) => `
+        <div class="artifact">${file.name}<br><span class="muted">${file.path}</span></div>
+      `).join("") : `<p class="muted">Todavía no hay artefactos.</p>`;
+    }
+
+    $("run").addEventListener("click", async () => {
+      try {
+        await api("/api/run", {
+          method: "POST",
+          body: JSON.stringify({ identifier: $("identifier").value })
+        });
+        showToast("Consulta iniciada. Revisá la ventana de Chromium.");
+        await refresh();
+      } catch (error) {
+        showToast(error.message);
+      }
+    });
+
+    $("apiRun").addEventListener("click", async () => {
+      try {
+        $("apiRun").disabled = true;
+        $("apiResult").textContent = "Consultando API pública del BCRA...";
+        const result = await api("/api/bcra-wrapper", {
+          method: "POST",
+          body: JSON.stringify({ identifier: $("identifier").value })
+        });
+        $("apiResult").textContent = JSON.stringify({
+          fuente: result.source,
+          consultado: result.consultedIdentifier,
+          cache: result.servedFromCache ? result.cacheReason : "respuesta en vivo",
+          denominacion: result.result?.denominacion,
+          periodosActuales: result.result?.currentPeriods,
+          entidadesActuales: result.result?.currentEntities,
+          periodosHistoricos: result.result?.historicPeriods,
+          chequesRechazados: result.result?.rejectedChecks,
+          situacionMaxima: result.result?.maxSituation,
+          deudaTotal: result.result?.totalDebt,
+          senal: result.result?.riskSignal,
+          confianza: result.confidence,
+          evidencia: result.evidence
+        }, null, 2);
+        showToast("Consulta API BCRA registrada.");
+        await refresh();
+      } catch (error) {
+        $("apiResult").textContent = `${error.message}\n\nEl endpoint publico del BCRA a veces corta conexiones si se consulta muchas veces seguidas. Espera unos segundos y reintenta.`;
+        showToast(error.message);
+      } finally {
+        $("apiRun").disabled = false;
+      }
+    });
+
+    $("health").addEventListener("click", async () => {
+      try {
+        $("apiResult").textContent = "Probando conexion con API BCRA...";
+        const result = await api("/api/bcra-health");
+        $("apiResult").textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        $("apiResult").textContent = error.message;
+      }
+    });
+
+    $("enter").addEventListener("click", async () => {
+      try {
+        await api("/api/enter", { method: "POST", body: "{}" });
+        showToast("Enter enviado al proceso.");
+        await refresh();
+      } catch (error) {
+        showToast(error.message);
+      }
+    });
+
+    $("refresh").addEventListener("click", refresh);
+    $("viewResults").addEventListener("click", () => {
+      location.href = "/resultados";
+    });
+    $("viewStatic").addEventListener("click", () => {
+      location.href = "/visor";
+    });
+    setInterval(refresh, 2000);
+    refresh().catch(error => showToast(error.message));
+  </script>
+</body>
+</html>
