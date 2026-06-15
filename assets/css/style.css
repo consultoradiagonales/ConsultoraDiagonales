@@ -458,6 +458,73 @@ input {
   color: rgba(226, 240, 248, 0.82);
 }
 
+.home-proof-band,
+.home-process-band {
+  border-top: 1px solid rgba(122, 194, 232, 0.28);
+}
+
+.home-proof-band {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(183, 238, 255, 0.28), transparent 36%),
+    #031b2d;
+}
+
+.home-process-band {
+  background:
+    radial-gradient(circle at 80% 0%, rgba(110, 213, 255, 0.2), transparent 34%),
+    #05263d;
+}
+
+.proof-grid,
+.process-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.proof-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.proof-grid article,
+.process-grid article {
+  border: 1px solid var(--box-border);
+  border-radius: 8px;
+  padding: 1.15rem;
+  color: #fff;
+  background: rgba(8, 54, 74, 0.84);
+}
+
+.proof-grid span {
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.proof-grid h3 {
+  margin-top: 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.proof-grid p,
+.process-grid span {
+  display: block;
+  margin-top: 0.65rem;
+  color: rgba(226, 240, 248, 0.78);
+  line-height: 1.55;
+}
+
+.process-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.process-grid strong {
+  color: #fff;
+  font-size: 1rem;
+}
+
 .institutional-card:hover {
   transform: translateY(-4px);
   background: var(--box-blue-hover);
@@ -1429,7 +1496,9 @@ body[data-page="servicios"] .subpage {
 
   .home-card-grid,
   .repo-grid,
-  .package-grid {
+  .package-grid,
+  .proof-grid,
+  .process-grid {
     grid-template-columns: 1fr;
   }
 
