@@ -87,7 +87,7 @@ function initServiceRequests() {
     territorial:
       "Hola Consultora Diagonales. Quiero solicitar un servicio de Inteligencia territorial. Necesito analizar un territorio, sus actores, dinámicas y escenarios para tomar mejores decisiones.",
     electoral:
-      "Hola Consultora Diagonales. Quiero solicitar un servicio de Escenarios electorales. Necesito analizar tendencias, actores y proyecciones para un contexto electoral específico.",
+      "Hola Consultora Diagonales. Quiero solicitar un servicio de Escenarios electorales y empresariales. Necesito analizar tendencias, actores y proyecciones para un contexto electoral y empresarial específico.",
     opinion:
       "Hola Consultora Diagonales. Quiero solicitar un servicio de Opinión pública. Necesito medir percepciones, comportamientos y clima social sobre un tema, actor o territorio.",
   };
@@ -105,7 +105,7 @@ function initServiceRequests() {
 
   const serviceLabels = {
     territorial: "Inteligencia territorial",
-    electoral: "Escenarios electorales",
+    electoral: "Escenarios electorales y empresariales",
     opinion: "Opinión pública",
   };
   const questionSets = {
@@ -115,7 +115,7 @@ function initServiceRequests() {
       "¿Qué decisión necesitás tomar con ese análisis?",
     ],
     electoral: [
-      "¿Qué zona querés analizar para ver el escenario electoral? Puede ser municipio, provincia, sección electoral o territorio específico.",
+      "¿Qué zona querés analizar para ver el escenario electoral y empresarial? Puede ser municipio, provincia, sección electoral y empresarial o territorio específico.",
       "¿Qué elección, período o escenario querés proyectar?",
       "¿Qué actores, fuerzas políticas, candidatos o hipótesis querés comparar?",
     ],
