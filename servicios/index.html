@@ -4,8 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Servicios | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260615-audit-fixes" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="bg-[#080d14] text-white antialiased" data-page="servicios">
     <header class="site-header is-solid" data-header>
@@ -18,7 +19,6 @@
         <a href="index.html" data-nav="servicios">Servicios</a>
         <a href="../repositorio/index.html" data-nav="radiografias">Radiografías</a>
         <a href="../contacto/index.html" data-nav="contacto">Contacto</a>
-        <a href="../admin/index.html" data-nav="admin">Admin</a>
       </nav>
       <button class="menu-toggle" type="button" aria-label="Abrir menú" data-menu-toggle><span></span><span></span><span></span></button>
     </header>
@@ -28,7 +28,7 @@
       <a href="index.html">Servicios</a>
       <a href="../repositorio/index.html">Radiografías</a>
       <a href="../contacto/index.html">Contacto</a>
-      <a href="../admin/index.html">Admin</a>
+
     </div>
 
     <main class="subpage">
@@ -52,6 +52,36 @@
             <p>Medimos percepciones y comportamientos para interpretar el clima social.</p>
           </a>
         </div>
+        <div class="package-grid">
+          <article>
+            <span>Diagnóstico</span>
+            <h2>Radiografía territorial</h2>
+            <p>Mapa de actores, dinámicas locales, riesgos y oportunidades para una decisión puntual.</p>
+            <small>Entrega estimada: 2 semanas</small>
+          </article>
+          <article>
+            <span>Electoral</span>
+            <h2>Escenarios y estrategia</h2>
+            <p>Análisis electoral, hipótesis de competencia, variables críticas y recomendaciones de acción.</p>
+            <small>Entrega estimada: 4 a 6 semanas</small>
+          </article>
+          <article>
+            <span>Continuo</span>
+            <h2>Monitoreo territorial</h2>
+            <p>Seguimiento periódico de clima político, agenda pública, redes, alertas y evolución de escenarios.</p>
+            <small>Modalidad mensual</small>
+          </article>
+          <article>
+            <span>Enterprise</span>
+            <h2>Inteligencia integral</h2>
+            <p>Vetting multidimensional, asesoramiento estratégico, repositorio privado y capacitación interna.</p>
+            <small>Programa a medida</small>
+          </article>
+        </div>
+        <div class="service-cta">
+          <p>Armamos una propuesta según territorio, plazo y decisión a tomar.</p>
+          <a class="primary-link" href="../contacto/index.html">Solicitar diagnóstico</a>
+        </div>
       </section>
     </main>
 
@@ -60,6 +90,6 @@
     </footer>
 
     <script src="../assets/js/supabase-config.js?v=20260527"></script>
-    <script src="../assets/js/main.js?v=20260601-audience-tracking"></script>
+    <script src="../assets/js/main.js?v=20260615-audit-fixes"></script>
   </body>
 </html>

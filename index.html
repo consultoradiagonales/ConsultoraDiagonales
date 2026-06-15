@@ -3,11 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Consultora Diagonales: inteligencia territorial, análisis político y radiografías estratégicas." />
+    <meta name="description" content="Consultora Diagonales: inteligencia territorial, analisis electoral, opinion publica y radiografias estrategicas para gobiernos, campanas e instituciones." />
     <title>Consultora Diagonales | Inteligencia territorial</title>
     <link rel="preconnect" href="https://cdn.tailwindcss.com" />
-    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20260615-audit-fixes" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "ProfessionalService",
+        "name": "Consultora Diagonales",
+        "url": "https://consultoradiagonales.com.ar/",
+        "areaServed": "Argentina",
+        "email": "info.consultoradiagonales@gmail.com",
+        "telephone": "+54 9 221 676 5720",
+        "description": "Inteligencia territorial, escenarios electorales, opinion publica y radiografias estrategicas.",
+        "serviceType": ["Inteligencia territorial", "Analisis electoral", "Opinion publica", "Vetting multidimensional"]
+      }
+    </script>
   </head>
   <body class="bg-[#080d14] text-white antialiased" data-page="home">
     <header class="site-header" data-header>
@@ -20,7 +34,6 @@
         <a href="servicios/index.html" data-nav="servicios">Servicios</a>
         <a href="repositorio/index.html" data-nav="radiografias">Radiografías</a>
         <a href="contacto/index.html" data-nav="contacto">Contacto</a>
-        <a href="admin/index.html" data-nav="admin">Admin</a>
       </nav>
       <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle>
         <span></span>
@@ -34,7 +47,7 @@
       <a href="servicios/index.html">Servicios</a>
       <a href="repositorio/index.html">Radiografías</a>
       <a href="contacto/index.html">Contacto</a>
-      <a href="admin/index.html">Admin</a>
+
     </div>
 
     <main>
@@ -52,6 +65,10 @@
               "Analizamos el presente para anticipar el futuro. Brindamos herramientas estratégicas que transforman
               la información en decisiones..."
             </p>
+            <div class="hero-actions">
+              <a class="primary-link" href="servicios/index.html">Ver servicios</a>
+              <a class="secondary-link" href="repositorio/index.html">Explorar radiografias</a>
+            </div>
           </div>
         </div>
       </section>
@@ -62,6 +79,6 @@
     </footer>
 
     <script src="assets/js/supabase-config.js?v=20260527"></script>
-    <script src="assets/js/main.js?v=20260601-audience-tracking"></script>
+    <script src="assets/js/main.js?v=20260615-audit-fixes"></script>
   </body>
 </html>

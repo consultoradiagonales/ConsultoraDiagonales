@@ -18,6 +18,7 @@ initActiveNavigation();
 initFooterText();
 initLoginModal();
 initTracking();
+initLeadForms();
 
 if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
@@ -294,15 +295,52 @@ async function persistVisitorEventWithKeepalive(event) {
   });
 }
 
-async function saveLead({ email, phone }) {
+function initLeadForms() {
+  document.querySelectorAll("[data-lead-form]").forEach((form) => {
+    const status = form.querySelector("[data-lead-status]");
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submit = form.querySelector('button[type="submit"]');
+      const fullName = getFormValue(form, "full_name");
+      const phone = getFormValue(form, "phone");
+      const email = getFormValue(form, "email").toLowerCase();
+      const organization = getFormValue(form, "organization");
+      const interest = getFormValue(form, "interest");
+
+      if (!fullName || !phone) {
+        if (status) status.textContent = "Dejanos nombre y celular para poder contactarte.";
+        return;
+      }
+
+      submit.disabled = true;
+      if (status) status.textContent = "Guardando consulta.";
+      try {
+        await saveLead({ email, phone, fullName, organization, interest });
+        trackEvent("lead_form_submitted", { email, phone, fullName, organization, interest });
+        form.reset();
+        if (status) status.textContent = "Consulta guardada. Te vamos a contactar.";
+      } catch (error) {
+        if (status) status.textContent = `No se pudo guardar: ${error.message}`;
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  });
+}
+
+async function saveLead({ email, phone, fullName = "", organization = "", interest = "" }) {
   const visitor_id = getVisitorId();
   const contact = {
     visitor_id,
     email,
     phone,
+    full_name: fullName,
+    organization,
     access_reason: "lead_validation",
     phone_validation_status: "pending",
+    consent_terms: true,
     last_seen_at: new Date().toISOString(),
+    tags: Array.from(new Set(["lead_web", interest].filter(Boolean))),
   };
   persistLocalContact(contact);
   if (!supabaseClient) return;
@@ -312,7 +350,10 @@ async function saveLead({ email, phone }) {
       visitor_id,
       email,
       phone,
+      full_name: fullName,
+      organization,
       last_seen_at: new Date().toISOString(),
+      tags: contact.tags,
     },
     { onConflict: "visitor_id" },
   );
