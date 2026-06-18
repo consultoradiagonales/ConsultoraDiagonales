@@ -23,7 +23,7 @@ initLeadForms();
 if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
 if (page === "registro") initRegistration();
-if (page === "servicios") initServiceRequests();
+if (page === "solicitudes") initRequestGenerator();
 
 async function initRepository() {
   await syncStoredAuthContact();
@@ -72,82 +72,183 @@ function initLogoFallbacks() {
 }
 
 function initActiveNavigation() {
-  const key = page === "repo" ? "radiografias" : page === "home" ? "inicio" : page;
+  const key = page === "repo" ? "radiografias" : page === "home" ? "inicio" : page === "solicitudes" ? "servicios" : page;
   document.querySelectorAll(`[data-nav="${key}"]`).forEach((link) => link.classList.add("is-active"));
 }
 
 function initFooterText() {
   document.querySelectorAll(".site-footer").forEach((footer) => {
-    footer.textContent = "© CONSULTORA DIAGONALES | Data Analytics.";
+    footer.textContent = "\u00a9 CONSULTORA DIAGONALES | Data Analytics.";
   });
 }
 
-function initServiceRequests() {
-  const whatsappMessages = {
-    territorial:
-      "Hola Consultora Diagonales. Quiero solicitar un servicio de Inteligencia territorial. Necesito analizar un territorio, sus actores, dinámicas y escenarios para tomar mejores decisiones.",
-    electoral:
-      "Hola Consultora Diagonales. Quiero solicitar un servicio de Escenarios electorales y empresariales. Necesito analizar tendencias, actores y proyecciones para un contexto electoral y empresarial específico.",
-    opinion:
-      "Hola Consultora Diagonales. Quiero solicitar un servicio de Opinión pública. Necesito medir percepciones, comportamientos y clima social sobre un tema, actor o territorio.",
+function initRequestGenerator() {
+  const form = document.querySelector("[data-request-form]");
+  const output = document.querySelector("[data-request-output]");
+  const briefTarget = document.querySelector("[data-request-brief]");
+  const whatsapp = document.querySelector("[data-request-whatsapp]");
+  const email = document.querySelector("[data-request-email]");
+  const copy = document.querySelector("[data-request-copy]");
+  const status = document.querySelector("[data-request-status]");
+  const costModal = document.querySelector("[data-request-cost-modal]");
+  const costClose = document.querySelector("[data-request-cost-close]");
+  if (!form || !output || !briefTarget) return;
+
+  const getValue = (name) => String(new FormData(form).get(name) || "").trim();
+  const getValues = (name) => Array.from(new FormData(form).getAll(name)).map((value) => String(value).trim()).filter(Boolean);
+  const labelSeparator = `${String.fromCharCode(58)}${String.fromCharCode(32)}`;
+  const typeSeparator = `${String.fromCharCode(32)}${String.fromCharCode(43)}${String.fromCharCode(32)}`;
+  const line = (label, value) => `${label}${labelSeparator}${value || "A definir"}`;
+  const getRequestTypes = () => getValues("request_type");
+  let previousTypeCount = getRequestTypes().length;
+
+  const showCostModal = () => {
+    if (!costModal) return;
+    costModal.hidden = false;
+    costModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    costClose?.focus();
   };
 
-  document.querySelectorAll("[data-service]").forEach((card) => {
-    const message = whatsappMessages[card.dataset.service] || "Hola Consultora Diagonales. Quiero consultar por sus servicios.";
-    const href = `https://wa.me/5492216765720?text=${encodeURIComponent(message)}`;
-    card.setAttribute("href", href);
-    card.addEventListener("click", (event) => {
-      event.preventDefault();
-      window.open(href, "_blank", "noopener");
+  const hideCostModal = () => {
+    if (!costModal) return;
+    costModal.hidden = true;
+    costModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  const buildBrief = () => {
+    const types = getRequestTypes();
+    const type = types.join(typeSeparator) || "Solicitud estrategica";
+    const fullName = getValue("full_name");
+    const organization = getValue("organization");
+    const phone = getValue("phone");
+    const emailValue = getValue("email");
+    const target = getValue("target");
+    const territory = getValue("territory");
+    const horizon = getValue("time_horizon");
+    const urgency = getValue("urgency");
+    const deliverable = getValue("deliverable");
+    const decision = getValue("decision");
+    const context = getValue("context");
+    const sources = getValue("sources");
+    const publishAuthorization = form.elements.publish_authorization?.checked ? "Si" : "No";
+
+    return {
+      type,
+      target,
+      territory,
+      fullName,
+      organization,
+      phone,
+      email: emailValue,
+      horizon,
+      urgency,
+      deliverable,
+      publishAuthorization,
+      brief: [
+        "Solicitud para Consultora Diagonales",
+        "",
+        line("Tipo de trabajo", type),
+        line("Foco de analisis", target),
+        line("Territorio o mercado", territory),
+        line("Horizonte", horizon),
+        line("Prioridad", urgency),
+        line("Entrega esperada", deliverable),
+        "",
+        line("Decision a tomar", decision),
+        line("Contexto sensible", context),
+        line("Fuentes disponibles", sources),
+        line("Autoriza publicacion en repositorio", publishAuthorization),
+        "",
+        line("Solicitante", fullName),
+        line("Organizacion", organization),
+        line("Celular", phone),
+        line("Email", emailValue),
+      ].join("\n"),
+    };
+  };
+
+  const publishBrief = async () => {
+    const request = buildBrief();
+    const subject = `Solicitud - ${request.type} - ${request.target || "Consultora Diagonales"}`;
+    const encodedBrief = encodeURIComponent(request.brief);
+
+    briefTarget.textContent = request.brief;
+    if (whatsapp) whatsapp.href = `https://wa.me/5492216765720?text=${encodedBrief}`;
+    if (email) {
+      email.href = `https://mail.google.com/mail/?view=cm&fs=1&to=info.consultoradiagonales@gmail.com&su=${encodeURIComponent(subject)}&body=${encodedBrief}`;
+    }
+
+    output.hidden = false;
+    output.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (status) status.textContent = "Solicitud generada.";
+
+    try {
+      await saveLead({
+        email: request.email.toLowerCase(),
+        phone: request.phone,
+        fullName: request.fullName,
+        organization: request.organization,
+        interest: `${request.type}: ${request.target || request.territory || "A definir"}`,
+      });
+      await trackEvent("request_brief_generated", {
+        request_type: request.type,
+        target: request.target,
+        territory: request.territory,
+        horizon: request.horizon,
+        urgency: request.urgency,
+        deliverable: request.deliverable,
+      });
+    } catch (error) {
+      console.warn("No se pudo guardar la solicitud", error);
+    }
+  };
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!getRequestTypes().length) {
+      if (status) status.textContent = "Selecciona al menos un tipo de trabajo.";
+      return;
+    }
+    if (!form.reportValidity()) return;
+    await publishBrief();
+  });
+
+  form.querySelectorAll('[name="request_type"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      const typeCount = getRequestTypes().length;
+      if (typeCount > 1 && previousTypeCount <= 1) showCostModal();
+      previousTypeCount = typeCount;
     });
   });
-  return;
 
-  const serviceLabels = {
-    territorial: "Inteligencia territorial",
-    electoral: "Escenarios electorales y empresariales",
-    opinion: "Opinión pública",
-  };
-  const questionSets = {
-    territorial: [
-      "¿Sobre qué lugar querés hacer inteligencia territorial? Puede ser barrio, municipio, provincia, región o zona específica.",
-      "¿Qué actores, dinámicas o conflictos territoriales querés que analicemos?",
-      "¿Qué decisión necesitás tomar con ese análisis?",
-    ],
-    electoral: [
-      "¿Qué zona querés analizar para ver el escenario electoral y empresarial? Puede ser municipio, provincia, sección electoral y empresarial o territorio específico.",
-      "¿Qué elección, período o escenario querés proyectar?",
-      "¿Qué actores, fuerzas políticas, candidatos o hipótesis querés comparar?",
-    ],
-    opinion: [
-      "¿Querés analizar la opinión pública de un actor político, municipio, provincia, tema o humor social nacional?",
-      "¿Cuál es el ámbito territorial del análisis: local, provincial o nacional?",
-      "¿Qué percepción, comportamiento, imagen o clima social querés medir?",
-    ],
-  };
+  costClose?.addEventListener("click", hideCostModal);
+  costModal?.addEventListener("click", (event) => {
+    if (event.target === costModal) hideCostModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && costModal && !costModal.hidden) hideCostModal();
+  });
 
-  document.querySelectorAll("[data-service]").forEach((card) => {
-    card.addEventListener("click", (event) => {
-      event.preventDefault();
-      const service = card.dataset.service;
-      const title = serviceLabels[service] || card.querySelector("h2")?.textContent?.trim() || "Servicio";
-      const answers = [];
+  form.addEventListener("reset", () => {
+    window.setTimeout(() => {
+      output.hidden = true;
+      briefTarget.textContent = "";
+      previousTypeCount = getRequestTypes().length;
+      if (status) status.textContent = "";
+    }, 0);
+  });
 
-      for (const question of questionSets[service] || []) {
-        const answer = window.prompt(question);
-        if (answer === null) return;
-        answers.push({ question, answer: answer.trim() || "A definir" });
-      }
-
-      const message = [
-        `Necesito un análisis de: ${title}.`,
-        "",
-        "Datos para orientar el pedido:",
-        ...answers.map((item) => `- ${item.question} ${item.answer}`),
-      ].join("\n");
-
-      window.open(`https://wa.me/5492216765720?text=${encodeURIComponent(message)}`, "_blank", "noopener");
-    });
+  copy?.addEventListener("click", async () => {
+    const brief = briefTarget.textContent.trim();
+    if (!brief) return;
+    try {
+      await navigator.clipboard.writeText(brief);
+      if (status) status.textContent = "Brief copiado.";
+    } catch (_) {
+      if (status) status.textContent = "Selecciona el texto del brief para copiarlo.";
+    }
   });
 }
 

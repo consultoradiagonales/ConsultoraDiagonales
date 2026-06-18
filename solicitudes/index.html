@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Solicitud de radiografias, informes y evaluaciones estrategicas de Consultora Diagonales." />
+    <title>Solicitudes | Consultora Diagonales</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260618-solicitudes" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body class="bg-[#080d14] text-white antialiased" data-page="solicitudes">
+    <header class="site-header is-solid" data-header>
+      <a class="brand" href="../index.html" aria-label="Consultora Diagonales">
+        <img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
+        <img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo />
+      </a>
+      <nav class="desktop-nav" aria-label="Navegacion principal">
+        <a href="../index.html" data-nav="inicio">Inicio</a>
+        <a href="../servicios/index.html" data-nav="servicios">Servicios</a>
+        <a href="../repositorio/index.html" data-nav="radiografias">Radiograf&iacute;as</a>
+        <a href="../contacto/index.html" data-nav="contacto">Contacto</a>
+        <a href="../admin/index.html" data-nav="admin">Admin</a>
+      </nav>
+      <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" data-menu-toggle>
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </header>
+
+    <div class="mobile-menu" data-mobile-menu aria-hidden="true">
+      <a href="../index.html">Inicio</a>
+      <a href="../servicios/index.html">Servicios</a>
+      <a href="../repositorio/index.html">Radiograf&iacute;as</a>
+      <a href="../contacto/index.html">Contacto</a>
+      <a href="../admin/index.html">Admin</a>
+    </div>
+
+    <main class="subpage request-page">
+      <section class="request-layout mx-auto grid min-h-screen max-w-7xl gap-8 px-6 pb-20 pt-36 md:px-10 lg:grid-cols-[.9fr_1.1fr] lg:px-12">
+        <div class="request-intro">
+          <p class="eyebrow">Solicitudes</p>
+          <h1 class="page-title">Radiograf&iacute;as, informes y evaluaciones para decidir con informaci&oacute;n.</h1>
+          <p class="request-lede">
+            Empresas, territorios pol&iacute;ticos, humor social, dirigentes y proyecciones en un brief operativo.
+          </p>
+          <div class="request-modules" aria-label="Tipos de analisis">
+            <article>
+              <span>01</span>
+              <strong>Radiograf&iacute;a territorial</strong>
+              <p>Mapa de actores, intereses, conflictos, riesgos y oportunidades.</p>
+            </article>
+            <article>
+              <span>02</span>
+              <strong>Informe estrat&eacute;gico</strong>
+              <p>Lectura ejecutiva para una decisi&oacute;n, negociaci&oacute;n o campa&ntilde;a.</p>
+            </article>
+            <article>
+              <span>03</span>
+              <strong>Evaluaci&oacute;n empresarial</strong>
+              <p>Reputaci&oacute;n, entorno, mercado, se&ntilde;ales p&uacute;blicas y viabilidad.</p>
+            </article>
+            <article>
+              <span>04</span>
+              <strong>Perspectivas</strong>
+              <p>Escenarios, alertas tempranas y proyecciones de corto o mediano plazo.</p>
+            </article>
+          </div>
+        </div>
+
+        <form class="request-form" data-request-form>
+          <div class="request-block">
+            <span class="request-block-title">Tipo de trabajo</span>
+            <div class="request-type-grid">
+              <label class="request-option">
+                <input type="checkbox" name="request_type" value="Radiografia territorial" checked />
+                <span>Radiograf&iacute;a territorial</span>
+                <small>Territorio, poder local y actores.</small>
+              </label>
+              <label class="request-option">
+                <input type="checkbox" name="request_type" value="Informe estrategico" />
+                <span>Informe estrat&eacute;gico</span>
+                <small>Decisiones, riesgos y cursos de acci&oacute;n.</small>
+              </label>
+              <label class="request-option">
+                <input type="checkbox" name="request_type" value="Evaluacion de empresa" />
+                <span>Evaluaci&oacute;n de empresa</span>
+                <small>Negocio, reputaci&oacute;n y contexto.</small>
+              </label>
+              <label class="request-option">
+                <input type="checkbox" name="request_type" value="Territorio politico" />
+                <span>Territorio pol&iacute;tico</span>
+                <small>Coaliciones, conflictos y estructura.</small>
+              </label>
+              <label class="request-option">
+                <input type="checkbox" name="request_type" value="Humor social" />
+                <span>Humor social</span>
+                <small>Clima, percepciones y agenda p&uacute;blica.</small>
+              </label>
+              <label class="request-option">
+                <input type="checkbox" name="request_type" value="Politico o dirigente" />
+                <span>Pol&iacute;tico o dirigente</span>
+                <small>Imagen, trayectoria y proyecci&oacute;n.</small>
+              </label>
+              <label class="request-option request-option-wide">
+                <input type="checkbox" name="request_type" value="Perspectiva o proyeccion" />
+                <span>Perspectiva o proyecci&oacute;n</span>
+                <small>Escenarios futuros, hip&oacute;tesis y alertas.</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <label>
+              <span>Nombre</span>
+              <input name="full_name" type="text" autocomplete="name" placeholder="Nombre y apellido" required />
+            </label>
+            <label>
+              <span>Celular</span>
+              <input name="phone" type="tel" autocomplete="tel" placeholder="+54 9 ..." required />
+            </label>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <label>
+              <span>Email</span>
+              <input name="email" type="email" autocomplete="email" placeholder="nombre@dominio.com" />
+            </label>
+            <label>
+              <span>Organizacion</span>
+              <input name="organization" type="text" autocomplete="organization" placeholder="Equipo, empresa, institucion" />
+            </label>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <label>
+              <span>Foco de analisis</span>
+              <input name="target" type="text" placeholder="Empresa, distrito, dirigente, sector..." required />
+            </label>
+            <label>
+              <span>Territorio o mercado</span>
+              <input name="territory" type="text" placeholder="Municipio, provincia, region, rubro..." />
+            </label>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-3">
+            <label>
+              <span>Horizonte</span>
+              <select name="time_horizon">
+                <option value="30 dias">30 dias</option>
+                <option value="90 dias">90 dias</option>
+                <option value="6 meses">6 meses</option>
+                <option value="12 meses">12 meses</option>
+                <option value="2027">2027</option>
+                <option value="A definir">A definir</option>
+              </select>
+            </label>
+            <label>
+              <span>Prioridad</span>
+              <select name="urgency">
+                <option value="Exploratoria">Exploratoria</option>
+                <option value="Alta">Alta</option>
+                <option value="Urgente">Urgente</option>
+                <option value="Programa continuo">Programa continuo</option>
+              </select>
+            </label>
+            <label>
+              <span>Entrega</span>
+              <select name="deliverable">
+                <option value="Brief ejecutivo">Brief ejecutivo</option>
+                <option value="Informe completo">Informe completo</option>
+                <option value="Radiografia + anexos">Radiografia + anexos</option>
+                <option value="Dashboard o seguimiento">Dashboard o seguimiento</option>
+                <option value="Presentacion">Presentacion</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            <span>Decision a tomar</span>
+            <textarea name="decision" rows="4" placeholder="Que decision, riesgo, oportunidad o escenario necesita resolver el analisis..." required></textarea>
+          </label>
+
+          <label>
+            <span>Contexto sensible</span>
+            <textarea name="context" rows="3" placeholder="Actores relevantes, conflicto abierto, evento cercano, restricciones politicas o comerciales..."></textarea>
+          </label>
+
+          <label>
+            <span>Fuentes disponibles</span>
+            <textarea name="sources" rows="3" placeholder="Encuestas, documentos, redes, notas, bases internas, antecedentes o links publicos..."></textarea>
+          </label>
+
+          <label class="checkbox-field request-consent">
+            <input name="terms" type="checkbox" required />
+            <span>Acepto que Consultora Diagonales use estos datos para responder la solicitud.</span>
+          </label>
+          <label class="checkbox-field request-consent">
+            <input name="publish_authorization" type="checkbox" />
+            <span>Autorizo que Consultora Diagonales publique, dicho an&aacute;lisis, en su repositorio de Radiograf&iacute;as.</span>
+          </label>
+
+          <div class="request-actions">
+            <button class="primary-link justify-center" type="submit">Generar solicitud</button>
+            <button class="secondary-link justify-center" type="reset" data-request-reset>Limpiar</button>
+          </div>
+          <p class="form-status" data-request-status role="status"></p>
+        </form>
+      </section>
+
+      <section class="request-output-band" data-request-output hidden>
+        <div class="mx-auto grid max-w-7xl gap-8 px-6 py-16 md:px-10 lg:grid-cols-[.8fr_1.2fr] lg:px-12">
+          <div>
+            <p class="eyebrow">Brief generado</p>
+            <h2 class="section-title">Solicitud lista para enviar.</h2>
+          </div>
+          <div class="request-output-card">
+            <pre data-request-brief></pre>
+            <div class="request-output-actions">
+              <a class="primary-link justify-center" data-request-whatsapp target="_blank" rel="noopener">Enviar por WhatsApp</a>
+              <a class="secondary-link justify-center" data-request-email target="_blank" rel="noopener">Enviar por email</a>
+              <button class="secondary-link justify-center" type="button" data-request-copy>Copiar brief</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="request-cost-modal" data-request-cost-modal hidden aria-hidden="true">
+        <div class="request-cost-dialog" role="dialog" aria-modal="true" aria-labelledby="request-cost-title">
+          <p class="eyebrow" id="request-cost-title">Aviso importante</p>
+          <p>
+            Consultora Diagonales ofrece un servicio de an&aacute;lisis b&aacute;sico y gratuito. De necesitar mas de una
+            Radiograf&iacute;a o An&aacute;lisis, ello conlleva un costo, el cual le ser&aacute; comunicado previamente a generar el
+            informe para que Ud. pueda confirmar.
+          </p>
+          <button class="primary-link justify-center" type="button" data-request-cost-close>Entendido</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <span>&copy; CONSULTORA DIAGONALES | Data Analytics.</span>
+    </footer>
+
+    <script src="../assets/js/supabase-config.js?v=20260527"></script>
+    <script src="../assets/js/main.js?v=20260618-solicitudes"></script>
+  </body>
+</html>
