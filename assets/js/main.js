@@ -23,7 +23,7 @@ initLeadForms();
 if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
 if (page === "registro") initRegistration();
-if (page === "servicios") initServiceRequests();
+if (page === "solicitudes") initRequestGenerator();
 
 async function initRepository() {
   await syncStoredAuthContact();
@@ -72,13 +72,183 @@ function initLogoFallbacks() {
 }
 
 function initActiveNavigation() {
-  const key = page === "repo" ? "radiografias" : page === "home" ? "inicio" : page;
+  const key = page === "repo" ? "radiografias" : page === "home" ? "inicio" : page === "solicitudes" ? "servicios" : page;
   document.querySelectorAll(`[data-nav="${key}"]`).forEach((link) => link.classList.add("is-active"));
 }
 
 function initFooterText() {
   document.querySelectorAll(".site-footer").forEach((footer) => {
-    footer.textContent = "© CONSULTORA DIAGONALES | Data Analytics.";
+    footer.textContent = "\u00a9 CONSULTORA DIAGONALES | Data Analytics.";
+  });
+}
+
+function initRequestGenerator() {
+  const form = document.querySelector("[data-request-form]");
+  const output = document.querySelector("[data-request-output]");
+  const briefTarget = document.querySelector("[data-request-brief]");
+  const whatsapp = document.querySelector("[data-request-whatsapp]");
+  const email = document.querySelector("[data-request-email]");
+  const copy = document.querySelector("[data-request-copy]");
+  const status = document.querySelector("[data-request-status]");
+  const costModal = document.querySelector("[data-request-cost-modal]");
+  const costClose = document.querySelector("[data-request-cost-close]");
+  if (!form || !output || !briefTarget) return;
+
+  const getValue = (name) => String(new FormData(form).get(name) || "").trim();
+  const getValues = (name) => Array.from(new FormData(form).getAll(name)).map((value) => String(value).trim()).filter(Boolean);
+  const labelSeparator = `${String.fromCharCode(58)}${String.fromCharCode(32)}`;
+  const typeSeparator = `${String.fromCharCode(32)}${String.fromCharCode(43)}${String.fromCharCode(32)}`;
+  const line = (label, value) => `${label}${labelSeparator}${value || "A definir"}`;
+  const getRequestTypes = () => getValues("request_type");
+  let previousTypeCount = getRequestTypes().length;
+
+  const showCostModal = () => {
+    if (!costModal) return;
+    costModal.hidden = false;
+    costModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    costClose?.focus();
+  };
+
+  const hideCostModal = () => {
+    if (!costModal) return;
+    costModal.hidden = true;
+    costModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  const buildBrief = () => {
+    const types = getRequestTypes();
+    const type = types.join(typeSeparator) || "Solicitud estrategica";
+    const fullName = getValue("full_name");
+    const organization = getValue("organization");
+    const phone = getValue("phone");
+    const emailValue = getValue("email");
+    const target = getValue("target");
+    const territory = getValue("territory");
+    const horizon = getValue("time_horizon");
+    const urgency = getValue("urgency");
+    const deliverable = getValue("deliverable");
+    const decision = getValue("decision");
+    const context = getValue("context");
+    const sources = getValue("sources");
+    const publishAuthorization = form.elements.publish_authorization?.checked ? "Si" : "No";
+
+    return {
+      type,
+      target,
+      territory,
+      fullName,
+      organization,
+      phone,
+      email: emailValue,
+      horizon,
+      urgency,
+      deliverable,
+      publishAuthorization,
+      brief: [
+        "Solicitud para Consultora Diagonales",
+        "",
+        line("Tipo de trabajo", type),
+        line("Foco de analisis", target),
+        line("Territorio o mercado", territory),
+        line("Horizonte", horizon),
+        line("Prioridad", urgency),
+        line("Entrega esperada", deliverable),
+        "",
+        line("Decision a tomar", decision),
+        line("Contexto sensible", context),
+        line("Fuentes disponibles", sources),
+        line("Autoriza publicacion en repositorio", publishAuthorization),
+        "",
+        line("Solicitante", fullName),
+        line("Organizacion", organization),
+        line("Celular", phone),
+        line("Email", emailValue),
+      ].join("\n"),
+    };
+  };
+
+  const publishBrief = async () => {
+    const request = buildBrief();
+    const subject = `Solicitud - ${request.type} - ${request.target || "Consultora Diagonales"}`;
+    const encodedBrief = encodeURIComponent(request.brief);
+
+    briefTarget.textContent = request.brief;
+    if (whatsapp) whatsapp.href = `https://wa.me/5492216765720?text=${encodedBrief}`;
+    if (email) {
+      email.href = `https://mail.google.com/mail/?view=cm&fs=1&to=info.consultoradiagonales@gmail.com&su=${encodeURIComponent(subject)}&body=${encodedBrief}`;
+    }
+
+    output.hidden = false;
+    output.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (status) status.textContent = "Solicitud generada.";
+
+    try {
+      await saveLead({
+        email: request.email.toLowerCase(),
+        phone: request.phone,
+        fullName: request.fullName,
+        organization: request.organization,
+        interest: `${request.type}: ${request.target || request.territory || "A definir"}`,
+      });
+      await trackEvent("request_brief_generated", {
+        request_type: request.type,
+        target: request.target,
+        territory: request.territory,
+        horizon: request.horizon,
+        urgency: request.urgency,
+        deliverable: request.deliverable,
+      });
+    } catch (error) {
+      console.warn("No se pudo guardar la solicitud", error);
+    }
+  };
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!getRequestTypes().length) {
+      if (status) status.textContent = "Selecciona al menos un tipo de trabajo.";
+      return;
+    }
+    if (!form.reportValidity()) return;
+    await publishBrief();
+  });
+
+  form.querySelectorAll('[name="request_type"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      const typeCount = getRequestTypes().length;
+      if (typeCount > 1 && previousTypeCount <= 1) showCostModal();
+      previousTypeCount = typeCount;
+    });
+  });
+
+  costClose?.addEventListener("click", hideCostModal);
+  costModal?.addEventListener("click", (event) => {
+    if (event.target === costModal) hideCostModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && costModal && !costModal.hidden) hideCostModal();
+  });
+
+  form.addEventListener("reset", () => {
+    window.setTimeout(() => {
+      output.hidden = true;
+      briefTarget.textContent = "";
+      previousTypeCount = getRequestTypes().length;
+      if (status) status.textContent = "";
+    }, 0);
+  });
+
+  copy?.addEventListener("click", async () => {
+    const brief = briefTarget.textContent.trim();
+    if (!brief) return;
+    try {
+      await navigator.clipboard.writeText(brief);
+      if (status) status.textContent = "Brief copiado.";
+    } catch (_) {
+      if (status) status.textContent = "Selecciona el texto del brief para copiarlo.";
+    }
   });
 }
 
