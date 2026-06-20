@@ -20,12 +20,10 @@
     if (card.querySelector(`.${SHARE_CLASS}`)) return;
 
     const title = card.querySelector("h2")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
-    const primaryLink = card.querySelector("[data-report-open], [data-pdf-download]");
-    const shareUrl = buildShareUrl(primaryLink?.href);
     const actions = card.querySelector(".report-actions");
     if (!actions) return;
 
-    actions.insertAdjacentHTML("beforeend", buildShareAnchor(title, shareUrl));
+    actions.insertAdjacentHTML("beforeend", buildShareAnchor(title, `${SHARE_CLASS}--card`));
   }
 
   function addListShareLink(row) {
@@ -33,47 +31,56 @@
     if (row.dataset.shareEnhanced === "true") return;
 
     const title = row.querySelector("span")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
-    const shareUrl = buildShareUrl(row.href);
-    const share = document.createElement("a");
+    const share = document.createElement("span");
     share.className = `${SHARE_CLASS} ${SHARE_CLASS}--list`;
-    share.href = buildWhatsappHref(title, shareUrl);
-    share.target = "_blank";
-    share.rel = "noopener";
-    share.textContent = "WhatsApp";
+    share.setAttribute("role", "button");
+    share.setAttribute("tabindex", "0");
     share.setAttribute("aria-label", `${SHARE_LABEL}: ${title}`);
-    share.addEventListener("click", (event) => event.stopPropagation());
+    share.innerHTML = shareIcon();
+
+    const openShare = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      window.open(buildWhatsappHref(title), "_blank", "noopener");
+    };
+
+    share.addEventListener("click", openShare);
+    share.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") openShare(event);
+    });
 
     row.dataset.shareEnhanced = "true";
-    row.insertAdjacentElement("afterend", share);
+    row.appendChild(share);
   }
 
-  function buildShareAnchor(title, shareUrl) {
-    return `<a class="${SHARE_CLASS}" href="${escapeAttribute(buildWhatsappHref(title, shareUrl))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}">${SHARE_LABEL}</a>`;
+  function buildShareAnchor(title, modifierClass) {
+    return `<a class="${SHARE_CLASS} ${modifierClass}" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}">${shareIcon()}</a>`;
   }
 
-  function buildShareUrl(candidate) {
-    try {
-      const url = new URL(candidate || window.location.href, window.location.href);
-      if (url.pathname.includes("/registro/")) return repositoryUrl();
-      return url.href;
-    } catch (_) {
-      return repositoryUrl();
-    }
+  function buildWhatsappHref(title) {
+    const message = [
+      "Consultora Diagonales",
+      SLOGAN,
+      "",
+      title,
+      repositoryUrl(),
+    ].join("\n");
+    return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 
   function repositoryUrl() {
     return new URL("/repositorio/index.html", window.location.origin).href;
   }
 
-  function buildWhatsappHref(title, shareUrl) {
-    const message = [
-      "Consultora Diagonales",
-      SLOGAN,
-      "",
-      title,
-      shareUrl,
-    ].join("\n");
-    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  function shareIcon() {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M16 8.5 8.8 12l7.2 3.5" />
+        <circle cx="18" cy="7.5" r="2.5" />
+        <circle cx="6" cy="12" r="2.5" />
+        <circle cx="18" cy="16.5" r="2.5" />
+      </svg>
+    `;
   }
 
   function escapeAttribute(value) {
