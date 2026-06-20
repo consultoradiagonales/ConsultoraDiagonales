@@ -7,13 +7,13 @@
   document.addEventListener("DOMContentLoaded", () => {
     addShareLinks();
     document.querySelectorAll("[data-reports]").forEach((container) => {
-      observer.observe(container, { childList: true, subtree: true });
+      observer.observe(container, { childList: true });
     });
   });
 
   function addShareLinks() {
     document.querySelectorAll(".report-card").forEach(addCardShareLink);
-    document.querySelectorAll(".latest-list > a").forEach(addListShareLink);
+    document.querySelectorAll(`.latest-list > a:not(.${SHARE_CLASS})`).forEach(addListShareLink);
   }
 
   function addCardShareLink(card) {
@@ -29,6 +29,7 @@
   }
 
   function addListShareLink(row) {
+    if (row.classList.contains(SHARE_CLASS)) return;
     if (row.dataset.shareEnhanced === "true") return;
 
     const title = row.querySelector("span")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
