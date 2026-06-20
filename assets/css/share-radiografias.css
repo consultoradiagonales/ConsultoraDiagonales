@@ -1,0 +1,26 @@
+.radiografia-share-link {
+  color: rgba(210, 247, 255, 0.92);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 180ms ease;
+}
+
+.radiografia-share-link:hover {
+  color: #fff;
+}
+
+.radiografia-share-link--list {
+  justify-self: end;
+  width: max-content;
+  margin: -0.35rem 1rem 0.4rem 0;
+}
+
+@media (max-width: 640px) {
+  .radiografia-share-link--list {
+    justify-self: start;
+    margin: -0.45rem 0 0.55rem 1rem;
+  }
+}
