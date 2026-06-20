@@ -12,7 +12,7 @@
 
       event.preventDefault();
       event.stopImmediatePropagation();
-      openPdfViewer(url.href, link.closest("[data-report-index]")?.textContent?.trim() || "Radiografia");
+      openPdfViewer(url.href, getPdfTitle(link));
     },
     true,
   );
@@ -54,6 +54,12 @@
     viewer.classList.add("is-open");
     viewer.setAttribute("aria-hidden", "false");
     document.body.classList.add("pdf-viewer-open");
+  }
+
+  function getPdfTitle(link) {
+    const cardTitle = link.closest(".report-card")?.querySelector("h2")?.textContent?.trim();
+    const listTitle = link.closest(".latest-list a")?.querySelector("span")?.textContent?.trim();
+    return cardTitle || listTitle || "Radiografia";
   }
 
   function closePdfViewer() {
