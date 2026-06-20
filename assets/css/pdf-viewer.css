@@ -1,0 +1,122 @@
+body.pdf-viewer-open {
+  overflow: hidden;
+}
+
+.pdf-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  background: rgba(3, 13, 22, 0.78);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.pdf-viewer.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pdf-viewer__dialog {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: min(100%, 1180px);
+  height: min(100%, 900px);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--box-border);
+  border-radius: 8px;
+  background: #061522;
+  box-shadow: 0 30px 95px rgba(0, 10, 18, 0.56);
+}
+
+.pdf-viewer__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(122, 194, 232, 0.22);
+  background: var(--box-blue);
+}
+
+.pdf-viewer__bar span {
+  display: block;
+  color: var(--blue);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.pdf-viewer__bar h2 {
+  max-width: min(64vw, 760px);
+  overflow: hidden;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-viewer__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.pdf-viewer__actions button {
+  min-height: 38px;
+  border: 1px solid rgba(122, 194, 232, 0.34);
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.pdf-viewer iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  background: #fff;
+}
+
+@media (max-width: 640px) {
+  .pdf-viewer {
+    padding: 0;
+  }
+
+  .pdf-viewer__dialog {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .pdf-viewer__bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pdf-viewer__bar h2 {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .pdf-viewer__actions,
+  .pdf-viewer__actions button {
+    width: 100%;
+  }
+}
