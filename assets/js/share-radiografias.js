@@ -4,6 +4,9 @@
   const SLOGAN = "Data Analytics aplicado al territorio, opinion publica y escenarios de poder.";
 
   const observer = new MutationObserver(addShareLinks);
+  document.addEventListener("click", handleShareActivation, true);
+  document.addEventListener("keydown", handleShareKeydown, true);
+
   document.addEventListener("DOMContentLoaded", () => {
     removeLegacyShareLinks();
     addShareLinks();
@@ -45,26 +48,42 @@
     share.setAttribute("role", "button");
     share.setAttribute("tabindex", "0");
     share.setAttribute("aria-label", `${SHARE_LABEL}: ${title}`);
+    share.dataset.shareTitle = title;
     share.textContent = "";
     share.insertAdjacentHTML("afterbegin", shareIcon());
-
-    const openShare = (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      window.open(buildWhatsappHref(title), "_blank", "noopener");
-    };
-
-    share.addEventListener("click", openShare);
-    share.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") openShare(event);
-    });
 
     row.dataset.shareEnhanced = "true";
     row.appendChild(share);
   }
 
   function buildShareAnchor(title, modifierClass) {
-    return `<a class="${SHARE_CLASS} ${modifierClass}" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}">${shareIcon()}</a>`;
+    return `<a class="${SHARE_CLASS} ${modifierClass}" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>`;
+  }
+
+  function handleShareActivation(event) {
+    const share = event.target.closest(`.${SHARE_CLASS}`);
+    if (!share) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    openWhatsappShare(share);
+  }
+
+  function handleShareKeydown(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const share = event.target.closest(`.${SHARE_CLASS}`);
+    if (!share) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    openWhatsappShare(share);
+  }
+
+  function openWhatsappShare(share) {
+    const title = share.dataset.shareTitle || share.closest("a")?.querySelector("span")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
+    window.location.href = buildWhatsappHref(title);
   }
 
   function buildWhatsappHref(title) {
