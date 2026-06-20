@@ -5,6 +5,7 @@
 
   const observer = new MutationObserver(addShareLinks);
   document.addEventListener("DOMContentLoaded", () => {
+    removeLegacyShareLinks();
     addShareLinks();
     document.querySelectorAll("[data-reports]").forEach((container) => {
       observer.observe(container, { childList: true });
@@ -12,8 +13,16 @@
   });
 
   function addShareLinks() {
+    removeLegacyShareLinks();
     document.querySelectorAll(".report-card").forEach(addCardShareLink);
     document.querySelectorAll(`.latest-list > a:not(.${SHARE_CLASS})`).forEach(addListShareLink);
+  }
+
+  function removeLegacyShareLinks() {
+    document.querySelectorAll(`.latest-list > .${SHARE_CLASS}, .latest-list > a[href*="wa.me"], .latest-list > a[href*="whatsapp"]`).forEach((link) => {
+      const text = link.textContent.trim().toLowerCase();
+      if (link.classList.contains(SHARE_CLASS) || text === "whatsapp") link.remove();
+    });
   }
 
   function addCardShareLink(card) {
@@ -36,7 +45,8 @@
     share.setAttribute("role", "button");
     share.setAttribute("tabindex", "0");
     share.setAttribute("aria-label", `${SHARE_LABEL}: ${title}`);
-    share.innerHTML = shareIcon();
+    share.textContent = "";
+    share.insertAdjacentHTML("afterbegin", shareIcon());
 
     const openShare = (event) => {
       event.preventDefault();
