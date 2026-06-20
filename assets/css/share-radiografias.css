@@ -8,6 +8,8 @@
   border-radius: 8px;
   color: rgba(210, 247, 255, 0.94);
   background: rgba(255, 255, 255, 0.05);
+  font-size: 0;
+  line-height: 0;
   text-decoration: none;
   transition: color 180ms ease, border-color 180ms ease, background 180ms ease, transform 180ms ease;
 }
@@ -24,6 +26,19 @@
 .radiografia-share-link svg {
   width: 20px;
   height: 20px;
+}
+
+.radiografia-share-link::before {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: currentColor;
+  clip-path: polygon(78% 6%, 92% 12%, 96% 26%, 90% 40%, 76% 45%, 63% 39%, 34% 55%, 63% 72%, 76% 66%, 90% 71%, 96% 85%, 90% 98%, 76% 100%, 63% 92%, 31% 73%, 21% 79%, 7% 75%, 0 62%, 5% 48%, 20% 43%, 31% 49%, 63% 31%, 62% 18%);
+}
+
+.radiografia-share-link:has(svg)::before {
+  display: none;
 }
 
 .radiografia-share-link path,
