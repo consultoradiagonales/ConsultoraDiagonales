@@ -1,5 +1,6 @@
 (function () {
   const LOADING_TEXT = "Cargando radiograf";
+  const SLOGAN = "Data Analytics aplicado al territorio, opinion publica y escenarios de poder.";
 
   document.addEventListener("DOMContentLoaded", () => {
     window.setTimeout(loadReportsIfStuck, 3200);
@@ -48,14 +49,34 @@
     container.innerHTML = reports.map((report, index) => {
       const title = escapeHtml(report.titulo || "Radiograf&iacute;a sin t&iacute;tulo");
       const pdfHref = escapeAttribute(report.pdf_url || "#");
+      const shareHref = escapeAttribute(buildWhatsappHref(report.titulo || "Radiografia de Consultora Diagonales"));
       return `
-        <a href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">
+        <div class="latest-report-row">
           <time datetime="${escapeAttribute(report.fecha || "")}">${formatDate(report.fecha)}</time>
           <span>${title}</span>
-          <strong>Abrir PDF</strong>
-        </a>
+          <a class="latest-report-row__pdf" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">Abrir PDF</a>
+          <a class="radiografia-share-link radiografia-share-link--list" href="${shareHref}" target="_blank" rel="noopener" aria-label="Compartir por WhatsApp: ${title}">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M16 8.5 8.8 12l7.2 3.5" />
+              <circle cx="18" cy="7.5" r="2.5" />
+              <circle cx="6" cy="12" r="2.5" />
+              <circle cx="18" cy="16.5" r="2.5" />
+            </svg>
+          </a>
+        </div>
       `;
     }).join("");
+  }
+
+  function buildWhatsappHref(title) {
+    const message = [
+      "Consultora Diagonales",
+      SLOGAN,
+      "",
+      title,
+      new URL("/repositorio/index.html", window.location.origin).href,
+    ].join("\n");
+    return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 
   function formatDate(value) {
