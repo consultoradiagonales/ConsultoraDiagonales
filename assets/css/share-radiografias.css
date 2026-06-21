@@ -50,10 +50,45 @@
   stroke-linejoin: round;
 }
 
-.latest-list > a[data-share-enhanced="true"] {
-  position: relative;
+.latest-report-row {
+  display: grid;
   grid-template-columns: 160px 1fr auto 42px;
-  padding-right: 1rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem 1rem;
+  border-radius: 8px;
+  background: rgba(4, 54, 72, 0.96);
+  border: 1px solid rgba(122, 194, 232, 0.24);
+  color: #fff;
+}
+
+.latest-report-row time {
+  color: #7ce3ff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.latest-report-row span {
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.latest-report-row__pdf {
+  color: #7ce3ff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.latest-report-row__pdf:hover,
+.latest-report-row__pdf:focus-visible {
+  color: #fff;
+  outline: none;
 }
 
 .radiografia-share-link--list {
@@ -61,13 +96,14 @@
 }
 
 @media (max-width: 640px) {
-  .latest-list > a[data-share-enhanced="true"] {
+  .latest-report-row {
     grid-template-columns: 1fr 42px;
+    gap: 0.45rem 1rem;
   }
 
-  .latest-list > a[data-share-enhanced="true"] time,
-  .latest-list > a[data-share-enhanced="true"] span,
-  .latest-list > a[data-share-enhanced="true"] strong {
+  .latest-report-row time,
+  .latest-report-row span,
+  .latest-report-row__pdf {
     grid-column: 1;
   }
 
