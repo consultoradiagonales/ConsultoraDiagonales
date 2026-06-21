@@ -4,6 +4,8 @@
   document.addEventListener(
     "click",
     (event) => {
+      if (event.target.closest(".radiografia-share-link")) return;
+
       const link = event.target.closest("[data-pdf-download]");
       if (!link) return;
 
