@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Validación de acceso a radiografías de Consultora Diagonales." />
-    <title>Validación de acceso | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260615-seo-proof" />
+    <meta name="description" content="Acceso a radiograf&iacute;as PDF de Consultora Diagonales." />
+    <title>Acceso a radiograf&iacute;as | Consultora Diagonales</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260620-pdf-viewer" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -15,14 +15,14 @@
         <img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
         <img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo />
       </a>
-      <nav class="desktop-nav" aria-label="Navegacion principal">
+      <nav class="desktop-nav" aria-label="Navegaci&oacute;n principal">
         <a href="../index.html" data-nav="inicio">Inicio</a>
         <a href="../servicios/index.html" data-nav="servicios">Servicios</a>
-        <a href="../repositorio/index.html" data-nav="radiografias">Radiografías</a>
+        <a href="../repositorio/index.html" data-nav="radiografias">Radiograf&iacute;as</a>
         <a href="../contacto/index.html" data-nav="contacto">Contacto</a>
         <a href="../admin/index.html" data-nav="admin">Admin</a>
       </nav>
-      <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle>
+      <button class="menu-toggle" type="button" aria-label="Abrir men&uacute;" aria-expanded="false" data-menu-toggle>
         <span></span>
         <span></span>
         <span></span>
@@ -32,62 +32,46 @@
     <div class="mobile-menu" data-mobile-menu aria-hidden="true">
       <a href="../index.html">Inicio</a>
       <a href="../servicios/index.html">Servicios</a>
-      <a href="../repositorio/index.html">Radiografías</a>
+      <a href="../repositorio/index.html">Radiograf&iacute;as</a>
       <a href="../contacto/index.html">Contacto</a>
       <a href="../admin/index.html">Admin</a>
-
     </div>
 
     <main class="subpage">
       <section class="registration-layout mx-auto grid min-h-screen max-w-7xl gap-10 px-6 pb-24 pt-36 md:px-10 lg:grid-cols-[.9fr_1.1fr] lg:px-12">
         <div>
-          <p class="eyebrow">Descarga de PDFs</p>
-          <h1 class="page-title">Registrate para descargar radiografías PDF.</h1>
+          <p class="eyebrow">Acceso a PDFs</p>
+          <h1 class="page-title">Dejanos tu celular para abrir la radiograf&iacute;a.</h1>
           <p class="mt-6 max-w-xl text-base leading-8 text-slate-300">
-            El registro se usa para validar contactos y habilitar descargas. Pedimos nombre y teléfono, y confirmamos
-            el acceso con Gmail antes de permitir la descarga de PDFs.
+            Usamos el celular para construir una base de lectores y enviarte nuevas radiograf&iacute;as de Consultora Diagonales.
           </p>
         </div>
 
         <form class="registration-form" data-registration-form>
+          <label>
+            <span>Tel&eacute;fono</span>
+            <input name="phone" type="tel" autocomplete="tel" placeholder="+54 9 ..." required />
+          </label>
           <div class="grid gap-5 md:grid-cols-2">
             <label>
               <span>Nombre y apellido</span>
-              <input name="full_name" type="text" autocomplete="name" placeholder="Tu nombre" required />
+              <input name="full_name" type="text" autocomplete="name" placeholder="Tu nombre" />
             </label>
             <label>
-              <span>Teléfono</span>
-              <input name="phone" type="tel" autocomplete="tel" placeholder="+54 9 ..." required />
+              <span>Correo electr&oacute;nico</span>
+              <input name="email" type="email" autocomplete="email" placeholder="nombre@gmail.com" />
             </label>
           </div>
           <label>
-            <span>Correo electrónico</span>
-            <input name="email" type="email" autocomplete="email" placeholder="nombre@gmail.com" />
-          </label>
-          <label>
-            <span>Organización o rol</span>
+            <span>Organizaci&oacute;n o rol</span>
             <input name="organization" type="text" autocomplete="organization" placeholder="Consultora, medio, equipo..." />
           </label>
-          <div class="phone-verification" data-gmail-verification>
-            <div>
-              <span>Validación con Gmail</span>
-              <p>Guardamos tu nombre y teléfono, y después validamos tu identidad con Gmail para habilitar las descargas.</p>
-            </div>
-          </div>
 
           <label class="checkbox-field">
             <input name="terms" type="checkbox" required />
             <span>Acepto el uso de mis datos para gestionar mi acceso y comunicaciones de Consultora Diagonales.</span>
           </label>
-          <button class="primary-link justify-center" type="submit" data-registration-submit>Continuar con Gmail</button>
-
-          <div class="social-login-panel">
-            <span>Validación requerida</span>
-            <div class="social-login-grid">
-              <button type="button" data-social-provider="google">Validar con Gmail</button>
-            </div>
-          </div>
-
+          <button class="primary-link justify-center" type="submit" data-registration-submit>Guardar celular y abrir PDF</button>
           <p class="form-status" data-registration-status role="status"></p>
         </form>
       </section>
@@ -98,6 +82,7 @@
     </footer>
 
     <script src="../assets/js/supabase-config.js?v=20260531-gmail-access"></script>
-    <script src="../assets/js/main.js?v=20260618-solicitudes"></script>
+    <script src="../assets/js/main.js?v=20260620-pdf-viewer"></script>
+    <script src="../assets/js/phone-access.js?v=20260621-phone-only"></script>
   </body>
 </html>
