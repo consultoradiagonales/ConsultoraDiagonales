@@ -77,6 +77,14 @@
 }
 
 .latest-report-row__pdf {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 1px solid rgba(122, 194, 232, 0.28);
+  border-radius: 8px;
+  padding: 0 1rem;
+  background: transparent;
   color: #7ce3ff;
   font-size: 0.78rem;
   font-weight: 800;
@@ -89,6 +97,32 @@
 .latest-report-row__pdf:focus-visible {
   color: #fff;
   outline: none;
+}
+
+.latest-list .latest-report-row .radiografia-share-link {
+  display: inline-grid !important;
+  grid-template-columns: none !important;
+  gap: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  transform: none;
+}
+
+.latest-list .latest-report-row .radiografia-share-link svg {
+  display: block !important;
+  width: 21px !important;
+  height: 21px !important;
+}
+
+.latest-list .latest-report-row .radiografia-share-link::before {
+  display: none !important;
 }
 
 .radiografia-share-link--list {
