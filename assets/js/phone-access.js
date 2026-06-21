@@ -14,11 +14,10 @@
 
     const status = document.querySelector("[data-registration-status]");
     const submit = document.querySelector("[data-registration-submit]");
-    const data = new FormData(form);
-    const phone = String(data.get("phone") || "").trim();
-    const fullName = String(data.get("full_name") || "").trim();
-    const email = String(data.get("email") || "").trim().toLowerCase();
-    const organization = String(data.get("organization") || "").trim();
+    const phone = String(new FormData(form).get("phone") || "").trim();
+    const fullName = String(new FormData(form).get("full_name") || "").trim();
+    const email = String(new FormData(form).get("email") || "").trim().toLowerCase();
+    const organization = String(new FormData(form).get("organization") || "").trim();
 
     if (!phone) {
       if (status) status.textContent = "Dejanos un celular para habilitar la lectura.";
@@ -38,7 +37,7 @@
       full_name: fullName,
       organization,
       access_reason: "pdf_download",
-      phone_validation_status: "gmail_verified",
+      phone_validation_status: "phone_verified",
       consent_terms: true,
       last_seen_at: new Date().toISOString(),
       tags: ["descarga_pdf", "celular_validado"],
