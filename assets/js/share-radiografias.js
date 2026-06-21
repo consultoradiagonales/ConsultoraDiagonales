@@ -1,6 +1,6 @@
 (function () {
   const SHARE_CLASS = "radiografia-share-link";
-  const SHARE_LABEL = "Compartir por WhatsApp";
+  const SHARE_LABEL = "Compartir radiografia";
   const SLOGAN = "Data Analytics aplicado al territorio, opinion publica y escenarios de poder.";
 
   const observer = new MutationObserver(addShareLinks);
@@ -43,17 +43,16 @@
     if (row.dataset.shareEnhanced === "true") return;
 
     const title = row.querySelector("span")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
-    const share = document.createElement("span");
-    share.className = `${SHARE_CLASS} ${SHARE_CLASS}--list`;
-    share.setAttribute("role", "button");
-    share.setAttribute("tabindex", "0");
-    share.setAttribute("aria-label", `${SHARE_LABEL}: ${title}`);
-    share.dataset.shareTitle = title;
-    share.textContent = "";
-    share.insertAdjacentHTML("afterbegin", shareIcon());
-
-    row.dataset.shareEnhanced = "true";
-    row.appendChild(share);
+    const replacement = document.createElement("div");
+    replacement.className = "latest-report-row";
+    replacement.dataset.shareEnhanced = "true";
+    replacement.innerHTML = `
+      <time datetime="${escapeAttribute(row.querySelector("time")?.getAttribute("datetime") || "")}">${row.querySelector("time")?.innerHTML || ""}</time>
+      <span>${row.querySelector("span")?.innerHTML || escapeAttribute(title)}</span>
+      <a class="latest-report-row__pdf" href="${escapeAttribute(row.href)}" ${copyDataAttributes(row)}>Abrir PDF</a>
+      <a class="${SHARE_CLASS} ${SHARE_CLASS}--list" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>
+    `;
+    row.replaceWith(replacement);
   }
 
   function buildShareAnchor(title, modifierClass) {
@@ -67,7 +66,7 @@
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    openWhatsappShare(share);
+    window.location.href = buildWhatsappHref(getShareTitle(share));
   }
 
   function handleShareKeydown(event) {
@@ -78,12 +77,21 @@
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    openWhatsappShare(share);
+    window.location.href = buildWhatsappHref(getShareTitle(share));
   }
 
-  function openWhatsappShare(share) {
-    const title = share.dataset.shareTitle || share.closest("a")?.querySelector("span")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
-    window.location.href = buildWhatsappHref(title);
+  function copyDataAttributes(row) {
+    return Array.from(row.attributes)
+      .filter((attribute) => attribute.name.startsWith("data-"))
+      .map((attribute) => `${attribute.name}="${escapeAttribute(attribute.value)}"`)
+      .join(" ");
+  }
+
+  function getShareTitle(share) {
+    return share.dataset.shareTitle
+      || share.closest(".latest-report-row")?.querySelector("span")?.textContent?.trim()
+      || share.closest("a")?.querySelector("span")?.textContent?.trim()
+      || "Radiografia de Consultora Diagonales";
   }
 
   function buildWhatsappHref(title) {
