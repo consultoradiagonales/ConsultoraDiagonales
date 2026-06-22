@@ -50,6 +50,12 @@
   stroke-linejoin: round;
 }
 
+.latest-list > a[data-share-enhanced="true"] {
+  position: relative;
+  grid-template-columns: 160px 1fr auto 42px;
+  padding-right: 1rem;
+}
+
 .latest-report-row {
   display: grid;
   grid-template-columns: 160px 1fr auto 42px;
@@ -93,12 +99,6 @@
   text-transform: uppercase;
 }
 
-.latest-report-row__pdf:hover,
-.latest-report-row__pdf:focus-visible {
-  color: #fff;
-  outline: none;
-}
-
 .latest-list .latest-report-row .radiografia-share-link {
   display: inline-grid !important;
   grid-template-columns: none !important;
@@ -129,7 +129,184 @@
   justify-self: end;
 }
 
+.share-panel-open {
+  overflow: hidden;
+}
+
+.share-panel[hidden] {
+  display: none;
+}
+
+.share-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.share-panel__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 13, 20, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.share-panel__dialog {
+  position: relative;
+  width: min(100%, 520px);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  border: 1px solid rgba(122, 194, 232, 0.28);
+  border-radius: 8px;
+  background: #062233;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), 0 0 45px rgba(124, 227, 255, 0.12);
+  color: #fff;
+  padding: 1.4rem;
+}
+
+.share-panel__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.share-panel__eyebrow {
+  margin: 0 2.5rem 0.45rem 0;
+  color: #7ce3ff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.share-panel h2 {
+  margin: 0;
+  max-width: 26rem;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  line-height: 1.12;
+}
+
+.share-panel__title {
+  margin: 0.85rem 0 1rem;
+  color: rgba(230, 247, 255, 0.82);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.share-panel__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
+}
+
+.share-panel__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid rgba(124, 227, 255, 0.42);
+  border-radius: 8px;
+  color: #001924;
+  background: #7ce3ff;
+  padding: 0.78rem 0.9rem;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.share-panel__button--ghost {
+  color: #dff9ff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.share-panel__button--primary {
+  width: 100%;
+  margin-top: 0.15rem;
+}
+
+.share-panel__button:disabled {
+  cursor: progress;
+  opacity: 0.68;
+}
+
+.share-panel__link-label,
+.share-panel__form label {
+  display: grid;
+  gap: 0.35rem;
+  color: rgba(230, 247, 255, 0.78);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.share-panel input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(122, 194, 232, 0.28);
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(1, 14, 21, 0.62);
+  padding: 0.78rem 0.85rem;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.share-panel input:focus {
+  border-color: rgba(124, 227, 255, 0.72);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 227, 255, 0.14);
+}
+
+.share-panel__form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.share-panel__status {
+  min-height: 1.2rem;
+  margin: 0;
+  color: #7ce3ff;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
 @media (max-width: 640px) {
+  .latest-list > a[data-share-enhanced="true"] {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .latest-list > a[data-share-enhanced="true"] time,
+  .latest-list > a[data-share-enhanced="true"] span,
+  .latest-list > a[data-share-enhanced="true"] strong {
+    grid-column: 1;
+  }
+
+  .radiografia-share-link--list {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+  }
+
   .latest-report-row {
     grid-template-columns: 1fr 42px;
     gap: 0.45rem 1rem;
@@ -141,9 +318,19 @@
     grid-column: 1;
   }
 
-  .radiografia-share-link--list {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-    align-self: center;
+  .share-panel {
+    align-items: end;
+    padding: 0;
+  }
+
+  .share-panel__dialog {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 8px 8px 0 0;
+    padding: 1.15rem;
+  }
+
+  .share-panel__actions {
+    grid-template-columns: 1fr;
   }
 }
