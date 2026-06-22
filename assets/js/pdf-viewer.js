@@ -36,7 +36,6 @@
               <h2 id="pdf-viewer-title" data-pdf-viewer-title>Documento</h2>
             </div>
             <div class="pdf-viewer__actions">
-              <a href="#" data-pdf-viewer-open target="_blank" rel="noopener">Abrir PDF</a>
               <button type="button" data-pdf-viewer-close aria-label="Cerrar visor">Cerrar</button>
             </div>
           </div>
@@ -59,7 +58,6 @@
     }
 
     viewer.querySelector("[data-pdf-viewer-title]").textContent = title;
-    viewer.querySelector("[data-pdf-viewer-open]").href = pdfUrl;
     viewer.querySelector("[data-pdf-viewer-frame]").src = isMobileViewport() ? "about:blank" : pdfUrl;
     viewer.classList.add("is-open");
     viewer.setAttribute("aria-hidden", "false");
