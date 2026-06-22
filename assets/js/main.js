@@ -21,6 +21,7 @@ initFooterText();
 initLoginModal();
 initTracking();
 initLeadForms();
+initHtmlReportViewer();
 
 if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
@@ -840,7 +841,7 @@ function renderReports(reports, container, count) {
             <h2>${title}</h2>
           </div>
           <div class="report-actions">
-            ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}" target="_blank" rel="noopener" data-report-open data-report-index="${index}" data-track="open_graph">GrÃ¡ficos</a>` : ""}
+            ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">GrÃ¡ficos</a>` : ""}
             <a class="request-link" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>
           </div>
         </article>
@@ -1020,11 +1021,78 @@ function bindReportOpenLinks(container, reports) {
       const report = reports[Number(link.dataset.reportIndex)];
       if (!report) return;
 
-      event.preventDefault();
       await logReportInterest(report, "report_open", report.html_url || link.href);
-      window.open(link.href, link.target || "_self", "noopener");
     });
   });
+}
+
+function initHtmlReportViewer() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("[data-html-viewer-open]");
+    if (!link) return;
+
+    const url = new URL(link.href, window.location.href);
+    if (url.origin !== window.location.origin) return;
+
+    event.preventDefault();
+    openHtmlReportViewer(url.href, getHtmlViewerTitle(link));
+  });
+}
+
+function openHtmlReportViewer(url, title) {
+  let viewer = document.querySelector("[data-html-viewer]");
+  if (!viewer) {
+    viewer = document.createElement("div");
+    viewer.className = "html-viewer";
+    viewer.setAttribute("data-html-viewer", "");
+    viewer.setAttribute("aria-hidden", "true");
+    viewer.innerHTML = `
+      <div class="html-viewer__dialog" role="dialog" aria-modal="true" aria-labelledby="html-viewer-title">
+        <div class="html-viewer__bar">
+          <div>
+            <span>Radiografia</span>
+            <h2 id="html-viewer-title" data-html-viewer-title>Graficos</h2>
+          </div>
+          <div class="html-viewer__actions">
+            <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
+          </div>
+        </div>
+        <iframe data-html-viewer-frame title="Visor de graficos" loading="lazy"></iframe>
+      </div>
+    `;
+    document.body.appendChild(viewer);
+
+    viewer.addEventListener("click", (event) => {
+      if (event.target === viewer || event.target.closest("[data-html-viewer-close]")) closeHtmlReportViewer();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && viewer.classList.contains("is-open")) closeHtmlReportViewer();
+    });
+  }
+
+  viewer.querySelector("[data-html-viewer-title]").textContent = title;
+  viewer.querySelector("[data-html-viewer-frame]").src = url;
+  viewer.classList.add("is-open");
+  viewer.setAttribute("aria-hidden", "false");
+  document.body.classList.add("html-viewer-open");
+}
+
+function closeHtmlReportViewer() {
+  const viewer = document.querySelector("[data-html-viewer]");
+  if (!viewer) return;
+
+  const frame = viewer.querySelector("[data-html-viewer-frame]");
+  viewer.classList.remove("is-open");
+  viewer.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("html-viewer-open");
+  if (frame) frame.src = "about:blank";
+}
+
+function getHtmlViewerTitle(link) {
+  const rowTitle = link.closest(".latest-report-row")?.querySelector("span")?.textContent?.trim();
+  const cardTitle = link.closest(".report-card")?.querySelector("h2")?.textContent?.trim();
+  return rowTitle || cardTitle || "Graficos";
 }
 
 async function logReportInterest(report, eventType, targetUrl) {

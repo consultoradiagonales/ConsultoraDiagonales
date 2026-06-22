@@ -51,7 +51,7 @@
       const pdfHref = escapeAttribute(report.pdf_url || "#");
       const graphsUrl = getReportGraphsUrl(report);
       const graphsLink = graphsUrl
-        ? `<a class="latest-report-row__graphs" href="${escapeAttribute(graphsUrl)}" target="_blank" rel="noopener" data-track="open_graph">Gr&aacute;ficos</a>`
+        ? `<a class="latest-report-row__graphs" href="${escapeAttribute(graphsUrl)}" data-html-viewer-open data-track="open_graph">Gr&aacute;ficos</a>`
         : "";
       const shareHref = escapeAttribute(buildWhatsappHref(report.titulo || "Radiografia de Consultora Diagonales"));
       return `
