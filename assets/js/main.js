@@ -1155,11 +1155,15 @@ function initAdmin() {
   const dashboard = document.querySelector("[data-admin-dashboard]");
   const refresh = document.querySelector("[data-admin-refresh]");
   const cancelEdit = document.querySelector("[data-admin-cancel-edit]");
+  const htmlPicker = document.querySelector("[data-admin-html-picker]");
+  const htmlSelect = document.querySelector("[data-admin-html-select]");
+  const htmlSelectAction = document.querySelector("[data-admin-html-select-action]");
   if (!form) return;
 
   const unlockAdmin = () => {
     login?.classList.add("is-hidden");
     form.classList.remove("is-hidden");
+    htmlPicker?.classList.remove("is-hidden");
     dashboard?.classList.remove("is-hidden");
     loadAdminDashboard();
   };
@@ -1275,6 +1279,10 @@ function initAdmin() {
 
   refresh?.addEventListener("click", loadAdminDashboard);
   cancelEdit?.addEventListener("click", resetAdminForm);
+  htmlSelectAction?.addEventListener("click", () => {
+    const report = adminReports.find((item) => item.id === htmlSelect?.value);
+    if (report) fillAdminEditForm(report, "html");
+  });
 
   document.querySelector("[data-admin-reports]")?.addEventListener("click", async (event) => {
     const editButton = event.target.closest("[data-admin-edit]");
@@ -1386,6 +1394,7 @@ async function loadAdminDashboard() {
   try {
     const data = await fetchAdminDashboard();
     adminReports = data.reports || [];
+    renderAdminHtmlPicker(adminReports);
     setAdminTotal("reports", data.totals?.reports ?? adminReports.length);
     setAdminTotal("downloads", data.totals?.downloads ?? data.downloads?.length ?? 0);
     setAdminTotal("contacts", data.totals?.audience ?? data.totals?.contacts ?? data.contacts?.length ?? 0);
@@ -1527,6 +1536,29 @@ async function saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia,
   }
 
   return result?.report || result || {};
+}
+
+function renderAdminHtmlPicker(reports) {
+  const select = document.querySelector("[data-admin-html-select]");
+  const action = document.querySelector("[data-admin-html-select-action]");
+  if (!select) return;
+
+  const candidates = (reports || []).filter((item) => item.pdf_url || item.html_url);
+  if (!candidates.length) {
+    select.innerHTML = '<option value="">TodavÃ­a no hay radiografÃ­as cargadas</option>';
+    if (action) action.disabled = true;
+    return;
+  }
+
+  select.innerHTML = [
+    '<option value="">Seleccionar radiografÃ­a</option>',
+    ...candidates.map((item) => {
+      const status = item.html_url ? "HTML cargado" : "sin HTML";
+      const label = `${item.titulo || "RadiografÃ­a sin tÃ­tulo"} - ${item.fecha || "sin fecha"} - ${status}`;
+      return `<option value="${escapeAttribute(item.id || "")}">${escapeHtml(label)}</option>`;
+    }),
+  ].join("");
+  if (action) action.disabled = false;
 }
 
 async function updateRadiografiaReport({ id, file, titulo, provincia, localidad, fecha }) {

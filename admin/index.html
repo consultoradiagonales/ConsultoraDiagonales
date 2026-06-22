@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260622-admin-html" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260622-admin-html-picker" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -57,6 +57,21 @@
           <button class="primary-link justify-center" type="submit">Ingresar al panel</button>
           <p class="form-status" data-admin-login-status role="status"></p>
         </form>
+
+        <section class="admin-form is-hidden" data-admin-html-picker>
+          <div>
+            <p class="eyebrow">Gr&aacute;ficos</p>
+            <h2 class="admin-helper-title">Agregar HTML a una radiograf&iacute;a cargada</h2>
+            <p class="admin-helper-copy">Eleg&iacute; la radiograf&iacute;a PDF existente y despu&eacute;s carg&aacute; el archivo HTML de gr&aacute;ficos.</p>
+          </div>
+          <label>
+            <span>Radiograf&iacute;a existente</span>
+            <select name="radiografia_html_target" data-admin-html-select>
+              <option value="">Cargando radiograf&iacute;as...</option>
+            </select>
+          </label>
+          <button class="secondary-link justify-center" type="button" data-admin-html-select-action>Agregar HTML a esta radiograf&iacute;a</button>
+        </section>
 
         <form class="admin-form is-hidden" data-admin-form>
           <input name="id" type="hidden" />
@@ -140,6 +155,6 @@
     </main>
 
     <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
-    <script src="../assets/js/main.js?v=20260622-admin-add-html"></script>
+    <script src="../assets/js/main.js?v=20260622-admin-html-picker"></script>
   </body>
 </html>

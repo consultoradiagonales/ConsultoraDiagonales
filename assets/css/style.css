@@ -1517,6 +1517,7 @@ body.html-viewer-open {
 }
 
 .admin-form input,
+.admin-form select,
 .registration-form input {
   width: 100%;
   max-width: 100%;
@@ -1548,6 +1549,7 @@ body.html-viewer-open {
 }
 
 .admin-form input:focus,
+.admin-form select:focus,
 .registration-form input:focus {
   border-color: rgba(110, 168, 255, 0.6);
   box-shadow: 0 0 0 3px rgba(110, 168, 255, 0.12);
