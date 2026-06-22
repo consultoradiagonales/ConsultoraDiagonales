@@ -1278,7 +1278,14 @@ function initAdmin() {
 
   document.querySelector("[data-admin-reports]")?.addEventListener("click", async (event) => {
     const editButton = event.target.closest("[data-admin-edit]");
+    const htmlButton = event.target.closest("[data-admin-add-html]");
     const deleteButton = event.target.closest("[data-admin-delete]");
+    if (htmlButton) {
+      const report = adminReports.find((item) => item.id === htmlButton.dataset.adminAddHtml);
+      if (report) fillAdminEditForm(report, "html");
+      return;
+    }
+
     if (editButton) {
       const report = adminReports.find((item) => item.id === editButton.dataset.adminEdit);
       if (report) fillAdminEditForm(report);
@@ -1325,7 +1332,7 @@ function resetAdminForm() {
   cancelEdit?.classList.add("is-hidden");
 }
 
-function fillAdminEditForm(report) {
+function fillAdminEditForm(report, mode = "full") {
   const form = document.querySelector("[data-admin-form]");
   const submit = document.querySelector("[data-submit]");
   const cancelEdit = document.querySelector("[data-admin-cancel-edit]");
@@ -1340,8 +1347,17 @@ function fillAdminEditForm(report) {
   form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
   if (submit) submit.textContent = "Actualizar radiografía";
   if (status) status.textContent = "Editando radiografía: podés cambiar el título/datos o seleccionar otro PDF para reemplazar el archivo actual.";
+  if (mode === "html") {
+    if (submit) submit.textContent = "Guardar HTML de grÃ¡ficos";
+    if (status) status.textContent = "CargÃ¡ el HTML de grÃ¡ficos para esta radiografÃ­a. El PDF existente se conserva.";
+  } else if (status) {
+    status.textContent = "Editando radiografÃ­a: podÃ©s cambiar datos, reemplazar el PDF o agregar/reemplazar el HTML de grÃ¡ficos.";
+  }
   cancelEdit?.classList.remove("is-hidden");
   form.scrollIntoView({ behavior: "smooth", block: "center" });
+  window.setTimeout(() => {
+    form.querySelector(mode === "html" ? '[name="html_archivo"]' : '[name="pdf_archivo"]')?.focus();
+  }, 350);
 }
 
 async function loadAdminDashboard() {
@@ -1431,6 +1447,7 @@ function renderAdminReportItem(item) {
       <div class="admin-list-actions">
         ${item.html_url ? `<a class="admin-action-button" href="${escapeAttribute(item.html_url)}" target="_blank" rel="noopener">Abrir HTML</a>` : ""}
         ${item.pdf_url ? `<a class="admin-action-button" href="${escapeAttribute(item.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}
+        ${item.pdf_url ? `<button class="admin-action-button" type="button" data-admin-add-html="${escapeAttribute(item.id || "")}">${item.html_url ? "Reemplazar HTML de grÃ¡ficos" : "Agregar HTML de grÃ¡ficos"}</button>` : ""}
         <button class="admin-action-button" type="button" data-admin-edit="${escapeAttribute(item.id || "")}">Modificar datos / reemplazar archivo</button>
         <button class="admin-action-button is-danger" type="button" data-admin-delete="${escapeAttribute(item.id || "")}">Borrar archivo</button>
       </div>
