@@ -1225,30 +1225,40 @@ function initAdmin() {
 
     const formData = new FormData(form);
     const id = String(formData.get("id") || "").trim();
-    const file = formData.get("archivo");
+    const pdfFile = formData.get("pdf_archivo");
+    const htmlFile = formData.get("html_archivo");
     const titulo = String(formData.get("titulo") || "").trim();
     const provincia = String(formData.get("provincia") || "").trim();
     const localidad = String(formData.get("localidad") || "").trim();
     const fecha = String(formData.get("fecha") || "").trim();
 
-    if (!id && (!file || !isReportFile(file))) {
+    if (!id && !hasUploadFile(pdfFile) && !hasUploadFile(htmlFile)) {
       status.textContent = "Selecciona un archivo PDF o HTML válido.";
       return;
     }
 
-    if (id && file?.size && !isReportFile(file)) {
+    if (hasUploadFile(pdfFile) && !isPdfFile(pdfFile)) {
       status.textContent = "Selecciona un archivo PDF o HTML válido o deja el archivo vacío para conservar el actual.";
       return;
     }
 
     submit.disabled = true;
+    if (hasUploadFile(htmlFile) && !isHtmlFile(htmlFile)) {
+      status.textContent = "El archivo HTML de grÃ¡ficos debe ser .html o .htm.";
+      return;
+    }
+
     submit.textContent = id ? "Actualizando..." : "Guardando...";
     status.textContent = id ? "Actualizando radiografía." : "Subiendo archivo y publicando metadata.";
 
     try {
-      const data = await saveRadiografiaReport({ id, file, titulo, provincia, localidad, fecha });
+      const data = await saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha });
+      const links = [
+        data.pdf_url ? `<a href="${escapeAttribute(data.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : "",
+        data.html_url ? `<a href="${escapeAttribute(data.html_url)}" target="_blank" rel="noopener">Abrir HTML</a>` : "",
+      ].filter(Boolean).join(" | ");
       const publicUrl = data.pdf_url || data.html_url;
-      const fileLabel = data.html_url ? "HTML" : "archivo";
+      const fileLabel = data.html_url && !data.pdf_url ? "HTML" : "archivo";
 
       resetAdminForm();
       status.innerHTML = id
@@ -1307,7 +1317,8 @@ function resetAdminForm() {
   if (!form) return;
   form.reset();
   form.elements.id.value = "";
-  form.querySelector('[name="archivo"]')?.setAttribute("required", "required");
+  form.querySelector('[name="pdf_archivo"]')?.removeAttribute("required");
+  form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
   if (submit) submit.textContent = "Guardar PDF";
   const status = document.querySelector("[data-form-status]");
   if (status) status.textContent = "";
@@ -1325,7 +1336,8 @@ function fillAdminEditForm(report) {
   form.elements.provincia.value = report.provincia || "";
   form.elements.localidad.value = report.localidad || "";
   form.elements.fecha.value = report.fecha || "";
-  form.querySelector('[name="archivo"]')?.removeAttribute("required");
+  form.querySelector('[name="pdf_archivo"]')?.removeAttribute("required");
+  form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
   if (submit) submit.textContent = "Actualizar radiografía";
   if (status) status.textContent = "Editando radiografía: podés cambiar el título/datos o seleccionar otro PDF para reemplazar el archivo actual.";
   cancelEdit?.classList.remove("is-hidden");
@@ -1480,9 +1492,24 @@ function renderAdminEventItem(item) {
   `;
 }
 
-async function saveRadiografiaReport({ id, file, titulo, provincia, localidad, fecha }) {
-  if (id) return updateRadiografiaReport({ id, file, titulo, provincia, localidad, fecha });
-  return uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha });
+async function saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha }) {
+  const uploads = [
+    hasUploadFile(pdfFile) ? pdfFile : null,
+    hasUploadFile(htmlFile) ? htmlFile : null,
+  ].filter(Boolean);
+
+  if (!uploads.length && id) return updateRadiografiaReport({ id, titulo, provincia, localidad, fecha });
+
+  let currentId = id;
+  let result = null;
+  for (const file of uploads.length ? uploads : [null]) {
+    result = currentId
+      ? await updateRadiografiaReport({ id: currentId, file, titulo, provincia, localidad, fecha })
+      : await uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha });
+    currentId = result.report?.id || currentId;
+  }
+
+  return result?.report || result || {};
 }
 
 async function updateRadiografiaReport({ id, file, titulo, provincia, localidad, fecha }) {
@@ -1527,7 +1554,7 @@ async function deleteRadiografiaReport(id) {
   return data;
 }
 
-async function uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha }) {
+async function uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha }) {
   if (window.CD_ADMIN?.useEdgeUpload === false) {
     throw new Error("La carga directa desde el navegador está deshabilitada. Usá la Edge Function admin-upload-report.");
   }
@@ -1558,6 +1585,20 @@ async function uploadRadiografiaPdf({ file, titulo, provincia, localidad, fecha 
 function isReportFile(file) {
   const name = file.name.toLowerCase();
   return file.type === "application/pdf" || file.type === "text/html" || name.endsWith(".pdf") || name.endsWith(".html") || name.endsWith(".htm");
+}
+
+function hasUploadFile(file) {
+  return file instanceof File && file.size > 0;
+}
+
+function isPdfFile(file) {
+  const name = file.name.toLowerCase();
+  return file.type === "application/pdf" || name.endsWith(".pdf");
+}
+
+function isHtmlFile(file) {
+  const name = file.name.toLowerCase();
+  return file.type === "text/html" || name.endsWith(".html") || name.endsWith(".htm");
 }
 
 function buildPdfRequestLink(report) {
