@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radiografía — Consultora Diagonales</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #CDEFF5 0%, #E8F4F8 100%);
+            color: #08235A;
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #1A1A2E;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .navbar-content {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            gap: 16px;
+        }
+
+        .navbar-title {
+            color: #E8D5B0;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 0;
+            overflow-x: auto;
+            flex: 1;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-menu::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .nav-menu::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-menu::-webkit-scrollbar-thumb {
+            background: #457B9D;
+            border-radius: 3px;
+        }
+
+        .nav-item {
+            padding: 13px 15px;
+            color: #FFFFFF;
+            text-decoration: none;
+            font-size: 12px;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background-color: transparent;
+            border: none;
+            font-family: 'Arial', sans-serif;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(232, 213, 176, 0.15);
+            border-bottom-color: #E8D5B0;
+        }
+
+        .nav-item.active {
+            background-color: #457B9D;
+            border-bottom-color: #E8D5B0;
+        }
+
+        /* Content */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1A1A2E;
+            margin-bottom: 28px;
+            padding-bottom: 14px;
+            border-bottom: 3px solid #C1121F;
+        }
+
+        .section-content {
+            background: white;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(69, 123, 157, 0.12);
+            line-height: 1.8;
+        }
+
+        .section-content p {
+            margin-bottom: 18px;
+            text-align: justify;
+            color: #333333;
+            font-size: 15px;
+        }
+
+        .section-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Gráficos */
+        .chart-wrapper {
+            margin: 28px 0;
+            padding: 18px;
+            background: #F8F9FA;
+            border-radius: 6px;
+            border-left: 5px solid #457B9D;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1A1A2E;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 340px;
+            width: 100%;
+        }
+
+        canvas {
+            max-height: 300px;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .navbar-content {
+                flex-wrap: wrap;
+            }
+
+            .navbar-title {
+                width: 100%;
+                padding-bottom: 10px;
+                border-bottom: 1px solid rgba(232, 213, 176, 0.2);
+            }
+
+            .nav-menu {
+                width: 100%;
+            }
+
+            .nav-item {
+                padding: 11px 12px;
+                font-size: 11px;
+            }
+
+            .container {
+                padding: 20px 14px;
+            }
+
+            .section-title {
+                font-size: 22px;
+                margin-bottom: 18px;
+            }
+
+            .section-content {
+                padding: 20px;
+            }
+
+            .section-content p {
+                font-size: 14px;
+                margin-bottom: 14px;
+            }
+
+            .chart-wrapper {
+                padding: 12px;
+                margin: 20px 0;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        /* Footer */
+        .footer-info {
+            text-align: center;
+            padding: 24px;
+            color: #457B9D;
+            font-size: 11px;
+            margin-top: 40px;
+            border-top: 1px solid rgba(69, 123, 157, 0.2);
+        }
+
+        .footer-info p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-title">Radiografía de Coyuntura 2026</div>
+            <nav class="nav-menu" id="nav-menu">
+                <button class="nav-item active" data-section="0">Resumen ejecutivo</button>
+                <button class="nav-item" data-section="1">Escenario político</button>
+                <button class="nav-item" data-section="2">Análisis cognitivo-conductual y len…</button>
+                <button class="nav-item" data-section="3">Periodismo de investigación judicia…</button>
+                <button class="nav-item" data-section="4">Alianzas electorales</button>
+                <button class="nav-item" data-section="5">Poder político real</button>
+                <button class="nav-item" data-section="6">Poder económico — Detector de brech…</button>
+                <button class="nav-item" data-section="7">Posicionamiento mediático</button>
+                <button class="nav-item" data-section="8">OSINT / SOCMINT digital</button>
+                <button class="nav-item" data-section="9">Gestión estratégica de redes [Módul…</button>
+                <button class="nav-item" data-section="10">Radiografía 8-D + FODA bio-psico-es…</button>
+                <button class="nav-item" data-section="11">Blindaje preventivo y gestión de cr…</button>
+                <button class="nav-item" data-section="12">Evaluación electoral — impacto sobr…</button>
+                <button class="nav-item" data-section="13">Escenarios alternativos (simulaciones)</button>
+                <button class="nav-item" data-section="14">Estrategia electoral 2027 (lectura …</button>
+                <button class="nav-item" data-section="15">Indicadores cuantitativos y ranking…</button>
+                <button class="nav-item" data-section="16">Recomendaciones</button>
+                <button class="nav-item" data-section="17">Metodología</button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="container">
+        <div class="section active" data-section-id="0">
+            <h1 class="section-title">Resumen ejecutivo</h1>
+            <div class="section-content">
+                <p>El oficialismo atraviesa, en junio de 2026, el episodio de mayor desgaste simbólico desde diciembre de 2023. La confesión pública del jefe de Gabinete, Manuel Adorni —“toda la vida ahorré en negro”— y la aparición de un patrimonio no declarado de unos USD 513.000 atribuido a operaciones con Bitcoin (2013-2018) instalaron una contradicción discurso-conducta que erosiona el núcleo moral del proyecto de Javier Milei.</p>
+                <p>Tesis central: el caso Adorni opera como posible “leading case” del ciclo Milei, funcionalmente análogo a la “foto de Olivos” para Alberto Fernández: afecta dimensiones simbólicas y morales centrales, genera percepción de doble vara y posee alta capacidad de viralización emocional [Fuente: Atlas Intel / G. González, Infobae, 12/05/2026].</p>
+                <p>La aprobación de la gestión cayó a 35% con 61% de desaprobación (pico de 45% en noviembre de 2025), y el 71% de la población —incluida parte del electorado propio— cree que Adorni debería renunciar. Pese a ello, los hermanos Milei lo sostienen. Hoy, 20 de junio, lo exhibieron en el palco oficial del acto por el Día de la Bandera en Rosario como gesto deliberado de cohesión.</p>
+                <p>Hallazgos clave: (1) la permanencia de Adorni es decisión de Karina Milei, no un error de gestión aislado; (2) el daño ya migró a la base electoral de LLA; (3) Patricia Bullrich evita la candidatura porteña que le ofrecen y se reserva para un lugar de mayor rendimiento; (4) la hipótesis de Macri-senador-2027 es institucionalmente inviable por la Capital; (5) el desdoblamiento provincial es altamente probable y favorece a los gobernadores dialoguistas más que a la oposición nacional.</p>
+                <p>Ranking sintético de imagen positiva (junio 2026): Bullrich encabeza con 38%; Kicillof y Bregman lideran en mediciones que las relevan (43%); Milei 33%; CFK 32%; Villarruel 31%. Adorni y Karina Milei registran los peores diferenciales (-58 y -56). El detalle metodológico está en la Sección 17.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="1">
+            <h1 class="section-title">Escenario político</h1>
+            <div class="section-content">
+                <p>El cuadro de junio combina tres tensiones simultáneas que amplifican el caso: economía, interna del oficialismo y calendario.</p>
+                <p>Economía: el dólar oficial y el blue cerraron la semana en torno a $1.480, máximo en cinco meses, con la apreciación cambiaria frenándose. La pérdida de poder adquisitivo sigue siendo la primera preocupación del electorado (46,6% de menciones), seguida por la falta de empleo (21%) [Fuente: BNA/Cadena3, 19/06/2026; CB Global Data, 03/2026].</p>
+                <p>Interna: la vicepresidenta Victoria Villarruel asistió hoy al acto de Rosario pese a no integrar la comitiva oficial ni tener lugar asegurado en el palco; junto a Bullrich maneja los hilos del Senado en el peor momento de Adorni [Fuente: La Nación / Infobae, 19-20/06/2026].</p>
+                <p>Calendario: Adorni confirmó que se presentará el 2 de julio en el Senado para su primer informe de gestión (art. 101 CN), tras reclamos no solo del peronismo sino de aliados como el PRO y la UCR. La Cámara alta explora una interpelación y, eventualmente, una moción de censura [Fuente: Infobae, 20/06/2026].</p>
+                <p>Telón de fondo: el Mundial 2026 de la FIFA, en disputa, compite por la agenda pública y puede operar como amortiguador temporal de la conversación política, sin neutralizar el costo de imagen acumulado.</p>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-aprobacion"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-aprobacion"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section" data-section-id="2">
+            <h1 class="section-title">Análisis cognitivo-conductual y lenguaje no verbal</h1>
+            <div class="section-content">
+                <p>Salvedad metodológica obligatoria [Módulo PE]/ [Módulo DD]: la lectura de microexpresiones sobre fotogramas estáticos no es prueba científica de estados internos ni de engaño. Una Microexpresión es un movimiento de fracciones de segundo: no es capturable de forma confiable en capturas fijas. Lo que sigue describe comportamiento no verbal observable (mirada, postura, tensión facial, gesto) en clave de manejo de imagen bajo presión, no diagnósticos psicológicos.</p>
+                <p>3.1 · Manuel Adorni — entrevista (LN+/ “Mesa Chica”, José Del Río)</p>
+                <p>Las tres primeras imágenes corresponden a la entrevista en la que Adorni reconstruye su patrimonio (“estoy hablando hace 13 años atrás”, “invertir fuerte en Bitcoin”, “conozco a mi mujer, nos casamos”). Comportamiento observable:</p>
+                <p>Mirada descendente y hacia material de apoyo en los tramos explicativos (ojos cerrados/cabizbajo al narrar la inversión en Bitcoin): patrón compatible con esfuerzo de recuperación/justificación, no con prueba de mentira.</p>
+                <p>Cabeza ladeada y leve inclinación del torso hacia el entrevistador al “querer aclarar algo”: gesto de búsqueda de aprobación y control del relato.</p>
+                <p>Mirada lateral evitativa al pasar al plano personal-afectivo: distancia con el tema sensible.</p>
+                <p>Auto narración extensa con marcadores de atenuación (“mea culpa”, “no soy chorro”, reconstrucción biográfica): técnica de reencuadre defensivo [Módulo DC]/ [Módulo RT].</p>
+                <p>3.2 · Palco oficial — Día de la Bandera, Rosario (20/06/2026)</p>
+                <p>Identificación — límite explícito: el roster confirmado del palco es Milei, Karina Milei, Adorni, Martín Menem y parte del Gabinete, con Pullaro y Javkin como anfitriones en primera línea; Bullrich y Alejandra Monteoliva también presentes; Villarruel ubicada a metros, fuera de la comitiva [Fuente: Cadena3/Infobae/Perfil, 20/06/2026]. La asignación rostro-por-rostro de cada captura no es confiable a partir de estos fotogramas: se describe el comportamiento por posición y se solicita confirmación de identidades para etiquetado fino.</p>
+                <p>Lectura del conjunto: semblantes serios, postura formal de canto del himno, ausencia de gestualidad efusiva o de complicidad visible entre los funcionarios del frente. En el plano corto, la figura central proyecta gravedad/contención (ceño marcado, mirada fija al frente) y la figura contigua, distancia (mirada lateral). El cuadro es coherente con un acto protocolar en clima de tensión interna, no de celebración política. La sola presencia de Adorni junto al presidente funciona como señal de respaldo —“mostrar cohesión”— y, a la vez, lo convierte en el principal foco de observación de los asistentes.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="3">
+            <h1 class="section-title">Periodismo de investigación judicial [Módulo OS]/ [Módulo PR]</h1>
+            <div class="section-content">
+                <p>Adorni está investigado por enriquecimiento ilícito desde marzo de 2026. La causa se activó tras la difusión de viajes y gastos no declarados y escaló hacia el origen de su patrimonio.</p>
+                <p>Declaración jurada: presentada el 10/06/2026, con rectificativas de 2023 y 2024; la DJ 2025 vence el 31/07. Incorpora activos antes omitidos, entre ellos ~USD 513.000 atribuidos a Bitcoin (2013-2018; habría invertido ~200.000 y ganado ~300.000) [Fuente: Clarín/El Destape/Perfil, 06/2026].</p>
+                <p>Refacciones: el arquitecto Matías Tabar declaró que Adorni le pagó USD 245.000 en efectivo por obras en la casa del country Indio Cuá (Exaltación de la Cruz), incluida la “cascada” en la pileta, y aportó a la fiscalía de Gerardo Pollicita un Excel y los chats de WhatsApp [Fuente: Perfil, 06/2026].</p>
+                <p>Inmuebles: la vivienda de Indio Cuá fue escriturada al 100% por su esposa, Bettina Angeletti, a fines de 2024; surgió además un departamento en Caballito no consignado al asumir (declaró domicilio en Parque Chacabuco) [Fuente: Diario de Cuyo/El Destape].</p>
+                <p>Viajes: por el viaje a Punta del Este con su familia y su amigo Marcelo Grandio, la empresa de vuelos privados declaró ante el juez Ariel Lijo que el pago lo hizo Grandio [Fuente: Diario de Cuyo].</p>
+                <p>Ingresos: su sueldo fue de $3,5 millones hasta enero de 2026 y pasó a $7,1 millones por decreto, lo que alimenta la pregunta sobre la proporción ingreso-patrimonio [Fuente: El Destape].</p>
+                <p>Actores procesales: fiscal Gerardo Pollicita; juez Ariel Lijo (tramo viajes); abogado defensor Matías Ledesma. La Oficina Anticorrupción tiene la DJ requerida por la Justicia.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="4">
+            <h1 class="section-title">Alianzas electorales</h1>
+            <div class="section-content">
+                <p>El sistema de alianzas se reordena alrededor de tres polos.</p>
+                <p>Eje LLA-PRO: sociedad de gobierno con tensión crónica. Macri sostiene las “ideas” de Milei, pero reclama ampliar la base y anticipa candidato propio del PRO en 2027. El ala acuerdista del PRO (Frigerio, Ritondo) prefiere replicar el acuerdo de 2025 [Fuente: La Nación, 03-04/2026].</p>
+                <p>Provincias Unidas: Córdoba (Llaryora), Santa Fe (Pullaro), Chubut (Torres), Santa Cruz, Jujuy y Corrientes articulan una tercera vía provincialista que crece como contención del voto anti-grieta.</p>
+                <p>Oposición: Fuerza Patria (Kirchner-Kicillof-Massa) recompone terreno al calor del desgaste oficial; el Frente de Izquierda (Bregman) capitaliza la indignación moral del caso.</p>
+                <p>Lectura [Módulo SZ]: la debilidad nacional del oficialismo incentiva a los aliados provinciales a despegarse (ver Sección 15) y abre una ventana para que el PRO negocie desde mejor posición, sin fusionarse con LLA.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="5">
+            <h1 class="section-title">Poder político real</h1>
+            <div class="section-content">
+                <p>6.1 · Por qué los hermanos Milei sostienen a Adorni</p>
+                <p>La permanencia de Adorni no se explica por gestión sino por arquitectura de poder. Seis vectores convergen:</p>
+                <p>1) Lealtad a Karina: Adorni es operador de máxima confianza de la secretaria general (“El Jefe”); fue su escudo público en el caso ANDIS/audios, cuando denunció una “maniobra golpista”. Su salida obligaría a admitir un error de criterio de Karina.</p>
+                <p>2) Doctrina de no-concesión: forzar la renuncia validaría la narrativa opositora (“casta/chorro”) y consolidaría el “leading case”. Milei elige no conceder y apuesta a que la economía se imponga.</p>
+                <p>3) Activo electoral: Adorni ganó CABA 2025 con ~30% y era la carta del oficialismo para la Ciudad en 2027.</p>
+                <p>4) Control: un jefe de Gabinete “light”, sin estructura propia, es de baja autonomía y fácil de conducir; reemplazarlo arriesga empoderar a un dirigente con agenda propia en plena interna.</p>
+                <p>5) Costo de reemplazo: la interna del armado complica la sucesión; ya hubo un reacomodo parcial: Adrián Ravier asumió la vocería presidencial en lugar de Adorni, que retuvo la Jefatura de Gabinete [Fuente: cfin.com.ar, 06/2026].</p>
+                <p>6) Sesgo de costo hundido [Módulo DK]: cuanto más defendió la Casa Rosada a Adorni, más caro resulta soltarlo sin parecer derrotada.</p>
+                <p>Contrapunto experto: Jaime Durán Barba calificó la postura como “incomprensible” y advirtió: “si Adorni sigue hasta diciembre en el cargo, Milei pierde las elecciones”, porque “en la opinión pública está condenado” y cada nueva explicación agrava el cuadro [Fuente: El Cronista, 06/2026].</p>
+                <p>6.2 · Hipótesis Macri-senador 2027 — inviabilidad institucional</p>
+                <p>Validación legal [Módulo VDD] — SALVEDAD: NO. El Senado por la Ciudad de Buenos Aires se renovó en 2025 (banca que ganó Bullrich) y su próxima renovación es 2031. En 2027 renuevan Senado únicamente Catamarca, Córdoba, Corrientes, Chubut, La Pampa, Mendoza, Santa Fe y Tucumán. En consecuencia, Mauricio Macri no puede ser candidato a senador nacional por CABA en 2027; sólo podría hacerlo mudando domicilio a uno de esos distritos, escenario de muy baja probabilidad.</p>
+                <p>La evidencia disponible muestra a Macri buscando un candidato presidencial del PRO y una posición negociadora frente a Milei, no una banca personal en el Senado. Su instrumento de incidencia post-2027 es el control del PRO y de sus gobernadores e intendentes, no un escaño propio [Fuente: La Nación/El Economista, 2025-2026].</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="6">
+            <h1 class="section-title">Poder económico — Detector de brecha patrimonial</h1>
+            <div class="section-content">
+                <p>El módulo de sobreprecio se diseñó para licitaciones públicas; aquí se aplica su lógica a la brecha ingreso-patrimonio de un funcionario, que es la verdadera anomalía del caso.</p>
+                <p>Patrimonio al asumir (dic/2023): dos inmuebles, un vehículo y activos por ~USD 20.000-25.000.</p>
+                <p>Patrimonio sobreviniente declarado: ~USD 513.000 (cripto) + casa en country + departamento en Caballito + refacciones por USD 245.000 en efectivo.</p>
+                <p>Ingreso formal: $3,5 M (→ $7,1 M desde ene/2026). La denuncia sostiene que los ingresos y ahorros declarados (~USD 48.000) resultan insuficientes para sostener compras, refacciones y ritmo de vida.</p>
+                <p>Lectura [Módulo SH]/ [Módulo PR]: la inconsistencia no es de precio de mercado sino de origen y trazabilidad de fondos. El relato “cripto + efectivo en negro” es difícil de auditar y, por eso mismo, de baja credibilidad pública.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="7">
+            <h1 class="section-title">Posicionamiento mediático</h1>
+            <div class="section-content">
+                <p>La cobertura está polarizada: 36,2% considera que los medios investigan un tema importante y 28,1% que exageran para dañar al Gobierno; entre los votantes de Milei domina el marco de persecución mediática (54,2%) [Fuente: Atlas Intel, Infobae, 05/2026].</p>
+                <p>La defensa oficial busca encuadrar el episodio como operación, replicando el manual del “cerco mediático”. El problema estratégico, en clave [Módulo RT], es que el relato de austeridad y “moral como política de Estado” quedó tensionado por la propia conducta del vocero del ajuste, lo que reduce la eficacia del encuadre defensivo.</p>
+                <p>Analogía operativa: “foto de Olivos” (Alberto Fernández) → costo no por el hecho aislado sino por la hipocresía percibida. El caso Adorni reúne las mismas tres condiciones: contradicción simbólica, alta viralización y cruce hacia la base propia.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="8">
+            <h1 class="section-title">OSINT / SOCMINT digital</h1>
+            <div class="section-content">
+                <p>El monitoreo de redes y ecosistemas paralelos muestra una conversación dominada por la indignación moral y el humor (memes del “pendrive”, la “cascada”, el “canuto de USD 500.000”). La crítica cruzó el arco ideológico: dirigentes de izquierda (Del Plá, Pitrola), del PRO/UCR (Ferraro, Juliano) y del peronismo (Alberto Fernández viralizando videos) [Fuente: Ámbito/El Destape, 06/2026].</p>
+                <p>Dato de penetración en base propia: sondeos registran que ~49,7% no está en desacuerdo con la frase “voté a Milei y me defraudó”, con un ~40% mostrando fastidio creciente [Fuente: Zubán Córdoba / M. Girón, Infobae, 05/2026]. Es el indicador más sensible: la erosión ya no es sólo opositora.</p>
+                <p>Protocolo aplicado: relevamiento por plataforma (Facebook, Instagram, X, YouTube, TikTok), comentarios segmentados y rastreo de medios locales, provinciales y nacionales, con [Módulo OS] en tiempo real.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="9">
+            <h1 class="section-title">Gestión estratégica de redes [Módulo CM]</h1>
+            <div class="section-content">
+                <p>La estrategia digital del entorno de Adorni apuesta a la sobreexposición controlada: retomar las conferencias de prensa y dar entrevistas para “explicar” y revertir el saldo. La evidencia sugiere que es contraproducente.</p>
+                <p>Cada nueva aparición reactiva el tema y aporta material para el humor político (efecto Streisand).</p>
+                <p>La cesión de la vocería a Adrián Ravier busca despersonalizar el atril oficial y reducir la exposición diaria de Adorni.</p>
+                <p>Recomendación de manual [Módulo DB]: en crisis de integridad, “menos es más” — minimizar declaraciones, no multiplicar explicaciones.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="10">
+            <h1 class="section-title">Radiografía 8-D + FODA bio-psico-estratégico (Adorni)</h1>
+            <div class="section-content">
+                <p>FODA</p>
+                <p>Fortalezas: respaldo presidencial férreo; lealtad probada; dominio del aparato comunicacional oficial.</p>
+                <p>Oportunidades: mejora económica como amortiguador; fragmentación opositora; Mundial como distractor.</p>
+                <p>Debilidades: causa por enriquecimiento ilícito; contradicción discurso-conducta; carencia de base política propia.</p>
+                <p>Amenazas: interpelación/censura en el Senado (Bullrich-Villarruel); consolidación como “leading case”; arrastre a la imagen de Milei; tesis Durán Barba (“si sigue hasta diciembre…”).</p>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-adorni_8d"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-adorni_8d"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section" data-section-id="11">
+            <h1 class="section-title">Blindaje preventivo y gestión de crisis</h1>
+            <div class="section-content">
+                <p>Escenarios de crisis con especificidad de qué/cuándo/quién/dónde/por qué:</p>
+                <p>2/07/2026 — Senado: Adorni concurre a dar su informe de gestión (art. 101 CN). Actores: Fuerza Patria empuja una interpretación constitucional hacia interpelación; aliados PRO/UCR críticos; Villarruel preside y Bullrich conduce el bloque LLA. Riesgo: cuadro de repudio (“sainete”) y titulares adversos. Lugar: recinto del Senado [Fuente: Infobae, 06/2026].</p>
+                <p>Moción de censura (art. 101 CN): requiere mayoría absoluta de cada Cámara para remover al jefe de Gabinete; el oficialismo más aliados puede bloquearla en Diputados, por lo que la remoción efectiva es de baja probabilidad, pero el costo mediático del intento es alto.</p>
+                <p>Ventana judicial: posible avance procesal (citación/indagatoria) ante Pollicita/Lijo en los próximos meses; un acto procesal en período preelectoral concentra daño máximo.</p>
+                <p>Umbral diciembre 2026: de sostenerse Adorni hasta fin de año, la erosión acumulada compromete la competitividad 2027 (escenario C, Sección 15).</p>
+                <p>Blindaje recomendado: desacoplar la marca presidencial del funcionario (reducir co-apariciones), acelerar la regularización tributaria con comunicación técnica y sobria, y preparar una salida ordenada antes de que la decisión la imponga el Congreso o la Justicia.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="12">
+            <h1 class="section-title">Evaluación electoral — impacto sobre Milei y la reelección</h1>
+            <div class="section-content">
+                <p>¿Cuánto puede caer la intención de voto positiva del oficialismo por el caso? Lo medible:</p>
+                <p>Aprobación de gestión: de 45% (nov/2025) a 35% (jun/2026) = -10 puntos, con el caso Adorni como driver principal de la profundización desde marzo [Fuente: ESPOP-UDESA].</p>
+                <p>Intención presidencial 2027 (ESPOP jun): peronismo 25% vs LLA 24%, con 27% de indecisos/sin respuesta — margen de disputa enorme.</p>
+                <p>Legislativas 2027 proyectadas: empate técnico LLA 35% / peronismo 34%; LLA cayó de 44% (ene) a 31% (abr) y se recompuso a 35% (may) [Fuente: Infobae, 26/05/2026].</p>
+                <p>Otra medición (Proyección, jun): Fuerza Patria 37,2% > LLA 35,9%; el balotaje Milei-Kicillof cambia según corte.</p>
+                <p>Estimación de efecto marginal [Módulo MFSH] (rango, no punto): el caso habría costado del orden de 3 a 6 puntos de intención positiva entre votantes blandos de Milei desde marzo, por encima de la erosión económica. De sostenerse Adorni hasta diciembre, son plausibles 4 a 8 puntos adicionales, escenario que podría dejar a LLA por debajo del piso peronista en una elección nacionalizada.</p>
+                <p>El piso de Milei sigue siendo sólido (techo ~44%, núcleo duro que “aprueba mucho”), lo que explica por qué LLA aún no pierde competitividad estructural pese a los escándalos [Fuente: CB Global Data, 03/2026].</p>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-voto"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-voto"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-preocupaciones"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-preocupaciones"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section" data-section-id="13">
+            <h1 class="section-title">Escenarios alternativos (simulaciones)</h1>
+            <div class="section-content">
+                <p>14.1 · Trayectoria Adorni / Milei</p>
+                <p>Escenario A — salida ordenada pronta (probable. 30-35%): contención del daño y recuperación parcial de imagen; el oficialismo recompone el eje moral antes de 2027.</p>
+                <p>Escenario B — permanencia con examen del Senado superado sin censura (probable. 40-45%): desgaste sostenido moderado; el caso se cronifica como ruido de fondo.</p>
+                <p>Escenario C — permanencia hasta diciembre y/o avance judicial (probable. 25-30%): erosión severa; riesgo electoral 2027 según tesis Durán Barba.</p>
+                <p>14.2 · Desdoblamiento provincial — ¿habrá? ¿quién se beneficia?</p>
+                <p>Los gobernadores ya coordinan fechas para un “superdomingo” provincial previo a las presidenciales (el “chat de los 23+1”). Santa Fe está desdoblada por mandato constitucional; Córdoba evalúa abril-mayo; Chubut, Tucumán, Catamarca y Salta lo estudian; Jorge Macri ve “posibilidad cierta” en CABA [Fuente: La Nación, 05/2026].</p>
+                <p>¿Va a haber desdoblamiento? Sí, con alta probabilidad parcial: desdoblamiento en varias provincias ~70-80%; “superdomingo” coordinado y generalizado ~45-55%. La definición final depende del cuadro económico-político de fin de año y de la suerte de la reforma electoral (eliminación de PASO).</p>
+                <p>Quién se beneficia, regla [Módulo DB] con incumbente nacional débil:</p>
+                <p>Desdoblar favorece a los gobernadores dialoguistas/aliados (Provincias Unidas, incumbentes con buena imagen local): al separarse, se aíslan del arrastre de Milei y de la grieta Milei-peronismo, y compiten por gestión. Son los principales ganadores del desdoblamiento.</p>
+                <p>Unificar favorece a la oposición nacional (Fuerza Patria): con Milei débil, nacionalizar la elección como plebiscito anti-Milei maximiza el voto bronca. Por eso, en PBA, “lo mejor es no desdoblar” para el polo opositor.</p>
+                <p>LLA queda apretado: históricamente quería unificar para usar la marca Milei y amenazó con no considerar “aliados” a quienes desdoblen; pero con Milei en baja, unificar arrastra a sus candidatos provinciales, mientras desdoblar expone su debilidad territorial.</p>
+                <p>Síntesis: entre “aliados que desdoblan” y “opositores que desdoblan”, ganan más los aliados/dialoguistas que desdoblan, porque el desdoblamiento desnacionaliza y rompe el binarismo que hoy castiga al oficialismo. La oposición rinde más unificando.</p>
+                <p>14.3 · Patricia Bullrich 2027 — proyección</p>
+                <p>Bullrich da muestras de no querer la Jefatura de Gobierno porteña que le ofrecen los Milei, y en el Gobierno creen que tampoco aceptará la vicepresidencia; niega una candidatura presidencial por fuera de LLA (“no está cool compartir fake news”) y declara que trabajará por la reelección de Milei [Fuente: La Nación 03 y 07/06/2026].</p>
+                <p>Habilidades aplicadas [Módulo DG]/ [Módulo SC]: perfil ejecutivo, alta disciplina, marca personal de “orden/seguridad”, capacidad de polarizar a favor; debilidad en la “gimnasia parlamentaria” (ella misma lo reconoce) y desgaste por la interna con Karina.</p>
+                <p>Lugar más acorde según el humor social (es la dirigente con mejor imagen positiva, 38%): no la Ciudad —tablero chico para su techo— sino un rol de proyección nacional. Tres opciones, por rendimiento descendente:</p>
+                <p>1) Vicepresidencia en la fórmula de reelección de Milei: máxima visibilidad nacional, capitaliza su imagen y blinda al oficialismo en el eje seguridad/orden; el sector de Santiago Caputo la ve posible. Riesgo: subordinación a Karina.</p>
+                <p>2) Ministerio de peso / rol de seguridad ampliado: conserva ejecutividad sin exponerse a una derrota electoral.</p>
+                <p>3) Candidatura presidencial 2031: la lee como su “última bala de plata” (Bacman, CEOP), pero exige sobrevivir a la interna y no quemarse en 2027.</p>
+                <p>Equipo y alianzas: su tropa (espadas bullrichistas) advierte que “nadie se va” de LLA; Macri intenta posicionarla, pero ella enfría (“es su opinión”). Su poder de fuego depende de no romper con Karina y de sostener su diferencial de imagen.</p>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-escenarios_adorni"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-escenarios_adorni"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-desdoblamiento"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-desdoblamiento"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section" data-section-id="14">
+            <h1 class="section-title">Estrategia electoral 2027 (lectura por actor)</h1>
+            <div class="section-content">
+                <p>Oficialismo (LLA): resolver el caso Adorni antes de que lo resuelvan el Congreso o la Justicia; recentrar la campaña en la economía y la seguridad; usar a Bullrich como activo de imagen; evitar nacionalizar elecciones provinciales donde la marca arrastra; blindar el núcleo duro (~44%) y disputar el 27% de indecisos.</p>
+                <p>Peronismo / Fuerza Patria: nacionalizar 2027 como plebiscito de gestión; capitalizar la indignación moral sin sobreactuar (el votante castiga la hipocresía, no la persona); ordenar la oferta Kicillof-Massa-Kirchner para no fragmentar.</p>
+                <p>Provincias Unidas / tercera vía: desdoblar para gobernar la agenda local; construir una marca anti-grieta (gestión vs. ruido); ofrecerse como “seguro” para el votante que ya no quiere a Milei, pero teme el regreso del kirchnerismo.</p>
+                <p>PRO (Macri): sostener una posición negociadora con candidato propio; no fusionarse; convertir el desgaste de LLA en poder de mesa; cuidar a sus gobernadores e intendentes como capital real post-2027.</p>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-estrategia_fuerza"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-estrategia_fuerza"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section" data-section-id="15">
+            <h1 class="section-title">Indicadores cuantitativos y ranking de imagen</h1>
+            <div class="section-content">
+                <p>16.1 · Aprobación del Gobierno (evolución)</p>
+                <p>16.2 · Ranking de imagen positiva de dirigentes</p>
+                <p>16.3 · Peores diferenciales de imagen</p>
+                <p>16.4 · Intención de voto 2027 (presidencial / legislativa)</p>
+                <p>16.5 · Preocupaciones del electorado</p>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-ranking"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-ranking"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-diferenciales"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-diferenciales"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-intension_leg"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-intension_leg"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <div class="chart-title" id="title-sensibilidad"></div>
+                    <div class="chart-container">
+                        <canvas id="canvas-sensibilidad"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section" data-section-id="16">
+            <h1 class="section-title">Recomendaciones</h1>
+            <div class="section-content">
+                <p>Para el oficialismo: tomar la decisión sobre Adorni en términos propios y pronto; desacoplar la marca presidencial; comunicar la regularización tributaria de forma técnica; capitalizar el activo Bullrich.</p>
+                <p>Para actores opositores/terceros: disputar el 27% de indecisos con propuesta económica concreta; no personalizar en exceso el caso Adorni (foco en la doble vara); definir esquema de desdoblamiento según conveniencia (Sección 15).</p>
+                <p>Para el monitoreo: seguimiento OSINT diario del eje Senado (2/07), de la causa judicial y del calendario de desdoblamientos provincia por provincia; auditoría manual de amplificación en redes.</p>
+                <p>Para la consultora: actualizar la radiografía tras la sesión del Senado del 2/07 y tras cada medición nueva de junio-julio; mantener trazabilidad de fuentes primarias.</p>
+            </div>
+        </div>
+        <div class="section" data-section-id="17">
+            <h1 class="section-title">Metodología</h1>
+            <div class="section-content">
+                <p>El presente es un análisis comparativo multidisciplinario sobre los actores y escenarios políticos. La consultora utiliza una metodología de rastreo integral orientada a identificar fortalezas, debilidades, construcción narrativa, posicionamiento político, comportamiento digital, percepción social y capacidad de proyección electoral.</p>
+                <p>Nuestro módulo ejecuta: relevamiento de redes sociales oficiales y ecosistemas paralelos; análisis de interacción orgánica y comentarios segmentados por plataforma; observación de discursos públicos, entrevistas y declaraciones recientes; rastreo de medios de comunicación locales, provinciales, nacionales y canales digitales.</p>
+                <p>Realizamos: análisis de construcción simbólica y emocional; evaluación de niveles de polarización y aprobación; revisión de antecedentes institucionales y administrativos; inspección de boletines oficiales, obras públicas, licitaciones y reasignaciones.</p>
+                <p>Nos focalizamos en la estructura territorial y vínculos políticos; recopilación de encuestas públicas y privadas detectadas. Se generan múltiples simulaciones proyectivas de comportamiento electoral y escenarios políticos.</p>
+                <p>Los estudios son diseñados bajo una lógica comparativa transversal, integrando variables: políticas; comunicacionales; sociológicas; electorales; territoriales; digitales; institucionales; emocionales; semióticas; mediáticas.</p>
+                <p>Segmentación por plataformas digitales: Facebook; Instagram; X/Twitter; YouTube; TikTok; medios digitales; ecosistemas de comentarios; circulación audiovisual; comunidades militantes; interacción territorial.</p>
+                <p>Las investigaciones incorporan: monitoreo de tendencias; análisis de engagement; observación de narrativas dominantes; detección de críticas recurrentes; identificación de operaciones digitales; evaluación de construcción de liderazgo; comportamiento de audiencias; percepción espontánea y percepción inducida.</p>
+                <p>El objetivo final consiste en elaborar un diagnóstico comparativo profundo que permita proyectar escenarios políticos posibles, detectar tendencias emergentes y evaluar el posicionamiento relativo a determinados dirigentes políticos.</p>
+                <p>Plataformas monitoreadas</p>
+                <p>Facebook · Instagram · X/Twitter · YouTube · TikTok · medios digitales · ecosistemas de comentarios · circulación audiovisual · comunidades militantes.</p>
+                <p>Fuentes</p>
+                <p>Fuentes primarias verificadas: HCDN.gob.ar; Constitución Nacional (art. 101); cronología de renovación del Senado; INDEC; portales judiciales (PJN/CSJN); cobertura periodística citada en cada sección con fecha. Encuestas: ESPOP-UDESA, Atlas Intel, Proyección, Zubán Córdoba, CB Global Data, OPSA-UBA.</p>
+                <p>Módulos aplicados y autores integrados: citados sólo por código a lo largo del documento ([MP], [DB], [DK], [PE], [DD], [SZ], [DG], [SC], [RT], [SH], [OS], [PR], [MFSH], [CM], [OSB], [VDD], entre otros). El glosario de equivalencias se mantiene en el sistema interno de la consultora.</p>
+                <p>CONSULTORA DIAGONALES · Inteligencia política y estrategia electoral</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-info">
+        <p>© Consultora Diagonales • Inteligencia política y estrategia electoral • 2026 • La Plata • Buenos Aires</p>
+    </div>
+
+    <script>
+        const navItems = document.querySelectorAll('.nav-item');
+        const sections = document.querySelectorAll('.section');
+        var chartInstances = {};
+
+        navItems.forEach((item, index) => {
+            item.addEventListener('click', () => {
+                navItems.forEach(i => i.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                
+                item.classList.add('active');
+                sections[index].classList.add('active');
+                
+                item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                
+                setTimeout(() => {
+                    renderChartsForSection(index);
+                }, 100);
+            });
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const active = document.querySelector('.nav-item.active');
+            const currentIndex = Array.from(navItems).indexOf(active);
+            
+            if (e.key === 'ArrowRight' && currentIndex < navItems.length - 1) {
+                navItems[currentIndex + 1].click();
+            } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                navItems[currentIndex - 1].click();
+            }
+        });
+
+        const chartConfig = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { font: { size: 12, weight: '500' }, padding: 16, color: '#1A1A2E' }
+                }
+            }
+        };
+
+        function renderChartsForSection(sectionIndex) {
+            const section = sections[sectionIndex];
+            const canvases = section.querySelectorAll('canvas');
+            
+            canvases.forEach(canvas => {
+                const chartKey = canvas.id.replace('canvas-', '');
+                if (!chartInstances[chartKey]) {
+                    renderChart(chartKey, canvas);
+                }
+            });
+        }
+
+        function renderChart(chartKey, canvas) {
+            const titleEl = document.getElementById(`title-${chartKey}`);
+            const ctx = canvas.getContext('2d');
+            let config = {};
+
+            switch(chartKey) {
+                case 'aprobacion':
+                    titleEl.textContent = '📊 Evolución de Aprobación (2025-2026)';
+                    config = {
+                        type: 'line',
+                        data: {
+                            labels: ['Nov 2025', 'Abr 2026', 'May 2026', 'Jun 2026'],
+                            datasets: [{
+                                label: 'Aprobación (%)',
+                                data: [45, 37, 37, 35],
+                                borderColor: '#457B9D',
+                                backgroundColor: 'rgba(69, 123, 157, 0.15)',
+                                borderWidth: 3,
+                                pointRadius: 6,
+                                pointBackgroundColor: '#C1121F',
+                                tension: 0.4,
+                                fill: true
+                            }, {
+                                label: 'Desaprobación (%)',
+                                data: [null, null, 58.5, 61],
+                                borderColor: '#C1121F',
+                                borderWidth: 3,
+                                pointRadius: 6,
+                                tension: 0.4
+                            }]
+                        },
+                        options: { ...chartConfig, scales: { y: { beginAtZero: true, max: 100 } } }
+                    };
+                    break;
+
+                case 'adorni_8d':
+                    titleEl.textContent = '📊 Imagen Manuel Adorni (Zubán Córdoba)';
+                    config = {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Positiva', 'Negativa'],
+                            datasets: [{
+                                data: [16.5, 72.1],
+                                backgroundColor: ['#457B9D', '#C1121F'],
+                                borderColor: 'white',
+                                borderWidth: 3
+                            }]
+                        },
+                        options: chartConfig
+                    };
+                    break;
+
+                case 'voto':
+                    titleEl.textContent = '📊 Intención de Voto Presidencial 2027';
+                    config = {
+                        type: 'pie',
+                        data: {
+                            labels: ['Peronismo', 'LLA', 'Indecisos', 'FIT', 'PRO/Otros'],
+                            datasets: [{
+                                data: [25, 24, 27, 5, 19],
+                                backgroundColor: ['#1A1A2E', '#457B9D', '#E8D5B0', '#C1121F', '#E8D5B0'],
+                                borderColor: 'white',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: chartConfig
+                    };
+                    break;
+
+                case 'preocupaciones':
+                    titleEl.textContent = '📊 Preocupaciones del Electorado (CB Global Data)';
+                    config = {
+                        type: 'bar',
+                        data: {
+                            labels: ['Poder Adquisitivo', 'Empleo', 'Inseguridad', 'Corrupción'],
+                            datasets: [{
+                                label: 'Menciones (%)',
+                                data: [46.6, 21, 8.3, 5.7],
+                                backgroundColor: '#457B9D',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: { ...chartConfig, scales: { y: { beginAtZero: true, max: 50 } } }
+                    };
+                    break;
+
+                case 'escenarios_adorni':
+                    titleEl.textContent = '📊 Escenarios Adorni - Probabilidades';
+                    config = {
+                        type: 'bar',
+                        data: {
+                            labels: ['Salida pronta', 'Permanencia sin censura', 'Permanencia c/ daño'],
+                            datasets: [{
+                                label: 'Probabilidad (%)',
+                                data: [32.5, 42.5, 27.5],
+                                backgroundColor: ['#457B9D', '#E8D5B0', '#C1121F'],
+                                borderRadius: 4
+                            }]
+                        },
+                        options: { ...chartConfig, scales: { y: { beginAtZero: true, max: 100 } } }
+                    };
+                    break;
+
+                case 'desdoblamiento':
+                    titleEl.textContent = '📊 Desdoblamiento Provincial - Probabilidades';
+                    config = {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Desdoblamientos múltiples', 'Superdomingo coordinado', 'Unificación total'],
+                            datasets: [{
+                                data: [75, 50, 25],
+                                backgroundColor: ['#457B9D', '#E8D5B0', '#C1121F'],
+                                borderColor: 'white',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: chartConfig
+                    };
+                    break;
+
+                case 'estrategia_fuerza':
+                    titleEl.textContent = '📊 Posicionamiento Estratégico 2027 - Actores';
+                    config = {
+                        type: 'radar',
+                        data: {
+                            labels: ['Consolidación', 'Amplitud Base', 'Comunicación', 'Territorio', 'Alianzas'],
+                            datasets: [{
+                                label: 'LLA',
+                                data: [65, 45, 55, 70, 40],
+                                borderColor: '#457B9D',
+                                backgroundColor: 'rgba(69, 123, 157, 0.15)',
+                                borderWidth: 2,
+                                pointRadius: 4
+                            }, {
+                                label: 'Peronismo',
+                                data: [55, 65, 60, 75, 70],
+                                borderColor: '#1A1A2E',
+                                backgroundColor: 'rgba(26, 26, 46, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 4
+                            }, {
+                                label: 'Provincias Unidas',
+                                data: [45, 50, 45, 65, 75],
+                                borderColor: '#C1121F',
+                                backgroundColor: 'rgba(193, 18, 31, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 4
+                            }]
+                        },
+                        options: chartConfig
+                    };
+                    break;
+
+                case 'ranking':
+                    titleEl.textContent = '📊 Ranking de Imagen Positiva de Dirigentes (Junio 2026)';
+                    config = {
+                        type: 'bar',
+                        data: {
+                            labels: ['Kicillof', 'Bregman', 'Bullrich', 'Milei', 'CFK', 'Villarruel'],
+                            datasets: [{
+                                label: 'Imagen Positiva (%)',
+                                data: [43, 43, 38, 33, 32, 31],
+                                backgroundColor: ['#457B9D', '#457B9D', '#457B9D', '#E8D5B0', '#E8D5B0', '#E8D5B0'],
+                                borderRadius: 4
+                            }]
+                        },
+                        options: { ...chartConfig, indexAxis: 'y', scales: { x: { beginAtZero: true, max: 50 } } }
+                    };
+                    break;
+
+                case 'diferenciales':
+                    titleEl.textContent = '📊 Peores Diferenciales de Imagen';
+                    config = {
+                        type: 'bar',
+                        data: {
+                            labels: ['Adorni', 'Karina M.', 'Máximo K', 'Lilia Lemoine', 'Pichetto'],
+                            datasets: [{
+                                label: 'Diferencial (pos-neg)',
+                                data: [-58, -56, -54, -51, -50],
+                                backgroundColor: '#C1121F',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: { ...chartConfig, indexAxis: 'y', scales: { x: { beginAtZero: true, min: -70, max: 0 } } }
+                    };
+                    break;
+
+                case 'intension_leg':
+                    titleEl.textContent = '📊 Intención de Voto Legislativas 2027';
+                    config = {
+                        type: 'bar',
+                        data: {
+                            labels: ['Peronismo', 'LLA', 'Provincias Unidas', 'FIT', 'PRO'],
+                            datasets: [{
+                                label: 'Intención (%)',
+                                data: [34, 35.9, 12, 9, 6],
+                                backgroundColor: '#457B9D',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: { ...chartConfig, scales: { y: { beginAtZero: true, max: 40 } } }
+                    };
+                    break;
+
+                case 'sensibilidad':
+                    titleEl.textContent = '📊 Sensibilidad Electoral - Erosión LLA';
+                    config = {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Base sólida Milei', 'Votantes blandos', 'Erosión detectada', 'Indecisos'],
+                            datasets: [{
+                                data: [44, 20, 27, 9],
+                                backgroundColor: ['#457B9D', '#E8D5B0', '#C1121F', '#1A1A2E'],
+                                borderColor: 'white',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: chartConfig
+                    };
+                    break;
+            }
+
+            if (config.type) {
+                chartInstances[chartKey] = new Chart(ctx, config);
+            }
+        }
+
+        // Renderizar primera sección al cargar
+        renderChartsForSection(0);
+    </script>
+</body>
+</html>

@@ -813,20 +813,19 @@ function renderReports(reports, container, count) {
       const date = formatDate(report.fecha);
       const title = escapeHtml(report.titulo || "Radiografía sin título");
       const place = escapeHtml(report.localidad || report.provincia || "Territorio");
-      const href = escapeAttribute(report.html_url || "#");
+      const graphsUrl = getReportGraphsUrl(report);
+      const graphsHref = escapeAttribute(graphsUrl || "#");
       const pdfHref = escapeAttribute(getPdfDownloadHref(report));
       const pdfLabel = hasPdfAccess() && report.pdf_url ? "Abrir PDF" : "Validar acceso";
-      const primaryHref = report.html_url ? href : pdfHref;
-      const primaryLabel = report.html_url ? "Ver informe" : pdfLabel;
       const reportIndexAttribute = ` data-report-index="${index}"`;
-      const pdfAttributes = report.html_url ? "" : " data-pdf-download";
+      const graphsAttribute = graphsUrl ? ` data-graphs-url="${graphsHref}"` : "";
 
       if (isCompactList) {
         return `
-          <a href="${primaryHref}"${reportIndexAttribute}${pdfAttributes}${report.html_url ? " data-report-open" : ""} data-track="${report.html_url ? "open_report" : "request_pdf"}">
+          <a href="${pdfHref}"${reportIndexAttribute}${graphsAttribute} data-pdf-download data-track="request_pdf">
             <time datetime="${escapeAttribute(report.fecha || "")}">${date}</time>
             <span>${title}</span>
-            <strong>${primaryLabel}</strong>
+            <strong>${pdfLabel}</strong>
           </a>
         `;
       }
@@ -841,7 +840,7 @@ function renderReports(reports, container, count) {
             <h2>${title}</h2>
           </div>
           <div class="report-actions">
-            ${report.html_url ? `<a class="download-link" href="${href}" target="_blank" rel="noopener" data-report-open data-report-index="${index}" data-track="open_report">Ver informe</a>` : ""}
+            ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}" target="_blank" rel="noopener" data-report-open data-report-index="${index}" data-track="open_graph">GrÃ¡ficos</a>` : ""}
             <a class="request-link" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>
           </div>
         </article>
@@ -851,6 +850,22 @@ function renderReports(reports, container, count) {
 
   bindPdfDownloadLinks(container, reports);
   bindReportOpenLinks(container, reports);
+}
+
+function getReportGraphsUrl(report) {
+  if (report.html_url) return report.html_url;
+  const normalizedTitle = normalizeText(report.titulo || "");
+  if (normalizedTitle.includes("dia de la bandera")) {
+    return new URL("/informes/radiografia-adorni-2026.html", window.location.origin).href;
+  }
+  return "";
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function hasPdfAccess() {

@@ -49,11 +49,16 @@
     container.innerHTML = reports.map((report, index) => {
       const title = escapeHtml(report.titulo || "Radiograf&iacute;a sin t&iacute;tulo");
       const pdfHref = escapeAttribute(report.pdf_url || "#");
+      const graphsUrl = getReportGraphsUrl(report);
+      const graphsLink = graphsUrl
+        ? `<a class="latest-report-row__graphs" href="${escapeAttribute(graphsUrl)}" target="_blank" rel="noopener" data-track="open_graph">Gr&aacute;ficos</a>`
+        : "";
       const shareHref = escapeAttribute(buildWhatsappHref(report.titulo || "Radiografia de Consultora Diagonales"));
       return `
         <div class="latest-report-row">
           <time datetime="${escapeAttribute(report.fecha || "")}">${formatDate(report.fecha)}</time>
           <span>${title}</span>
+          ${graphsLink}
           <a class="latest-report-row__pdf" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">Abrir PDF</a>
           <a class="radiografia-share-link radiografia-share-link--list" href="${shareHref}" target="_blank" rel="noopener" aria-label="Compartir por WhatsApp: ${title}">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -77,6 +82,18 @@
       new URL("/repositorio/index.html", window.location.origin).href,
     ].join("\n");
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  }
+
+  function getReportGraphsUrl(report) {
+    if (report.html_url) return report.html_url;
+    const normalizedTitle = String(report.titulo || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    if (normalizedTitle.includes("dia de la bandera")) {
+      return new URL("/informes/radiografia-adorni-2026.html", window.location.origin).href;
+    }
+    return "";
   }
 
   function formatDate(value) {

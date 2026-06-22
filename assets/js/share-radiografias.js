@@ -45,12 +45,17 @@
     if (row.dataset.shareEnhanced === "true") return;
 
     const title = row.querySelector("span")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
+    const graphsUrl = row.dataset.graphsUrl || "";
+    const graphsLink = graphsUrl
+      ? `<a class="latest-report-row__graphs" href="${escapeAttribute(graphsUrl)}" target="_blank" rel="noopener" data-track="open_graph">Gr&aacute;ficos</a>`
+      : "";
     const replacement = document.createElement("div");
     replacement.className = "latest-report-row";
     replacement.dataset.shareEnhanced = "true";
     replacement.innerHTML = `
       <time datetime="${escapeAttribute(row.querySelector("time")?.getAttribute("datetime") || "")}">${row.querySelector("time")?.innerHTML || ""}</time>
       <span>${row.querySelector("span")?.innerHTML || escapeAttribute(title)}</span>
+      ${graphsLink}
       <a class="latest-report-row__pdf" href="${escapeAttribute(row.href)}" ${copyDataAttributes(row)}>Abrir PDF</a>
       <a class="${SHARE_CLASS} ${SHARE_CLASS}--list" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>
     `;
