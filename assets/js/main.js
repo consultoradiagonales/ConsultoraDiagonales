@@ -1054,7 +1054,7 @@ async function openHtmlReportViewer(url, title) {
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
-        <iframe data-html-viewer-frame title="Visor de graficos" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+        <iframe data-html-viewer-frame title="Visor de graficos" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-forms"></iframe>
       </div>
     `;
     document.body.appendChild(viewer);
@@ -1113,13 +1113,35 @@ async function fetchHtmlForViewer(url) {
 
 function normalizeHtmlForViewer(html, sourceUrl) {
   const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
+  const bridge = buildHtmlViewerExternalLinkBridge();
   let output = String(html || "");
   if (/<head[^>]*>/i.test(output)) {
     output = output.replace(/<head[^>]*>/i, (match) => `${match}\n${base}`);
   } else {
     output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}</head><body>${output}</body></html>`;
   }
+  if (/<\/body>/i.test(output)) {
+    output = output.replace(/<\/body>/i, `${bridge}\n</body>`);
+  } else {
+    output += bridge;
+  }
   return output;
+}
+
+function buildHtmlViewerExternalLinkBridge() {
+  return `<script>
+    (function () {
+      document.addEventListener("click", function (event) {
+        var link = event.target && event.target.closest ? event.target.closest("a[href]") : null;
+        if (!link) return;
+        var href = link.getAttribute("href") || "";
+        var isExternalAction = /^(https?:\\/\\/(api\\.whatsapp\\.com|wa\\.me)\\/|tel:)/i.test(href);
+        if (!isExternalAction) return;
+        event.preventDefault();
+        window.open(link.href, "_blank", "noopener");
+      });
+    })();
+  <\\/script>`;
 }
 
 function buildHtmlViewerLoading() {
