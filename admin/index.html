@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex" />
     <title>Admin | Consultora Diagonales</title>
     <link rel="stylesheet" href="../assets/css/style.css?v=20260622-admin-html-picker" />
+    <link rel="stylesheet" href="../assets/css/admin-audience.css?v=20260625" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -24,9 +25,7 @@
         <a href="index.html" data-nav="admin">Admin</a>
       </nav>
       <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle>
-        <span></span>
-        <span></span>
-        <span></span>
+        <span></span><span></span><span></span>
       </button>
     </header>
 
@@ -60,50 +59,32 @@
 
         <section class="admin-form is-hidden" data-admin-html-picker>
           <div>
-            <p class="eyebrow">Gr&aacute;ficos</p>
-            <h2 class="admin-helper-title">Agregar HTML a una radiograf&iacute;a cargada</h2>
-            <p class="admin-helper-copy">Eleg&iacute; la radiograf&iacute;a PDF existente y despu&eacute;s carg&aacute; el archivo HTML de gr&aacute;ficos.</p>
+            <p class="eyebrow">Gráficos</p>
+            <h2 class="admin-helper-title">Agregar HTML a una radiografía cargada</h2>
+            <p class="admin-helper-copy">Elegí la radiografía PDF existente y después cargá el archivo HTML de gráficos.</p>
           </div>
           <label>
-            <span>Radiograf&iacute;a existente</span>
+            <span>Radiografía existente</span>
             <select name="radiografia_html_target" data-admin-html-select>
-              <option value="">Cargando radiograf&iacute;as...</option>
+              <option value="">Cargando radiografías...</option>
             </select>
           </label>
-          <button class="secondary-link justify-center" type="button" data-admin-html-select-action>Agregar HTML a esta radiograf&iacute;a</button>
+          <button class="secondary-link justify-center" type="button" data-admin-html-select-action>Agregar HTML a esta radiografía</button>
         </section>
 
         <form class="admin-form is-hidden" data-admin-form>
           <input name="id" type="hidden" />
-          <label>
-            <span>Título</span>
-            <input name="titulo" type="text" placeholder="Radiografía política de..." required />
-          </label>
+          <label><span>Título</span><input name="titulo" type="text" placeholder="Radiografía política de..." required /></label>
           <div class="grid gap-5 md:grid-cols-2">
-            <label>
-              <span>Provincia</span>
-              <input name="provincia" type="text" placeholder="Buenos Aires" required />
-            </label>
-            <label>
-              <span>Localidad</span>
-              <input name="localidad" type="text" placeholder="La Plata" required />
-            </label>
+            <label><span>Provincia</span><input name="provincia" type="text" placeholder="Buenos Aires" required /></label>
+            <label><span>Localidad</span><input name="localidad" type="text" placeholder="La Plata" required /></label>
           </div>
           <div class="grid gap-5 md:grid-cols-2">
-            <label>
-              <span>Fecha</span>
-              <input name="fecha" type="date" required />
-            </label>
+            <label><span>Fecha</span><input name="fecha" type="date" required /></label>
           </div>
           <div class="grid gap-5 md:grid-cols-2">
-            <label>
-              <span>PDF principal</span>
-              <input name="pdf_archivo" type="file" accept=".pdf,application/pdf" />
-            </label>
-            <label>
-              <span>HTML de gr&aacute;ficos</span>
-              <input name="html_archivo" type="file" accept=".html,.htm,text/html" />
-            </label>
+            <label><span>PDF principal</span><input name="pdf_archivo" type="file" accept=".pdf,application/pdf" /></label>
+            <label><span>HTML de gráficos</span><input name="html_archivo" type="file" accept=".html,.htm,text/html" /></label>
           </div>
           <div class="admin-form-actions">
             <button class="primary-link justify-center" type="submit" data-submit>Guardar archivo</button>
@@ -116,8 +97,8 @@
           <div class="admin-dashboard-header">
             <div>
               <p class="eyebrow">Gestión</p>
-              <h2>Radiografías/PDF cargados.</h2>
-              <p class="admin-dashboard-status" data-admin-dashboard-status>Listo para cargar, modificar o borrar radiografías.</p>
+              <h2>Audiencia y consumo de radiografías.</h2>
+              <p class="admin-dashboard-status" data-admin-dashboard-status>Personas, visitas, contenidos consultados y origen aproximado.</p>
             </div>
             <div class="admin-dashboard-actions">
               <a class="secondary-link" href="gestion.html">Gestor simple</a>
@@ -127,9 +108,9 @@
 
           <div class="admin-metrics">
             <article><span data-admin-total="reports">0</span><small>Radiografías</small></article>
-            <article><span data-admin-total="downloads">0</span><small>Descargas recientes</small></article>
-            <article><span data-admin-total="contacts">0</span><small>Audiencia</small></article>
-            <article><span data-admin-total="events">0</span><small>Eventos</small></article>
+            <article><span data-admin-total="downloads">0</span><small>Consumos PDF</small></article>
+            <article><span data-admin-total="contacts">0</span><small>Personas identificadas</small></article>
+            <article><span data-admin-total="events">0</span><small>Visitas registradas</small></article>
           </div>
 
           <div class="admin-data-grid">
@@ -137,16 +118,16 @@
               <h3>Radiografías/PDF cargados</h3>
               <div class="admin-list" data-admin-reports></div>
             </article>
-            <article>
-              <h3>Consumos PDF</h3>
-              <div class="admin-list" data-admin-downloads></div>
-            </article>
-            <article>
-              <h3>Base de contactos e intereses</h3>
+            <article class="admin-audience-panel">
+              <h3>Personas y radiografías consultadas</h3>
               <div class="admin-list" data-admin-contacts></div>
             </article>
             <article>
-              <h3>Actividad reciente</h3>
+              <h3>Aperturas y descargas de PDF</h3>
+              <div class="admin-list" data-admin-downloads></div>
+            </article>
+            <article>
+              <h3>Actividad reciente, IP y zona</h3>
               <div class="admin-list" data-admin-events></div>
             </article>
           </div>
@@ -154,7 +135,8 @@
       </section>
     </main>
 
-    <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
+    <script src="../assets/js/supabase-config.js?v=20260625-ip"></script>
     <script src="../assets/js/main.js?v=20260622-html-whatsapp"></script>
+    <script src="../assets/js/admin-audience.js?v=20260625"></script>
   </body>
 </html>
