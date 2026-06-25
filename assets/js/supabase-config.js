@@ -9,10 +9,10 @@ window.CD_ADMIN = {
 
 window.setTimeout(() => {
   const config = window.CD_SUPABASE || {};
-  if (!config.url || !config.anonKey || typeof window.trackEvent !== "function") return;
-  if (String(window.trackEvent).includes("track-visitor-event")) return;
+  if (!config.url || !config.anonKey || typeof trackEvent !== "function") return;
+  if (String(trackEvent).includes("track-visitor-event")) return;
 
-  window.trackEvent = async function (eventType, metadata = {}, keepalive = false) {
+  trackEvent = async function (eventType, metadata = {}, keepalive = false) {
     const contact = JSON.parse(localStorage.getItem("cd:contact") || "{}");
     const visitorId = localStorage.getItem("cd:visitor_id");
     if (!visitorId) return;
@@ -44,5 +44,5 @@ window.setTimeout(() => {
     }).catch(() => null);
   };
 
-  window.trackEvent("network_snapshot", { title: document.title });
+  trackEvent("network_snapshot", { title: document.title });
 }, 0);
