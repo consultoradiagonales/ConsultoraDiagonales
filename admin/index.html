@@ -4,84 +4,46 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
+    <meta name="referrer" content="no-referrer" />
     <title>Admin | Consultora Diagonales</title>
     <link rel="stylesheet" href="../assets/css/style.css?v=20260622-admin-html-picker" />
     <link rel="stylesheet" href="../assets/css/admin-audience.css?v=20260625-events-ip-filter" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" referrerpolicy="no-referrer"></script>
   </head>
   <body class="bg-[#080d14] text-white antialiased" data-page="admin">
     <header class="site-header is-solid" data-header>
-      <a class="brand" href="../index.html" aria-label="Consultora Diagonales">
-        <img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo />
-        <img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo />
-        <span class="brand-fallback">Consultora Diagonales</span>
-      </a>
-      <nav class="desktop-nav" aria-label="Navegacion principal">
-        <a href="../index.html">Inicio</a>
-        <a href="../servicios/index.html">Servicios</a>
-        <a href="../repositorio/index.html">Radiografías</a>
-        <a href="../contacto/index.html">Contacto</a>
-        <a href="index.html" data-nav="admin">Admin</a>
-      </nav>
+      <a class="brand" href="../index.html" aria-label="Consultora Diagonales"><img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo /><img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo /><span class="brand-fallback">Consultora Diagonales</span></a>
+      <nav class="desktop-nav" aria-label="Navegacion principal"><a href="../index.html">Inicio</a><a href="../servicios/index.html">Servicios</a><a href="../repositorio/index.html">Radiografías</a><a href="../contacto/index.html">Contacto</a><a href="index.html" data-nav="admin">Admin</a></nav>
       <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle><span></span><span></span><span></span></button>
     </header>
-
-    <div class="mobile-menu" data-mobile-menu aria-hidden="true">
-      <a href="../index.html">Inicio</a><a href="../servicios/index.html">Servicios</a><a href="../repositorio/index.html">Radiografías</a><a href="../contacto/index.html">Contacto</a><a href="index.html">Admin</a>
-    </div>
+    <div class="mobile-menu" data-mobile-menu aria-hidden="true"><a href="../index.html">Inicio</a><a href="../servicios/index.html">Servicios</a><a href="../repositorio/index.html">Radiografías</a><a href="../contacto/index.html">Contacto</a><a href="index.html">Admin</a></div>
 
     <main class="subpage">
       <section class="mx-auto grid min-h-screen max-w-7xl gap-10 px-6 pb-24 pt-36 md:px-10 lg:grid-cols-[.85fr_1.15fr] lg:px-12">
-        <div>
-          <p class="eyebrow">Panel admin</p><h1 class="page-title">Carga de radiografías PDF.</h1>
-          <p class="mt-6 max-w-xl text-base leading-8 text-slate-300">Subí el PDF corregido, completá la metadata y publicá el informe. El archivo queda guardado en el bucket público <span class="font-semibold text-white">radiografías</span> y aparece en el repositorio.</p>
-        </div>
-
-        <form class="admin-form" data-admin-login>
-          <label><span>Clave de administrador</span><input name="admin_key" type="password" autocomplete="current-password" placeholder="Clave para subir radiografías" required /></label>
-          <button class="primary-link justify-center" type="submit">Ingresar al panel</button><p class="form-status" data-admin-login-status role="status"></p>
-        </form>
-
-        <section class="admin-form is-hidden" data-admin-html-picker>
-          <div><p class="eyebrow">Gráficos</p><h2 class="admin-helper-title">Agregar HTML a una radiografía cargada</h2><p class="admin-helper-copy">Elegí la radiografía PDF existente y después cargá el archivo HTML de gráficos.</p></div>
-          <label><span>Radiografía existente</span><select name="radiografia_html_target" data-admin-html-select><option value="">Cargando radiografías...</option></select></label>
-          <button class="secondary-link justify-center" type="button" data-admin-html-select-action>Agregar HTML a esta radiografía</button>
-        </section>
-
+        <div><p class="eyebrow">Panel admin</p><h1 class="page-title">Carga de radiografías PDF.</h1><p class="mt-6 max-w-xl text-base leading-8 text-slate-300">Subí el PDF corregido, completá la metadata y publicá el informe. El archivo queda guardado en el bucket público <span class="font-semibold text-white">radiografías</span> y aparece en el repositorio.</p></div>
+        <form class="admin-form" data-admin-login><label><span>Clave de administrador</span><input name="admin_key" type="password" autocomplete="current-password" placeholder="Clave para subir radiografías" required /></label><button class="primary-link justify-center" type="submit">Ingresar al panel</button><p class="form-status" data-admin-login-status role="status"></p></form>
+        <section class="admin-form is-hidden" data-admin-html-picker><div><p class="eyebrow">Gráficos</p><h2 class="admin-helper-title">Agregar HTML a una radiografía cargada</h2><p class="admin-helper-copy">Elegí la radiografía PDF existente y después cargá el archivo HTML de gráficos.</p></div><label><span>Radiografía existente</span><select name="radiografia_html_target" data-admin-html-select><option value="">Cargando radiografías...</option></select></label><button class="secondary-link justify-center" type="button" data-admin-html-select-action>Agregar HTML a esta radiografía</button></section>
         <form class="admin-form is-hidden" data-admin-form>
-          <input name="id" type="hidden" />
-          <label><span>Título</span><input name="titulo" type="text" placeholder="Radiografía política de..." required /></label>
+          <input name="id" type="hidden" /><label><span>Título</span><input name="titulo" type="text" placeholder="Radiografía política de..." required /></label>
           <div class="grid gap-5 md:grid-cols-2"><label><span>Provincia</span><input name="provincia" type="text" placeholder="Buenos Aires" required /></label><label><span>Localidad</span><input name="localidad" type="text" placeholder="La Plata" required /></label></div>
           <div class="grid gap-5 md:grid-cols-2"><label><span>Fecha</span><input name="fecha" type="date" required /></label></div>
           <div class="grid gap-5 md:grid-cols-2"><label><span>PDF principal</span><input name="pdf_archivo" type="file" accept=".pdf,application/pdf" /></label><label><span>HTML de gráficos</span><input name="html_archivo" type="file" accept=".html,.htm,text/html" /></label></div>
-          <div class="admin-form-actions"><button class="primary-link justify-center" type="submit" data-submit>Guardar archivo</button><button class="secondary-link justify-center is-hidden" type="button" data-admin-cancel-edit>Cancelar edición</button></div>
-          <p class="form-status" data-form-status role="status"></p>
+          <div class="admin-form-actions"><button class="primary-link justify-center" type="submit" data-submit>Guardar archivo</button><button class="secondary-link justify-center is-hidden" type="button" data-admin-cancel-edit>Cancelar edición</button></div><p class="form-status" data-form-status role="status"></p>
         </form>
 
         <section class="admin-dashboard is-hidden lg:col-span-2" data-admin-dashboard>
-          <div class="admin-dashboard-header">
-            <div><p class="eyebrow">Gestión</p><h2>Audiencia y consumo de radiografías.</h2><p class="admin-dashboard-status" data-admin-dashboard-status>Personas, visitas, contenidos consultados y origen aproximado.</p></div>
-            <div class="admin-dashboard-actions"><a class="secondary-link" href="gestion.html">Gestor simple</a><button class="secondary-link" type="button" data-admin-refresh>Actualizar</button></div>
-          </div>
-          <div class="admin-metrics">
-            <article><span data-admin-total="reports">0</span><small>Radiografías</small></article><article><span data-admin-total="downloads">0</span><small>Consumos PDF</small></article><article><span data-admin-total="contacts">0</span><small>Personas identificadas</small></article><article><span data-admin-total="events">0</span><small>Visitas registradas</small></article>
-          </div>
+          <div class="admin-dashboard-header"><div><p class="eyebrow">Gestión</p><h2>Audiencia y consumo de radiografías.</h2><p class="admin-dashboard-status" data-admin-dashboard-status>Personas, visitas, contenidos consultados y origen aproximado.</p></div><div class="admin-dashboard-actions"><a class="secondary-link" href="gestion.html">Gestor simple</a><button class="secondary-link" type="button" data-admin-export-excel>Exportar Excel</button><button class="secondary-link" type="button" data-admin-refresh>Actualizar</button></div></div>
+          <div class="admin-metrics"><article><span data-admin-total="reports">0</span><small>Radiografías</small></article><article><span data-admin-total="downloads">0</span><small>Consumos PDF</small></article><article><span data-admin-total="contacts">0</span><small>Personas identificadas</small></article><article><span data-admin-total="events">0</span><small>Visitas registradas</small></article></div>
           <div class="admin-data-grid">
             <article class="admin-reports-panel"><h3>Radiografías/PDF cargados</h3><div class="admin-list" data-admin-reports></div></article>
-            <article class="admin-audience-panel">
-              <div class="admin-audience-heading"><h3>Personas y radiografías consultadas</h3><label class="admin-ip-filter"><span>Filtrar por IP</span><select data-admin-ip-filter><option value="all">Todos</option><option value="with-ip">Con IP</option><option value="without-ip">Sin IP</option></select></label></div>
-              <div class="admin-list" data-admin-contacts></div>
-            </article>
+            <article class="admin-audience-panel"><div class="admin-audience-heading"><h3>Personas y radiografías consultadas</h3><label class="admin-ip-filter"><span>Filtrar por IP</span><select data-admin-ip-filter><option value="all">Todos</option><option value="with-ip">Con IP</option><option value="without-ip">Sin IP</option></select></label></div><div class="admin-list" data-admin-contacts></div></article>
             <article><h3>Aperturas y descargas de PDF</h3><div class="admin-list" data-admin-downloads></div></article>
-            <article class="admin-events-panel">
-              <div class="admin-audience-heading"><h3>Actividad reciente, IP y zona</h3><label class="admin-ip-filter"><span>Filtrar por IP</span><select data-admin-events-ip-filter><option value="all">Todos</option><option value="with-ip">Con IP</option><option value="without-ip">Sin IP</option></select></label></div>
-              <div class="admin-list" data-admin-events></div>
-            </article>
+            <article class="admin-events-panel"><div class="admin-audience-heading"><h3>Actividad reciente, IP y zona</h3><label class="admin-ip-filter"><span>Filtrar por IP</span><select data-admin-events-ip-filter><option value="all">Todos</option><option value="with-ip">Con IP</option><option value="without-ip">Sin IP</option></select></label></div><div class="admin-list" data-admin-events></div></article>
           </div>
         </section>
       </section>
     </main>
-    <script src="../assets/js/supabase-config.js?v=20260625-ip"></script><script src="../assets/js/main.js?v=20260622-html-whatsapp"></script><script src="../assets/js/admin-audience.js?v=20260625-events-ip-filter"></script>
+    <script src="../assets/js/supabase-config.js?v=20260625-ip"></script><script src="../assets/js/main.js?v=20260622-html-whatsapp"></script><script src="../assets/js/admin-audience.js?v=20260625-security-excel"></script>
   </body>
 </html>
