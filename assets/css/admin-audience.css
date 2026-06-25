@@ -6,6 +6,40 @@
   max-height: 680px;
 }
 
+.admin-audience-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(139, 207, 241, 0.22);
+  padding: 0.75rem 1rem;
+}
+
+.admin-audience-heading h3 {
+  border: 0;
+  padding: 0;
+}
+
+.admin-ip-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: rgba(226, 240, 248, 0.78);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-ip-filter select {
+  min-height: 38px;
+  border: 1px solid rgba(139, 207, 241, 0.34);
+  border-radius: 8px;
+  padding: 0 2rem 0 0.75rem;
+  color: #fff;
+  background: #062b40;
+}
+
 .admin-person-card {
   gap: 0.65rem;
   border: 1px solid rgba(139, 207, 241, 0.18);
@@ -62,6 +96,16 @@
 }
 
 @media (max-width: 760px) {
+  .admin-audience-heading,
+  .admin-ip-filter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-ip-filter select {
+    width: 100%;
+  }
+
   .admin-person-grid {
     grid-template-columns: 1fr;
   }
