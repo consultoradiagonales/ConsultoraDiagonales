@@ -84,7 +84,7 @@
       : '<span class="admin-report-tag">Sin radiografías identificadas</span>';
 
     return `
-      <div class="admin-list-item admin-person-card">
+      <div class="admin-list-item admin-person-card" data-has-ip="${item.ip_address ? "true" : "false"}">
         <strong>${escapeHtml(name)}</strong>
         <div class="admin-person-grid">
           <div class="admin-person-field"><small>Nombre y apellido</small><span>${escapeHtml(name)}</span></div>
@@ -115,4 +115,19 @@
       </div>
     `;
   };
+
+  const filter = document.querySelector("[data-admin-ip-filter]");
+  const audience = document.querySelector("[data-admin-contacts]");
+
+  function applyIpFilter() {
+    if (!filter || !audience) return;
+    const value = filter.value;
+    audience.querySelectorAll("[data-has-ip]").forEach((card) => {
+      const hasIp = card.dataset.hasIp === "true";
+      card.hidden = value === "with-ip" ? !hasIp : value === "without-ip" ? hasIp : false;
+    });
+  }
+
+  filter?.addEventListener("change", applyIpFilter);
+  if (audience) new MutationObserver(applyIpFilter).observe(audience, { childList: true });
 })();
