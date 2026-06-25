@@ -1,0 +1,72 @@
+.admin-audience-panel {
+  grid-column: 1 / -1;
+}
+
+.admin-audience-panel .admin-list {
+  max-height: 680px;
+}
+
+.admin-person-card {
+  gap: 0.65rem;
+  border: 1px solid rgba(139, 207, 241, 0.18);
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: rgba(5, 34, 52, 0.48);
+}
+
+.admin-person-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.admin-person-field {
+  display: grid;
+  align-content: start;
+  gap: 0.16rem;
+  min-width: 0;
+}
+
+.admin-person-field.is-wide {
+  grid-column: span 2;
+}
+
+.admin-person-field small {
+  color: var(--blue);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.admin-person-field span,
+.admin-person-field a {
+  overflow-wrap: anywhere;
+  color: rgba(244, 251, 255, 0.92);
+  line-height: 1.45;
+}
+
+.admin-report-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+}
+
+.admin-report-tag {
+  border: 1px solid rgba(110, 213, 255, 0.24);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: #dff9ff;
+  background: rgba(110, 213, 255, 0.08);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 760px) {
+  .admin-person-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-person-field.is-wide {
+    grid-column: auto;
+  }
+}
