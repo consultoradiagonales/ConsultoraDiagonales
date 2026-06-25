@@ -107,7 +107,7 @@
     const location = geo(item);
     const network = [item.ip_address, location === "Ubicación no disponible" ? "" : location].filter(Boolean).join(" · ");
     return `
-      <div class="admin-list-item">
+      <div class="admin-list-item" data-event-has-ip="${item.ip_address ? "true" : "false"}">
         <strong>${escapeHtml(eventName(item.event_type))}${escapeHtml(report)}</strong>
         <span>${escapeHtml(person)} · ${escapeHtml(pageName(item.page, item.path))}</span>
         ${network ? `<span>Origen: ${escapeHtml(network)}</span>` : "<span>Origen: IP no disponible para este registro</span>"}
@@ -118,6 +118,8 @@
 
   const filter = document.querySelector("[data-admin-ip-filter]");
   const audience = document.querySelector("[data-admin-contacts]");
+  const eventsFilter = document.querySelector("[data-admin-events-ip-filter]");
+  const events = document.querySelector("[data-admin-events]");
 
   function applyIpFilter() {
     if (!filter || !audience) return;
@@ -128,6 +130,17 @@
     });
   }
 
+  function applyEventsIpFilter() {
+    if (!eventsFilter || !events) return;
+    const value = eventsFilter.value;
+    events.querySelectorAll("[data-event-has-ip]").forEach((event) => {
+      const hasIp = event.dataset.eventHasIp === "true";
+      event.hidden = value === "with-ip" ? !hasIp : value === "without-ip" ? hasIp : false;
+    });
+  }
+
   filter?.addEventListener("change", applyIpFilter);
   if (audience) new MutationObserver(applyIpFilter).observe(audience, { childList: true });
+  eventsFilter?.addEventListener("change", applyEventsIpFilter);
+  if (events) new MutationObserver(applyEventsIpFilter).observe(events, { childList: true });
 })();
