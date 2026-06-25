@@ -20,6 +20,10 @@
   padding: 0;
 }
 
+.admin-events-panel .admin-audience-heading h3 {
+  color: var(--blue);
+}
+
 .admin-ip-filter {
   display: flex;
   align-items: center;
