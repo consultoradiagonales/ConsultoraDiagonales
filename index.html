@@ -8,7 +8,122 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com" />
     <link rel="stylesheet" href="assets/css/style.css?v=20260627-media-strip" />
     <style>
-      .media-mentions-list{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:.9rem!important}.media-logo{min-height:148px!important;justify-content:space-between!important;padding:1.15rem 1rem .85rem!important;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(3,27,45,.26)),rgba(3,27,45,.22)!important}.media-logo img,.media-logo svg{display:block;width:100%!important;height:94px!important;object-fit:contain!important;object-position:center!important;filter:drop-shadow(0 10px 18px rgba(0,0,0,.34))!important}.media-wordmark{display:grid;place-items:center;width:100%;height:94px;color:#fff;text-align:center;line-height:1;filter:drop-shadow(0 10px 18px rgba(0,0,0,.34))}.media-wordmark strong{display:block;font-family:Inter,Arial,sans-serif;font-size:clamp(1.05rem,1.55vw,1.55rem);font-weight:950;letter-spacing:.01em}.media-wordmark small{display:block;margin-top:.35rem;color:#dff8ff;font-size:.62rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase}.media-logo--news .media-wordmark strong{font-size:clamp(1rem,1.35vw,1.35rem);font-weight:850}.media-logo--news .media-dot{color:#9bdcf0}.media-logo--realpolitik .media-wordmark{background:linear-gradient(90deg,#ed1c24 0 40%,#080808 40%);border-radius:8px}.media-logo--realpolitik .media-wordmark strong{font-size:clamp(1.05rem,1.35vw,1.45rem)}.media-logo--radio-buenos-aires .media-wordmark{width:94px;height:94px;margin:auto;border-radius:50%;background:#ef1b1b}.media-logo--radio-buenos-aires .media-wordmark strong{font-size:.96rem;line-height:.86}.media-logo--aconcagua .media-wordmark strong{font-size:clamp(1.35rem,1.7vw,1.8rem);letter-spacing:.03em}.media-logo--la-sintesis svg{height:96px!important}@media(max-width:900px){.media-mentions-list{grid-template-columns:repeat(3,minmax(0,1fr))!important}}@media(max-width:640px){.media-mentions-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}.media-logo{min-height:124px!important;padding:.9rem .75rem .75rem!important}.media-logo img,.media-logo svg,.media-wordmark{height:74px!important}.media-logo--radio-buenos-aires .media-wordmark{width:76px!important;height:76px!important}.media-wordmark strong{font-size:1rem!important}.media-logo--radio-buenos-aires .media-wordmark strong{font-size:.78rem!important}}
+      .media-mentions {
+        position: relative;
+        z-index: 2;
+        padding: clamp(3rem, 6vw, 5.25rem) 1.5rem;
+        background: linear-gradient(180deg, rgba(6, 93, 115, 0.88), rgba(3, 19, 32, 0.96));
+      }
+      .media-mentions-inner {
+        width: min(100%, 1180px);
+        margin: 0 auto;
+      }
+      .media-mentions-label {
+        margin: 0 0 1.35rem;
+        color: rgba(219, 246, 255, 0.82);
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.22em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+      .media-mentions-list {
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 0.9rem !important;
+        align-items: stretch;
+      }
+      .media-logo {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between !important;
+        min-width: 0;
+        min-height: 148px !important;
+        overflow: hidden;
+        border: 1px solid rgba(139, 207, 241, 0.22);
+        border-radius: 10px;
+        padding: 1.15rem 1rem 0.85rem !important;
+        color: #fff;
+        background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(3,27,45,.26)), rgba(3,27,45,.22) !important;
+        text-align: center;
+        text-decoration: none !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 16px 38px rgba(0,10,18,.18);
+      }
+      .media-logo:hover,
+      .media-logo:focus-visible {
+        border-color: rgba(139, 207, 241, 0.55);
+        transform: translateY(-2px);
+      }
+      .media-logo img,
+      .media-logo svg {
+        display: block;
+        width: 100% !important;
+        height: 94px !important;
+        object-fit: contain !important;
+        object-position: center !important;
+        filter: drop-shadow(0 10px 18px rgba(0,0,0,.34)) !important;
+      }
+      .media-wordmark {
+        display: grid !important;
+        place-items: center;
+        width: 100%;
+        height: 94px;
+        color: #fff;
+        text-align: center;
+        line-height: 1;
+        filter: drop-shadow(0 10px 18px rgba(0,0,0,.34));
+      }
+      .media-wordmark strong {
+        display: block;
+        color: inherit;
+        font-family: Inter, Arial, sans-serif;
+        font-size: clamp(1.05rem, 1.55vw, 1.55rem);
+        font-weight: 950;
+        letter-spacing: .01em;
+      }
+      .media-wordmark small {
+        display: block;
+        margin-top: .35rem;
+        color: #dff8ff;
+        font-size: .62rem;
+        font-weight: 900;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+      }
+      .media-location {
+        display: block;
+        width: 100%;
+        margin-top: 0.8rem;
+        color: rgba(220, 244, 255, 0.76);
+        font-size: 0.64rem;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+      .media-logo--news .media-wordmark strong { font-size: clamp(1rem, 1.35vw, 1.35rem); font-weight: 850; }
+      .media-logo--news .media-dot { color: #9bdcf0; }
+      .media-logo--realpolitik .media-wordmark { background: linear-gradient(90deg, #ed1c24 0 40%, #080808 40%); border-radius: 8px; }
+      .media-logo--realpolitik .media-wordmark strong { font-size: clamp(1.05rem, 1.35vw, 1.45rem); }
+      .media-logo--radio-buenos-aires .media-wordmark { width: 94px; height: 94px; margin: auto; border-radius: 50%; background: #ef1b1b; }
+      .media-logo--radio-buenos-aires .media-wordmark strong { font-size: .96rem; line-height: .86; }
+      .media-logo--aconcagua .media-wordmark strong { font-size: clamp(1.35rem, 1.7vw, 1.8rem); letter-spacing: .03em; }
+      .media-logo--la-sintesis svg { height: 96px !important; }
+      @media (max-width: 900px) {
+        .media-mentions-list { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+      }
+      @media (max-width: 640px) {
+        .media-mentions { padding-inline: 1rem; }
+        .media-mentions-list { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: .75rem !important; }
+        .media-logo { min-height: 124px !important; padding: .9rem .75rem .75rem !important; }
+        .media-logo img,
+        .media-logo svg,
+        .media-wordmark { height: 74px !important; }
+        .media-logo--radio-buenos-aires .media-wordmark { width: 76px !important; height: 76px !important; }
+        .media-wordmark strong { font-size: 1rem !important; }
+        .media-logo--radio-buenos-aires .media-wordmark strong { font-size: .78rem !important; }
+      }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
