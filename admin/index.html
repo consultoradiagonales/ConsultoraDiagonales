@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex" />
     <title>Admin | Consultora Diagonales</title>
     <link rel="stylesheet" href="../assets/css/style.css?v=20260627-admin-restored" />
+    <link rel="stylesheet" href="../assets/css/admin-audience.css?v=20260627-ip-filter" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -141,12 +142,32 @@
               <h3>Consumos PDF</h3>
               <div class="admin-list" data-admin-downloads></div>
             </article>
-            <article>
-              <h3>Base de contactos e intereses</h3>
+            <article class="admin-audience-panel">
+              <div class="admin-audience-heading">
+                <h3>Base de contactos e intereses</h3>
+                <label class="admin-ip-filter">
+                  <span>Filtrar por IP</span>
+                  <select data-admin-ip-filter>
+                    <option value="all">Todos</option>
+                    <option value="with-ip">Con IP</option>
+                    <option value="without-ip">Sin IP</option>
+                  </select>
+                </label>
+              </div>
               <div class="admin-list" data-admin-contacts></div>
             </article>
-            <article>
-              <h3>Actividad reciente</h3>
+            <article class="admin-events-panel">
+              <div class="admin-audience-heading">
+                <h3>Actividad reciente</h3>
+                <label class="admin-ip-filter">
+                  <span>Filtrar por IP</span>
+                  <select data-admin-events-ip-filter>
+                    <option value="all">Todos</option>
+                    <option value="with-ip">Con IP</option>
+                    <option value="without-ip">Sin IP</option>
+                  </select>
+                </label>
+              </div>
               <div class="admin-list" data-admin-events></div>
             </article>
           </div>
@@ -156,5 +177,6 @@
 
     <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
     <script src="../assets/js/main.js?v=20260627-html-srcdoc"></script>
+    <script src="../assets/js/admin-audience.js?v=20260627-ip-filter"></script>
   </body>
 </html>
