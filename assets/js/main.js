@@ -1031,12 +1031,15 @@ function initHtmlReportViewer() {
     const link = event.target.closest("[data-html-viewer-open]");
     if (!link) return;
 
+    const url = new URL(link.href, window.location.href);
+    if (url.origin !== window.location.origin) return;
+
     event.preventDefault();
-    openHtmlReportViewer(link.href, getHtmlViewerTitle(link));
+    openHtmlReportViewer(url.href, getHtmlViewerTitle(link));
   });
 }
 
-async function openHtmlReportViewer(url, title) {
+function openHtmlReportViewer(url, title) {
   let viewer = document.querySelector("[data-html-viewer]");
   if (!viewer) {
     viewer = document.createElement("div");
@@ -1054,7 +1057,7 @@ async function openHtmlReportViewer(url, title) {
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
-        <iframe data-html-viewer-frame title="Visor de graficos" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-forms"></iframe>
+        <iframe data-html-viewer-frame title="Visor de graficos" loading="lazy"></iframe>
       </div>
     `;
     document.body.appendChild(viewer);
@@ -1069,20 +1072,10 @@ async function openHtmlReportViewer(url, title) {
   }
 
   viewer.querySelector("[data-html-viewer-title]").textContent = title;
-  const frame = viewer.querySelector("[data-html-viewer-frame]");
-  frame.removeAttribute("src");
-  frame.srcdoc = buildHtmlViewerLoading();
+  viewer.querySelector("[data-html-viewer-frame]").src = url;
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
   document.body.classList.add("html-viewer-open");
-
-  try {
-    const html = await fetchHtmlForViewer(url);
-    frame.srcdoc = normalizeHtmlForViewer(html, url);
-  } catch (error) {
-    frame.srcdoc = buildHtmlViewerError(url);
-    console.warn("No se pudo cargar el HTML en el visor interno", error);
-  }
 }
 
 function closeHtmlReportViewer() {
@@ -1093,63 +1086,13 @@ function closeHtmlReportViewer() {
   viewer.classList.remove("is-open");
   viewer.setAttribute("aria-hidden", "true");
   document.body.classList.remove("html-viewer-open");
-  if (frame) {
-    frame.removeAttribute("src");
-    frame.srcdoc = "";
-  }
+  if (frame) frame.src = "about:blank";
 }
 
 function getHtmlViewerTitle(link) {
   const rowTitle = link.closest(".latest-report-row")?.querySelector("span")?.textContent?.trim();
   const cardTitle = link.closest(".report-card")?.querySelector("h2")?.textContent?.trim();
   return rowTitle || cardTitle || "Graficos";
-}
-
-async function fetchHtmlForViewer(url) {
-  const response = await fetch(url, { credentials: "omit" });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return await response.text();
-}
-
-function normalizeHtmlForViewer(html, sourceUrl) {
-  const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
-  const bridge = buildHtmlViewerExternalLinkBridge();
-  let output = String(html || "");
-  if (/<head[^>]*>/i.test(output)) {
-    output = output.replace(/<head[^>]*>/i, (match) => `${match}\n${base}`);
-  } else {
-    output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}</head><body>${output}</body></html>`;
-  }
-  if (/<\/body>/i.test(output)) {
-    output = output.replace(/<\/body>/i, `${bridge}\n</body>`);
-  } else {
-    output += bridge;
-  }
-  return output;
-}
-
-function buildHtmlViewerExternalLinkBridge() {
-  return `<script>
-    (function () {
-      document.addEventListener("click", function (event) {
-        var link = event.target && event.target.closest ? event.target.closest("a[href]") : null;
-        if (!link) return;
-        var href = link.getAttribute("href") || "";
-        var isExternalAction = /^(https?:\\/\\/(api\\.whatsapp\\.com|wa\\.me)\\/|tel:)/i.test(href);
-        if (!isExternalAction) return;
-        event.preventDefault();
-        window.open(link.href, "_blank", "noopener");
-      });
-    })();
-  <\\/script>`;
-}
-
-function buildHtmlViewerLoading() {
-  return `<!doctype html><html><body style="margin:0;display:grid;min-height:100vh;place-items:center;background:#061522;color:#dff9ff;font-family:Arial,sans-serif">Cargando gr&aacute;ficos...</body></html>`;
-}
-
-function buildHtmlViewerError(url) {
-  return `<!doctype html><html><body style="margin:0;display:grid;min-height:100vh;place-items:center;background:#061522;color:#dff9ff;font-family:Arial,sans-serif;text-align:center;padding:24px"><div><h1 style="font-size:20px">No se pudo cargar el HTML dentro del visor.</h1><p>Prob&aacute; abrir el archivo desde el panel admin y volver a cargarlo.</p><a style="color:#7ce3ff" href="${escapeAttribute(url)}" target="_blank" rel="noopener">Abrir archivo</a></div></body></html>`;
 }
 
 async function logReportInterest(report, eventType, targetUrl) {
