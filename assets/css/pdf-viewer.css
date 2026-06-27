@@ -91,6 +91,16 @@ body.pdf-viewer-open {
   cursor: pointer;
 }
 
+.pdf-viewer__actions button.is-speaking {
+  border-color: rgba(110, 213, 255, 0.9);
+  background: rgba(110, 213, 255, 0.28);
+}
+
+.pdf-viewer__actions button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .pdf-viewer__mobile-note {
   display: none;
   padding: 0.65rem 1rem;

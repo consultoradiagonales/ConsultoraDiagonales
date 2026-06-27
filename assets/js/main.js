@@ -842,6 +842,7 @@ function renderReports(reports, container, count) {
           </div>
           <div class="report-actions">
             ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">GrÃ¡ficos</a>` : ""}
+            ${report.html_url || report.pdf_url ? `<button class="request-link listen-link" type="button" data-listen-report data-report-index="${index}">Escuchar</button>` : ""}
             <a class="request-link" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>
           </div>
         </article>
@@ -851,6 +852,7 @@ function renderReports(reports, container, count) {
 
   bindPdfDownloadLinks(container, reports);
   bindReportOpenLinks(container, reports);
+  bindReportListenLinks(container, reports);
 }
 
 function getReportGraphsUrl(report) {
@@ -903,6 +905,166 @@ function bindPdfDownloadLinks(container, reports) {
   });
 }
 
+const speechTextCache = new Map();
+const speechState = {
+  chunks: [],
+  index: 0,
+  button: null,
+};
+
+function bindReportListenLinks(container, reports) {
+  container.querySelectorAll("[data-listen-report]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const report = reports[Number(button.dataset.reportIndex)];
+      if (report) await startReportSpeech(report, button);
+    });
+  });
+}
+
+function isSpeechSupported() {
+  return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+}
+
+async function startReportSpeech(report, button) {
+  if (!isSpeechSupported()) {
+    alert("Este navegador no permite lectura en voz desde la web.");
+    return;
+  }
+
+  if (button?.classList.contains("is-speaking")) {
+    stopReportSpeech();
+    return;
+  }
+
+  const previousText = button?.textContent;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Preparando...";
+  }
+
+  try {
+    const text = await getReportSpeechText(report);
+    speakReportText(text, button);
+  } catch (error) {
+    console.warn("No se pudo preparar la lectura en voz", error);
+    alert("No pudimos preparar la lectura en voz de esta radiografía.");
+    if (button) button.textContent = previousText || "Escuchar";
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+function speakReportText(text, button) {
+  const cleanText = String(text || "").replace(/\s+/g, " ").trim();
+  if (!cleanText) {
+    alert("No encontramos texto legible para escuchar en esta radiografía.");
+    return;
+  }
+
+  stopReportSpeech();
+  speechState.chunks = splitSpeechText(cleanText);
+  speechState.index = 0;
+  speechState.button = button || null;
+  setSpeechButton(button, true);
+  speakNextChunk();
+}
+
+function speakNextChunk() {
+  if (!speechState.chunks.length || speechState.index >= speechState.chunks.length) {
+    stopReportSpeech(false);
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(speechState.chunks[speechState.index]);
+  utterance.lang = "es-AR";
+  utterance.rate = 0.95;
+  utterance.pitch = 1;
+  utterance.onend = () => {
+    speechState.index += 1;
+    speakNextChunk();
+  };
+  utterance.onerror = () => stopReportSpeech(false);
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopReportSpeech(cancel = true) {
+  if (cancel && isSpeechSupported()) window.speechSynthesis.cancel();
+  setSpeechButton(speechState.button, false);
+  speechState.chunks = [];
+  speechState.index = 0;
+  speechState.button = null;
+}
+
+function setSpeechButton(button, speaking) {
+  if (!button) return;
+  button.classList.toggle("is-speaking", speaking);
+  button.textContent = speaking ? "Detener" : "Escuchar";
+}
+
+function splitSpeechText(text, maxLength = 900) {
+  const sentences = text.match(/[^.!?。！？]+[.!?。！？]*/g) || [text];
+  const chunks = [];
+  let current = "";
+
+  sentences.forEach((sentence) => {
+    const next = `${current} ${sentence}`.trim();
+    if (next.length > maxLength && current) {
+      chunks.push(current);
+      current = sentence.trim();
+    } else {
+      current = next;
+    }
+  });
+
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+async function getReportSpeechText(report) {
+  const htmlUrl = report.html_url || getReportGraphsUrl(report);
+  const pdfUrl = report.pdf_url;
+  const key = htmlUrl || pdfUrl || report.id || report.titulo;
+
+  if (speechTextCache.has(key)) return speechTextCache.get(key);
+
+  const header = [
+    report.titulo,
+    report.localidad || report.provincia,
+    report.fecha ? `Fecha: ${formatDate(report.fecha)}.` : "",
+  ]
+    .filter(Boolean)
+    .join(". ");
+
+  let body = "";
+  if (htmlUrl) body = await extractHtmlSpeechText(htmlUrl);
+  else if (pdfUrl) body = await extractPdfSpeechText(pdfUrl);
+
+  const text = `${header}. ${body}`.trim();
+  speechTextCache.set(key, text);
+  return text;
+}
+
+async function extractHtmlSpeechText(url) {
+  const html = await fetchHtmlForViewer(url);
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("script, style, noscript, svg, canvas, nav, header, footer").forEach((node) => node.remove());
+  return (doc.body?.innerText || doc.documentElement?.textContent || "").trim();
+}
+
+async function extractPdfSpeechText(url) {
+  const pdfjs = await loadPdfJs();
+  const pdf = await pdfjs.getDocument(url).promise;
+  const pages = [];
+
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const content = await page.getTextContent();
+    pages.push(content.items.map((item) => item.str).join(" "));
+  }
+
+  return pages.join("\n\n").trim();
+}
+
 function openPdfViewer(report) {
   if (!report?.pdf_url) return;
 
@@ -920,6 +1082,7 @@ function openPdfViewer(report) {
               <h2 id="pdf-viewer-title" data-pdf-viewer-title>Documento</h2>
             </div>
             <div class="pdf-viewer__actions">
+              <button type="button" data-pdf-listen>Escuchar</button>
               <button type="button" data-pdf-viewer-close aria-label="Cerrar visor">Cerrar</button>
             </div>
           </div>
@@ -933,6 +1096,11 @@ function openPdfViewer(report) {
     document.body.appendChild(viewer);
 
     viewer.addEventListener("click", (event) => {
+      const listenButton = event.target.closest("[data-pdf-listen]");
+      if (listenButton) {
+        startReportSpeech(viewer.__cdReport, listenButton);
+        return;
+      }
       if (event.target === viewer || event.target.closest("[data-pdf-viewer-close]")) closePdfViewer();
     });
 
@@ -943,6 +1111,7 @@ function openPdfViewer(report) {
 
   const title = report.titulo || "Radiografia";
   const frame = viewer.querySelector("[data-pdf-viewer-frame]");
+  viewer.__cdReport = report;
   viewer.querySelector("[data-pdf-viewer-title]").textContent = title;
   frame.src = isMobileViewport() ? "about:blank" : report.pdf_url;
   viewer.classList.add("is-open");
@@ -962,6 +1131,7 @@ function closePdfViewer() {
   document.body.classList.remove("pdf-viewer-open");
   if (frame) frame.src = "about:blank";
   viewer.querySelector("[data-pdf-viewer-pages]")?.replaceChildren();
+  stopReportSpeech();
 }
 
 function isMobileViewport() {
@@ -1051,6 +1221,7 @@ async function openHtmlReportViewer(url, title) {
             <h2 id="html-viewer-title" data-html-viewer-title>Graficos</h2>
           </div>
           <div class="html-viewer__actions">
+            <button type="button" data-html-listen disabled>Escuchar</button>
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
@@ -1060,6 +1231,11 @@ async function openHtmlReportViewer(url, title) {
     document.body.appendChild(viewer);
 
     viewer.addEventListener("click", (event) => {
+      const listenButton = event.target.closest("[data-html-listen]");
+      if (listenButton) {
+        speakReportText(viewer.__cdSpeechText || title, listenButton);
+        return;
+      }
       if (event.target === viewer || event.target.closest("[data-html-viewer-close]")) closeHtmlReportViewer();
     });
 
@@ -1070,6 +1246,13 @@ async function openHtmlReportViewer(url, title) {
 
   viewer.querySelector("[data-html-viewer-title]").textContent = title;
   const frame = viewer.querySelector("[data-html-viewer-frame]");
+  const listenButton = viewer.querySelector("[data-html-listen]");
+  viewer.__cdSpeechText = "";
+  if (listenButton) {
+    listenButton.disabled = true;
+    listenButton.textContent = "Escuchar";
+    listenButton.classList.remove("is-speaking");
+  }
   frame.removeAttribute("src");
   frame.srcdoc = buildHtmlViewerLoading();
   viewer.classList.add("is-open");
@@ -1079,6 +1262,8 @@ async function openHtmlReportViewer(url, title) {
   try {
     const html = await fetchHtmlForViewer(url);
     frame.srcdoc = normalizeHtmlForViewer(html, url);
+    viewer.__cdSpeechText = `${title}. ${extractTextFromHtmlString(html)}`;
+    if (listenButton) listenButton.disabled = false;
   } catch (error) {
     frame.srcdoc = buildHtmlViewerError(url);
     console.warn("No se pudo cargar el HTML en el visor interno", error);
@@ -1097,6 +1282,13 @@ function closeHtmlReportViewer() {
     frame.removeAttribute("src");
     frame.srcdoc = "";
   }
+  stopReportSpeech();
+}
+
+function extractTextFromHtmlString(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("script, style, noscript, svg, canvas, nav, header, footer").forEach((node) => node.remove());
+  return (doc.body?.innerText || doc.documentElement?.textContent || "").replace(/\s+/g, " ").trim();
 }
 
 function getHtmlViewerTitle(link) {
