@@ -1054,6 +1054,7 @@ async function openHtmlReportViewer(url, title) {
           </div>
           <div class="html-viewer__actions">
             <button type="button" data-html-viewer-whatsapp>WhatsApp</button>
+            <button type="button" data-html-viewer-speech disabled>Escuchar</button>
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
@@ -1068,6 +1069,11 @@ async function openHtmlReportViewer(url, title) {
         shareHtmlViewerByWhatsapp(viewer.__cdHtmlViewer || { url, title });
         return;
       }
+      const speechButton = event.target.closest("[data-html-viewer-speech]");
+      if (speechButton) {
+        toggleHtmlViewerSpeech(viewer, speechButton);
+        return;
+      }
       if (event.target === viewer || event.target.closest("[data-html-viewer-close]")) closeHtmlReportViewer();
     });
 
@@ -1078,7 +1084,10 @@ async function openHtmlReportViewer(url, title) {
 
   viewer.querySelector("[data-html-viewer-title]").textContent = title;
   viewer.__cdHtmlViewer = { url, title };
+  viewer.__cdHtmlSpeechText = "";
   const frame = viewer.querySelector("[data-html-viewer-frame]");
+  const speechButton = viewer.querySelector("[data-html-viewer-speech]");
+  resetHtmlViewerSpeechButton(speechButton, true);
   frame.removeAttribute("src");
   frame.srcdoc = buildHtmlViewerLoading();
   viewer.classList.add("is-open");
@@ -1088,8 +1097,11 @@ async function openHtmlReportViewer(url, title) {
   try {
     const html = await fetchHtmlForViewer(url);
     frame.srcdoc = normalizeHtmlForViewer(html, url);
+    viewer.__cdHtmlSpeechText = buildHtmlViewerSpeechText(html, title);
+    resetHtmlViewerSpeechButton(speechButton, false);
   } catch (error) {
     frame.srcdoc = buildHtmlViewerError(url);
+    resetHtmlViewerSpeechButton(speechButton, true);
     console.warn("No se pudo cargar el HTML en el visor interno", error);
   }
 }
@@ -1102,6 +1114,7 @@ function closeHtmlReportViewer() {
   viewer.classList.remove("is-open");
   viewer.setAttribute("aria-hidden", "true");
   document.body.classList.remove("html-viewer-open");
+  stopHtmlViewerSpeech();
   if (frame) {
     frame.removeAttribute("src");
     frame.srcdoc = "";
@@ -1151,6 +1164,106 @@ function shareHtmlViewerByWhatsapp(data) {
     html_url: data.url,
     share_url: buildHtmlViewerShareUrl(data),
   }, true);
+}
+
+const htmlSpeechState = {
+  chunks: [],
+  index: 0,
+  button: null,
+};
+
+function isHtmlViewerSpeechSupported() {
+  return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+}
+
+function resetHtmlViewerSpeechButton(button, disabled = false) {
+  if (!button) return;
+  button.disabled = disabled;
+  button.classList.remove("is-speaking");
+  button.textContent = "Escuchar";
+}
+
+function toggleHtmlViewerSpeech(viewer, button) {
+  if (!isHtmlViewerSpeechSupported()) {
+    alert("Este navegador no permite lectura en voz desde la web.");
+    return;
+  }
+
+  if (button?.classList.contains("is-speaking")) {
+    stopHtmlViewerSpeech();
+    return;
+  }
+
+  const text = String(viewer?.__cdHtmlSpeechText || "").replace(/\s+/g, " ").trim();
+  if (!text) {
+    alert("No encontramos texto legible para escuchar en este HTML.");
+    return;
+  }
+
+  stopHtmlViewerSpeech();
+  htmlSpeechState.chunks = splitHtmlViewerSpeechText(text);
+  htmlSpeechState.index = 0;
+  htmlSpeechState.button = button || null;
+  setHtmlViewerSpeechButton(button, true);
+  speakNextHtmlViewerChunk();
+}
+
+function speakNextHtmlViewerChunk() {
+  if (!htmlSpeechState.chunks.length || htmlSpeechState.index >= htmlSpeechState.chunks.length) {
+    stopHtmlViewerSpeech(false);
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(htmlSpeechState.chunks[htmlSpeechState.index]);
+  utterance.lang = "es-AR";
+  utterance.rate = 0.95;
+  utterance.pitch = 1;
+  utterance.onend = () => {
+    htmlSpeechState.index += 1;
+    speakNextHtmlViewerChunk();
+  };
+  utterance.onerror = () => stopHtmlViewerSpeech(false);
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopHtmlViewerSpeech(cancel = true) {
+  if (cancel && isHtmlViewerSpeechSupported()) window.speechSynthesis.cancel();
+  setHtmlViewerSpeechButton(htmlSpeechState.button, false);
+  htmlSpeechState.chunks = [];
+  htmlSpeechState.index = 0;
+  htmlSpeechState.button = null;
+}
+
+function setHtmlViewerSpeechButton(button, speaking) {
+  if (!button) return;
+  button.classList.toggle("is-speaking", speaking);
+  button.textContent = speaking ? "Detener" : "Escuchar";
+}
+
+function splitHtmlViewerSpeechText(text, maxLength = 900) {
+  const sentences = text.match(/[^.!?。！？]+[.!?。！？]*/g) || [text];
+  const chunks = [];
+  let current = "";
+
+  sentences.forEach((sentence) => {
+    const next = `${current} ${sentence}`.trim();
+    if (next.length > maxLength && current) {
+      chunks.push(current);
+      current = sentence.trim();
+    } else {
+      current = next;
+    }
+  });
+
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+function buildHtmlViewerSpeechText(html, title) {
+  const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+  doc.querySelectorAll("script, style, noscript, svg, canvas, iframe, audio, video, nav, header, footer").forEach((node) => node.remove());
+  const bodyText = (doc.body?.innerText || doc.documentElement?.textContent || "").replace(/\s+/g, " ").trim();
+  return [title, bodyText].filter(Boolean).join(". ");
 }
 
 async function fetchHtmlForViewer(url) {

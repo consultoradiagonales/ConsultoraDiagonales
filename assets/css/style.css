@@ -1138,6 +1138,16 @@ body.html-viewer-open {
   cursor: pointer;
 }
 
+.html-viewer__actions button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.html-viewer__actions button.is-speaking {
+  border-color: rgba(110, 213, 255, 0.86);
+  background: rgba(110, 213, 255, 0.24);
+}
+
 .html-viewer iframe {
   width: 100%;
   height: 100%;
