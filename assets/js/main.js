@@ -1034,6 +1034,8 @@ function initHtmlReportViewer() {
     event.preventDefault();
     openHtmlReportViewer(new URL(link.href, window.location.href).href, getHtmlViewerTitle(link));
   });
+
+  openSharedHtmlViewerFromUrl();
 }
 
 async function openHtmlReportViewer(url, title) {
@@ -1051,6 +1053,7 @@ async function openHtmlReportViewer(url, title) {
             <h2 id="html-viewer-title" data-html-viewer-title>Graficos</h2>
           </div>
           <div class="html-viewer__actions">
+            <button type="button" data-html-viewer-whatsapp>WhatsApp</button>
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
@@ -1060,6 +1063,11 @@ async function openHtmlReportViewer(url, title) {
     document.body.appendChild(viewer);
 
     viewer.addEventListener("click", (event) => {
+      const whatsappButton = event.target.closest("[data-html-viewer-whatsapp]");
+      if (whatsappButton) {
+        shareHtmlViewerByWhatsapp(viewer.__cdHtmlViewer || { url, title });
+        return;
+      }
       if (event.target === viewer || event.target.closest("[data-html-viewer-close]")) closeHtmlReportViewer();
     });
 
@@ -1069,6 +1077,7 @@ async function openHtmlReportViewer(url, title) {
   }
 
   viewer.querySelector("[data-html-viewer-title]").textContent = title;
+  viewer.__cdHtmlViewer = { url, title };
   const frame = viewer.querySelector("[data-html-viewer-frame]");
   frame.removeAttribute("src");
   frame.srcdoc = buildHtmlViewerLoading();
@@ -1103,6 +1112,45 @@ function getHtmlViewerTitle(link) {
   const rowTitle = link.closest(".latest-report-row")?.querySelector("span")?.textContent?.trim();
   const cardTitle = link.closest(".report-card")?.querySelector("h2")?.textContent?.trim();
   return rowTitle || cardTitle || "Graficos";
+}
+
+function openSharedHtmlViewerFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const htmlUrl = params.get("html_viewer") || params.get("html") || params.get("grafico");
+  if (!htmlUrl) return;
+
+  try {
+    const url = new URL(htmlUrl, window.location.href).href;
+    const title = params.get("titulo") || params.get("title") || "Radiografía";
+    window.setTimeout(() => openHtmlReportViewer(url, title), 250);
+  } catch (error) {
+    console.warn("No se pudo abrir el HTML compartido", error);
+  }
+}
+
+function buildHtmlViewerShareUrl({ url, title }) {
+  const shareUrl = new URL("/repositorio/index.html", window.location.origin);
+  shareUrl.searchParams.set("html_viewer", url);
+  shareUrl.searchParams.set("titulo", title || "Radiografía");
+  return shareUrl.href;
+}
+
+function buildHtmlViewerWhatsappHref(data) {
+  const title = data?.title || "Radiografía";
+  const shareUrl = buildHtmlViewerShareUrl(data);
+  const message = `Mirá esta radiografía de Consultora Diagonales: ${title}\n${shareUrl}`;
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
+function shareHtmlViewerByWhatsapp(data) {
+  if (!data?.url) return;
+  const href = buildHtmlViewerWhatsappHref(data);
+  window.open(href, "_blank", "noopener");
+  trackEvent?.("share_html_viewer_whatsapp", {
+    title: data.title || null,
+    html_url: data.url,
+    share_url: buildHtmlViewerShareUrl(data),
+  }, true);
 }
 
 async function fetchHtmlForViewer(url) {
