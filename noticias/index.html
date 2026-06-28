@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Noticias y seguimiento territorial de Consultora Diagonales: política, economía, salud y otros temas estratégicos." />
+    <title>Noticias | Consultora Diagonales</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260627-html-voice" />
+    <style>
+      .news-shell{min-height:100vh;padding:9rem 1.5rem 5rem;background:linear-gradient(180deg,rgba(187,241,255,.9),rgba(72,164,189,.78) 38%,#062236 100%)}
+      .news-inner{width:min(100%,1180px);margin:0 auto}.news-head{display:grid;gap:1rem;margin-bottom:2rem}.news-head h1{max-width:850px;color:#08253d;font-size:clamp(2.4rem,6vw,5.5rem);font-weight:950;line-height:.95}.news-head p{max-width:720px;color:#12354b;font-size:1.05rem;line-height:1.7}.news-controls{display:flex;flex-wrap:wrap;gap:.75rem;margin:1.5rem 0 2rem}.news-filter{border:1px solid rgba(7,45,70,.2);border-radius:999px;padding:.75rem 1rem;color:#08253d;background:rgba(255,255,255,.42);font-weight:900;text-transform:uppercase;letter-spacing:.08em}.news-filter.is-active{color:#fff;background:#08364a}.news-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}.news-card{display:grid;gap:.8rem;border:1px solid rgba(139,207,241,.3);border-radius:14px;padding:1.1rem;color:#fff;background:rgba(3,27,45,.78);text-decoration:none;box-shadow:0 20px 50px rgba(0,14,24,.22)}.news-card small{color:#79dfff;font-weight:900;text-transform:uppercase;letter-spacing:.14em}.news-card h2{font-size:1.25rem;font-weight:900;line-height:1.2}.news-card p{color:rgba(232,247,255,.78);line-height:1.55}.news-card span{color:#dff8ff;font-size:.78rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em}.news-empty{grid-column:1/-1;border:1px solid rgba(139,207,241,.25);border-radius:14px;padding:1.4rem;color:#dff8ff;background:rgba(3,27,45,.58)}@media(max-width:900px){.news-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){.news-shell{padding:7.5rem 1rem 4rem}.news-grid{grid-template-columns:1fr}.news-head h1{font-size:2.7rem}}
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body class="bg-[#080d14] text-white antialiased" data-page="noticias">
+    <header class="site-header is-solid" data-header>
+      <a class="brand" href="../index.html" aria-label="Consultora Diagonales"><img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo /><img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo /></a>
+      <nav class="desktop-nav" aria-label="Navegación principal"><a href="../index.html" data-nav="inicio">Inicio</a><a href="../servicios/index.html" data-nav="servicios">Servicios</a><a href="../repositorio/index.html" data-nav="radiografias">Radiografías</a><a href="index.html" data-nav="noticias">Noticias</a><a href="../contacto/index.html" data-nav="contacto">Contacto</a><a href="../admin/index.html" data-nav="admin">Admin</a></nav>
+      <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle><span></span><span></span><span></span></button>
+    </header>
+    <div class="mobile-menu" data-mobile-menu aria-hidden="true"><a href="../index.html">Inicio</a><a href="../servicios/index.html">Servicios</a><a href="../repositorio/index.html">Radiografías</a><a href="index.html">Noticias</a><a href="../contacto/index.html">Contacto</a><a href="../admin/index.html">Admin</a></div>
+    <main class="news-shell">
+      <section class="news-inner">
+        <div class="news-head"><p class="eyebrow">Noticias</p><h1>Actualidad para leer el territorio.</h1><p>Seguimiento de noticias políticas, económicas, sanitarias y coyunturales que alimentan la toma de decisiones y el monitoreo de usuarios registrados o identificados por IP.</p></div>
+        <div class="news-controls" aria-label="Filtrar noticias por categoría"><button class="news-filter is-active" type="button" data-news-filter="all">Todas</button><button class="news-filter" type="button" data-news-filter="politica">Política</button><button class="news-filter" type="button" data-news-filter="economia">Economía</button><button class="news-filter" type="button" data-news-filter="salud">Salud</button><button class="news-filter" type="button" data-news-filter="otros">Otros</button></div>
+        <div class="news-grid" data-news-list><div class="news-empty">Cargando noticias.</div></div>
+      </section>
+    </main>
+    <footer class="site-footer"><span>&copy; CONSULTORA DIAGONALES | Data Analytics.</span></footer>
+    <script src="../assets/js/supabase-config.js?v=20260531-gmail-access"></script>
+    <script src="../assets/js/main.js?v=20260627-news-section"></script>
+  </body>
+</html>

@@ -24,6 +24,7 @@ initLeadForms();
 initHtmlReportViewer();
 
 if (page === "repo" || page === "analisis") initRepository();
+if (page === "noticias") initNewsPage();
 if (page === "admin") initAdmin();
 if (page === "registro") initRegistration();
 if (page === "solicitudes") initRequestGenerator();
@@ -1036,6 +1037,98 @@ function initHtmlReportViewer() {
   });
 
   openSharedHtmlViewerFromUrl();
+}
+
+async function initNewsPage() {
+  const list = document.querySelector("[data-news-list]");
+  const filters = document.querySelectorAll("[data-news-filter]");
+  if (!list) return;
+
+  const fallbackNews = [
+    {
+      categoria: "politica",
+      titulo: "Seguimiento político territorial",
+      bajada: "Espacio para cargar noticias políticas vinculadas a escenarios, actores y decisiones públicas.",
+      url: "../repositorio/index.html",
+      fuente: "Consultora Diagonales",
+      fecha: new Date().toISOString().slice(0, 10),
+    },
+    {
+      categoria: "economia",
+      titulo: "Economía y gestión",
+      bajada: "Monitoreo de variables económicas, presupuesto, inversión y efectos territoriales.",
+      url: "../servicios/index.html",
+      fuente: "Consultora Diagonales",
+      fecha: new Date().toISOString().slice(0, 10),
+    },
+    {
+      categoria: "salud",
+      titulo: "Salud pública y agenda sanitaria",
+      bajada: "Noticias sobre sistema sanitario, prestaciones, conflictos y demandas sociales.",
+      url: "../contacto/index.html",
+      fuente: "Consultora Diagonales",
+      fecha: new Date().toISOString().slice(0, 10),
+    },
+  ];
+
+  let news = fallbackNews;
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from("noticias")
+        .select("id, titulo, bajada, categoria, fuente, url, fecha, created_at")
+        .order("fecha", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(60);
+      if (!error && Array.isArray(data) && data.length) news = data;
+    } catch (error) {
+      console.warn("No se pudieron cargar noticias desde Supabase", error);
+    }
+  }
+
+  const render = (category = "all") => {
+    const filtered = category === "all" ? news : news.filter((item) => normalizeText(item.categoria || "otros") === category);
+    if (!filtered.length) {
+      list.innerHTML = '<div class="news-empty">Todavía no hay noticias en esta categoría.</div>';
+      return;
+    }
+    list.innerHTML = filtered.map((item) => {
+      const title = escapeHtml(item.titulo || "Noticia sin título");
+      const summary = escapeHtml(item.bajada || item.resumen || "");
+      const categoryLabel = escapeHtml(item.categoria || "otros");
+      const source = escapeHtml(item.fuente || "Consultora Diagonales");
+      const href = escapeAttribute(item.url || "#");
+      const date = item.fecha ? formatDate(item.fecha) : "";
+      return `
+        <a class="news-card" href="${href}" target="_blank" rel="noopener" data-track="news_open" data-news-title="${escapeAttribute(item.titulo || "")}" data-news-category="${escapeAttribute(item.categoria || "otros")}">
+          <small>${categoryLabel}${date ? ` · ${escapeHtml(date)}` : ""}</small>
+          <h2>${title}</h2>
+          ${summary ? `<p>${summary}</p>` : ""}
+          <span>${source}</span>
+        </a>
+      `;
+    }).join("");
+  };
+
+  filters.forEach((button) => {
+    button.addEventListener("click", () => {
+      filters.forEach((item) => item.classList.toggle("is-active", item === button));
+      render(button.dataset.newsFilter || "all");
+      trackEvent("news_filter_selected", { category: button.dataset.newsFilter || "all" });
+    });
+  });
+
+  list.addEventListener("click", (event) => {
+    const link = event.target.closest("[data-track='news_open']");
+    if (!link) return;
+    trackEvent("news_open", {
+      title: link.dataset.newsTitle || link.textContent?.trim() || "",
+      category: link.dataset.newsCategory || "otros",
+      target_url: link.href,
+    }, true);
+  });
+
+  render("all");
 }
 
 async function openHtmlReportViewer(url, title) {
