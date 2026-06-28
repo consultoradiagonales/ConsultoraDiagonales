@@ -1275,6 +1275,7 @@ async function fetchHtmlForViewer(url) {
 function normalizeHtmlForViewer(html, sourceUrl) {
   const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
   const bridge = buildHtmlViewerExternalLinkBridge();
+  const voiceBridge = buildHtmlViewerVoiceBridge();
   let output = String(html || "");
   if (/<head[^>]*>/i.test(output)) {
     output = output.replace(/<head[^>]*>/i, (match) => `${match}\n${base}`);
@@ -1282,9 +1283,9 @@ function normalizeHtmlForViewer(html, sourceUrl) {
     output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}</head><body>${output}</body></html>`;
   }
   if (/<\/body>/i.test(output)) {
-    output = output.replace(/<\/body>/i, `${bridge}\n</body>`);
+    output = output.replace(/<\/body>/i, `${voiceBridge}\n${bridge}\n</body>`);
   } else {
-    output += bridge;
+    output += voiceBridge + bridge;
   }
   return output;
 }
@@ -1301,6 +1302,70 @@ function buildHtmlViewerExternalLinkBridge() {
         event.preventDefault();
         window.open(link.href, "_blank", "noopener");
       });
+    })();
+  <\\/script>`;
+}
+
+function buildHtmlViewerVoiceBridge() {
+  return `<style>
+    .cd-voice-widget{position:fixed;top:14px;right:14px;z-index:2147483647;display:flex;align-items:center;gap:8px;font-family:Inter,Arial,sans-serif}
+    .cd-voice-widget button{min-height:42px;border:0;border-radius:10px;padding:0 14px;color:#172033;background:#fff;font-size:13px;font-weight:900;box-shadow:0 10px 26px rgba(0,0,0,.22);cursor:pointer}
+    .cd-voice-widget button.is-reading{background:#f7fbff}
+    .cd-voice-widget span{color:#f8d68a;font-size:13px;font-weight:900;text-shadow:0 1px 8px rgba(0,0,0,.45)}
+    @media(max-width:640px){.cd-voice-widget{top:10px;right:10px}.cd-voice-widget button{min-height:38px;padding:0 11px;font-size:12px}.cd-voice-widget span{display:none}}
+  </style>
+  <div class="cd-voice-widget" data-cd-voice-widget>
+    <button type="button" data-cd-voice-toggle>▶ Escuchar</button>
+    <span data-cd-voice-status></span>
+  </div>
+  <script>
+    (function () {
+      var state = { chunks: [], index: 0, reading: false };
+      var button = document.querySelector("[data-cd-voice-toggle]");
+      var status = document.querySelector("[data-cd-voice-status]");
+      function supported(){ return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window; }
+      function cleanText(){
+        var clone = document.body.cloneNode(true);
+        clone.querySelectorAll("script,style,noscript,svg,canvas,iframe,audio,video,nav,header,footer,[data-cd-voice-widget]").forEach(function(node){ node.remove(); });
+        return (clone.innerText || clone.textContent || "").replace(/\\s+/g," ").trim();
+      }
+      function chunks(text){
+        var parts = text.match(/[^.!?。！？]+[.!?。！？]*/g) || [text];
+        var out = [], current = "";
+        parts.forEach(function(sentence){
+          var next = (current + " " + sentence).trim();
+          if (next.length > 900 && current) { out.push(current); current = sentence.trim(); }
+          else current = next;
+        });
+        if (current) out.push(current);
+        return out;
+      }
+      function setReading(reading){
+        state.reading = reading;
+        if (button) { button.classList.toggle("is-reading", reading); button.textContent = reading ? "⏸ Pausa" : "▶ Escuchar"; }
+        if (status) status.textContent = reading ? "🔊 Leyendo..." : "";
+      }
+      function stop(){
+        if (supported()) window.speechSynthesis.cancel();
+        state.chunks = []; state.index = 0; setReading(false);
+      }
+      function next(){
+        if (!state.chunks.length || state.index >= state.chunks.length) { stop(); return; }
+        var utterance = new SpeechSynthesisUtterance(state.chunks[state.index]);
+        utterance.lang = "es-AR"; utterance.rate = 0.95; utterance.pitch = 1;
+        utterance.onend = function(){ state.index += 1; next(); };
+        utterance.onerror = function(){ stop(); };
+        window.speechSynthesis.speak(utterance);
+      }
+      function toggle(){
+        if (!supported()) { alert("Este navegador no permite lectura en voz desde la web."); return; }
+        if (state.reading) { stop(); return; }
+        var text = cleanText();
+        if (!text) { alert("No encontramos texto legible para escuchar en este HTML."); return; }
+        stop(); state.chunks = chunks(text); state.index = 0; setReading(true); next();
+      }
+      button && button.addEventListener("click", toggle);
+      window.addEventListener("beforeunload", stop);
     })();
   <\\/script>`;
 }
