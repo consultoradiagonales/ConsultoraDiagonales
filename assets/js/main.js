@@ -1405,7 +1405,7 @@ function buildHtmlViewerVoiceBridge() {
     .cd-voice-widget button{min-height:42px;border:0;border-radius:10px;padding:0 14px;color:#172033;background:#fff;font-size:13px;font-weight:900;box-shadow:0 10px 26px rgba(0,0,0,.22);cursor:pointer}
     .cd-voice-widget button.is-reading{background:#f7fbff}
     .cd-voice-widget span{color:#f8d68a;font-size:13px;font-weight:900;text-shadow:0 1px 8px rgba(0,0,0,.45)}
-    @media(max-width:640px){.cd-voice-widget{top:10px;right:10px}.cd-voice-widget button{min-height:38px;padding:0 11px;font-size:12px}.cd-voice-widget span{display:none}}
+    @media(max-width:640px){.cd-voice-widget{top:auto;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 24px)}.cd-voice-widget button{min-height:38px;padding:0 12px;font-size:12px;border-radius:12px}.cd-voice-widget span{display:none}}
   </style>
   <div class="cd-voice-widget" data-cd-voice-widget>
     <button type="button" data-cd-voice-toggle>▶ Escuchar</button>
