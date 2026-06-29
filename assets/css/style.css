@@ -1033,6 +1033,10 @@ body[data-page="contacto"] .section-title {
   gap: 0.45rem;
 }
 
+.newsletter-form label[hidden] {
+  display: none;
+}
+
 .newsletter-form input,
 .newsletter-form select {
   width: 100%;

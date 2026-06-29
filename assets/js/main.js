@@ -453,8 +453,8 @@ async function saveLead({ email, phone, fullName = "", organization = "", intere
   const visitor_id = getVisitorId();
   const contact = {
     visitor_id,
-    email,
-    phone,
+    email: email || null,
+    phone: phone || "",
     full_name: fullName,
     organization,
     access_reason: "lead_validation",
@@ -469,8 +469,8 @@ async function saveLead({ email, phone, fullName = "", organization = "", intere
   await supabaseClient.from("visitor_profiles").upsert(
     {
       visitor_id,
-      email,
-      phone,
+      email: email || null,
+      phone: phone || null,
       full_name: fullName,
       organization,
       last_seen_at: new Date().toISOString(),
@@ -512,14 +512,14 @@ function initNewsletterModal() {
               <span>Nombre y apellido</span>
               <input name="full_name" type="text" autocomplete="name" placeholder="Opcional" />
             </label>
-            <label>
+            <label data-newsletter-email-field>
               <span>Mail del solicitante</span>
-              <input name="email" type="email" autocomplete="email" placeholder="nombre@correo.com" required />
+              <input name="email" type="email" autocomplete="email" placeholder="nombre@correo.com" />
             </label>
           </div>
-          <label>
+          <label data-newsletter-phone-field>
             <span>Telefono / WhatsApp</span>
-            <input name="phone" type="tel" autocomplete="tel" placeholder="+54 9 11 1111-1111" required />
+            <input name="phone" type="tel" autocomplete="tel" placeholder="+54 9 11 1111-1111" />
           </label>
           <p class="newsletter-form__message">Hola Consultora Diagonales, me gustaria recibir los informes en cuanto se publican.</p>
           <div class="newsletter-form__actions">
@@ -536,12 +536,28 @@ function initNewsletterModal() {
   const form = modal.querySelector("[data-newsletter-form]");
   const status = modal.querySelector("[data-newsletter-status]");
   const closeButtons = modal.querySelectorAll("[data-newsletter-close]");
+  const channelSelect = form?.elements.channel;
+  const emailField = modal.querySelector("[data-newsletter-email-field]");
+  const phoneField = modal.querySelector("[data-newsletter-phone-field]");
+  const emailInput = form?.elements.email;
+  const phoneInput = form?.elements.phone;
+
+  const updateNewsletterFields = () => {
+    const channel = String(channelSelect?.value || "whatsapp");
+    const usesWhatsapp = channel === "whatsapp";
+    const usesEmail = channel === "email";
+    if (emailField) emailField.hidden = usesWhatsapp;
+    if (phoneField) phoneField.hidden = usesEmail;
+    if (emailInput) emailInput.required = usesEmail;
+    if (phoneInput) phoneInput.required = usesWhatsapp;
+  };
 
   const openModal = () => {
+    updateNewsletterFields();
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
-    window.setTimeout(() => form?.elements.email?.focus(), 80);
+    window.setTimeout(() => (channelSelect?.value === "email" ? emailInput : phoneInput)?.focus(), 80);
   };
 
   const closeModal = () => {
@@ -555,6 +571,9 @@ function initNewsletterModal() {
     trackEvent("newsletter_modal_open", { source: "repositorio" });
     openModal();
   });
+
+  channelSelect?.addEventListener("change", updateNewsletterFields);
+  updateNewsletterFields();
 
   closeButtons.forEach((button) => button.addEventListener("click", closeModal));
   modal.addEventListener("click", (event) => {
@@ -575,8 +594,13 @@ function initNewsletterModal() {
     const subject = "Solicito newsletter";
     const submit = form.querySelector('button[type="submit"]');
 
-    if (!email || !phone) {
-      if (status) status.textContent = "Dejanos mail y telefono para registrar la solicitud.";
+    if (channel === "email" && !email) {
+      if (status) status.textContent = "Dejanos un mail para registrar la solicitud.";
+      return;
+    }
+
+    if (channel === "whatsapp" && !phone) {
+      if (status) status.textContent = "Dejanos un WhatsApp para registrar la solicitud.";
       return;
     }
 
