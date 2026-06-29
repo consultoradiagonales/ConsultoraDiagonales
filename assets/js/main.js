@@ -21,6 +21,7 @@ initFooterText();
 initLoginModal();
 initTracking();
 initLeadForms();
+initNewsletterModal();
 initHtmlReportViewer();
 
 if (page === "repo" || page === "analisis") initRepository();
@@ -477,6 +478,163 @@ async function saveLead({ email, phone, fullName = "", organization = "", intere
     },
     { onConflict: "visitor_id" },
   );
+}
+
+function initNewsletterModal() {
+  const openButton = document.querySelector("[data-newsletter-open]");
+  if (!openButton) return;
+
+  let modal = document.querySelector("[data-newsletter-modal]");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.className = "newsletter-modal";
+    modal.setAttribute("data-newsletter-modal", "");
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML = `
+      <div class="newsletter-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="newsletter-title">
+        <div class="newsletter-modal__head">
+          <div>
+            <span>Newsletter</span>
+            <h2 id="newsletter-title">Recibir informes al publicarse</h2>
+          </div>
+          <button type="button" data-newsletter-close aria-label="Cerrar">Cerrar</button>
+        </div>
+        <form class="newsletter-form" data-newsletter-form>
+          <label>
+            <span>Modo de envio</span>
+            <select name="channel" required>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="email">Mail</option>
+            </select>
+          </label>
+          <div class="newsletter-form__grid">
+            <label>
+              <span>Nombre y apellido</span>
+              <input name="full_name" type="text" autocomplete="name" placeholder="Opcional" />
+            </label>
+            <label>
+              <span>Mail del solicitante</span>
+              <input name="email" type="email" autocomplete="email" placeholder="nombre@correo.com" required />
+            </label>
+          </div>
+          <label>
+            <span>Telefono / WhatsApp</span>
+            <input name="phone" type="tel" autocomplete="tel" placeholder="+54 9 11 1111-1111" required />
+          </label>
+          <p class="newsletter-form__message">Hola Consultora Diagonales, me gustaria recibir los informes en cuanto se publican.</p>
+          <div class="newsletter-form__actions">
+            <button class="primary-link" type="submit">Solicitar newsletter</button>
+            <button class="secondary-link" type="button" data-newsletter-close>Cancelar</button>
+          </div>
+          <p class="form-status" data-newsletter-status role="status"></p>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const form = modal.querySelector("[data-newsletter-form]");
+  const status = modal.querySelector("[data-newsletter-status]");
+  const closeButtons = modal.querySelectorAll("[data-newsletter-close]");
+
+  const openModal = () => {
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    window.setTimeout(() => form?.elements.email?.focus(), 80);
+  };
+
+  const closeModal = () => {
+    modal.classList.remove("is-open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (status) status.textContent = "";
+  };
+
+  openButton.addEventListener("click", () => {
+    trackEvent("newsletter_modal_open", { source: "repositorio" });
+    openModal();
+  });
+
+  closeButtons.forEach((button) => button.addEventListener("click", closeModal));
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal.classList.contains("is-open")) closeModal();
+  });
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = new FormData(form);
+    const channel = String(formData.get("channel") || "whatsapp");
+    const email = String(formData.get("email") || "").trim().toLowerCase();
+    const phone = String(formData.get("phone") || "").trim();
+    const fullName = String(formData.get("full_name") || "").trim() || inferNameFromEmail(email);
+    const message = "Hola Consultora Diagonales, me gustaria recibir los informes en cuanto se publican.";
+    const subject = "Solicito newsletter";
+    const submit = form.querySelector('button[type="submit"]');
+
+    if (!email || !phone) {
+      if (status) status.textContent = "Dejanos mail y telefono para registrar la solicitud.";
+      return;
+    }
+
+    submit.disabled = true;
+    if (status) status.textContent = "Guardando solicitud.";
+
+    try {
+      await saveLead({
+        email,
+        phone,
+        fullName,
+        interest: `newsletter:${channel}`,
+      });
+      await trackEvent("newsletter_requested", {
+        channel,
+        email,
+        phone,
+        full_name: fullName,
+        subject,
+        message,
+      }, true);
+      localStorage.setItem("cd:newsletter", JSON.stringify({ channel, email, phone, full_name: fullName, created_at: new Date().toISOString() }));
+      if (status) status.textContent = "Solicitud guardada. Abriendo canal elegido.";
+      openNewsletterChannel({ channel, email, phone, fullName, subject, message });
+      form.reset();
+      window.setTimeout(closeModal, 700);
+    } catch (error) {
+      if (status) status.textContent = `No se pudo guardar: ${error.message}`;
+    } finally {
+      submit.disabled = false;
+    }
+  });
+}
+
+function inferNameFromEmail(email) {
+  const local = String(email || "").split("@")[0] || "";
+  return local
+    .replace(/[._-]+/g, " ")
+    .replace(/\d+/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function openNewsletterChannel({ channel, email, phone, fullName, subject, message }) {
+  const consultoraEmail = "info.consultoradiagonales@gmail.com";
+  const consultoraWhatsapp = "5492216765720";
+  const signature = [fullName, email, phone].filter(Boolean).join(" | ");
+  const body = `${message}\n\nSolicitante: ${signature}`;
+
+  if (channel === "email") {
+    window.location.href = `mailto:${consultoraEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    return;
+  }
+
+  window.open(`https://wa.me/${consultoraWhatsapp}?text=${encodeURIComponent(body)}`, "_blank", "noopener");
 }
 
 function getFormValue(form, name) {

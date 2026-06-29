@@ -956,6 +956,115 @@ body[data-page="contacto"] .section-title {
   letter-spacing: 0.1em;
 }
 
+.newsletter-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 12, 20, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.newsletter-modal.is-open {
+  display: flex;
+}
+
+.newsletter-modal__dialog {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  border: 1px solid rgba(139, 207, 241, 0.28);
+  border-radius: 8px;
+  color: #fff;
+  background: #062d3e;
+  box-shadow: 0 28px 80px rgba(0, 12, 22, 0.42);
+}
+
+.newsletter-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(139, 207, 241, 0.22);
+  padding: 1.2rem;
+  background: rgba(3, 43, 62, 0.88);
+}
+
+.newsletter-modal__head span,
+.newsletter-form label span {
+  color: var(--blue);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.newsletter-modal__head h2 {
+  margin-top: 0.25rem;
+  color: #fff;
+  font-size: clamp(1.25rem, 3vw, 1.8rem);
+  font-weight: 900;
+}
+
+.newsletter-modal__head button {
+  min-height: 38px;
+  border: 1px solid rgba(139, 207, 241, 0.32);
+  border-radius: 8px;
+  padding: 0 0.85rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.newsletter-form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+
+.newsletter-form label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.newsletter-form input,
+.newsletter-form select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid rgba(139, 207, 241, 0.28);
+  border-radius: 8px;
+  padding: 0 0.85rem;
+  color: #fff;
+  background: rgba(2, 16, 28, 0.62);
+}
+
+.newsletter-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.newsletter-form__message {
+  border: 1px solid rgba(139, 207, 241, 0.18);
+  border-radius: 8px;
+  padding: 0.85rem;
+  color: rgba(226, 240, 248, 0.84);
+  background: rgba(130, 216, 255, 0.08);
+  line-height: 1.55;
+}
+
+.newsletter-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 body[data-page="servicios"] .subpage {
   background:
     linear-gradient(35deg, rgba(2, 31, 49, 0.8) 0%, rgba(5, 62, 86, 0.56) 34%, rgba(83, 207, 235, 0.2) 68%, rgba(222, 250, 255, 0.1) 100%),
@@ -1900,6 +2009,20 @@ body.html-viewer-open {
   .repo-toolbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .repo-toolbar small {
+    margin-left: 0;
+  }
+
+  .newsletter-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .newsletter-form__actions,
+  .newsletter-form__actions .primary-link,
+  .newsletter-form__actions .secondary-link {
+    width: 100%;
   }
 
   .method-link {
