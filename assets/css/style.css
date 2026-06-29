@@ -1065,6 +1065,19 @@ body[data-page="contacto"] .section-title {
   gap: 0.75rem;
 }
 
+.newsletter-form__actions .primary-link,
+.newsletter-form__actions .secondary-link {
+  border-color: rgba(130, 216, 255, 0.82);
+  color: #06264a;
+  background: #82d8ff;
+}
+
+.newsletter-form__actions .primary-link:hover,
+.newsletter-form__actions .secondary-link:hover {
+  color: #041a33;
+  background: #a7ecff;
+}
+
 body[data-page="servicios"] .subpage {
   background:
     linear-gradient(35deg, rgba(2, 31, 49, 0.8) 0%, rgba(5, 62, 86, 0.56) 34%, rgba(83, 207, 235, 0.2) 68%, rgba(222, 250, 255, 0.1) 100%),
