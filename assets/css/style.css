@@ -956,6 +956,19 @@ body[data-page="contacto"] .section-title {
   letter-spacing: 0.1em;
 }
 
+.repo-toolbar .secondary-link,
+.repo-toolbar button.secondary-link {
+  border-color: rgba(130, 216, 255, 0.82);
+  color: #06264a;
+  background: #82d8ff;
+}
+
+.repo-toolbar .secondary-link:hover,
+.repo-toolbar button.secondary-link:hover {
+  color: #041a33;
+  background: #a7ecff;
+}
+
 .newsletter-modal {
   position: fixed;
   inset: 0;
