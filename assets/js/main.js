@@ -1147,7 +1147,6 @@ async function openHtmlReportViewer(url, title) {
           </div>
           <div class="html-viewer__actions">
             <button type="button" data-html-viewer-whatsapp>WhatsApp</button>
-            <button type="button" data-html-viewer-speech disabled>Escuchar</button>
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
@@ -1162,11 +1161,6 @@ async function openHtmlReportViewer(url, title) {
         shareHtmlViewerByWhatsapp(viewer.__cdHtmlViewer || { url, title });
         return;
       }
-      const speechButton = event.target.closest("[data-html-viewer-speech]");
-      if (speechButton) {
-        toggleHtmlViewerSpeech(viewer, speechButton);
-        return;
-      }
       if (event.target === viewer || event.target.closest("[data-html-viewer-close]")) closeHtmlReportViewer();
     });
 
@@ -1179,8 +1173,6 @@ async function openHtmlReportViewer(url, title) {
   viewer.__cdHtmlViewer = { url, title };
   viewer.__cdHtmlSpeechText = "";
   const frame = viewer.querySelector("[data-html-viewer-frame]");
-  const speechButton = viewer.querySelector("[data-html-viewer-speech]");
-  resetHtmlViewerSpeechButton(speechButton, true);
   frame.removeAttribute("src");
   frame.srcdoc = buildHtmlViewerLoading();
   viewer.classList.add("is-open");
@@ -1191,10 +1183,8 @@ async function openHtmlReportViewer(url, title) {
     const html = await fetchHtmlForViewer(url);
     frame.srcdoc = normalizeHtmlForViewer(html, url);
     viewer.__cdHtmlSpeechText = buildHtmlViewerSpeechText(html, title);
-    resetHtmlViewerSpeechButton(speechButton, false);
   } catch (error) {
     frame.srcdoc = buildHtmlViewerError(url);
-    resetHtmlViewerSpeechButton(speechButton, true);
     console.warn("No se pudo cargar el HTML en el visor interno", error);
   }
 }
@@ -1368,18 +1358,47 @@ async function fetchHtmlForViewer(url) {
 function normalizeHtmlForViewer(html, sourceUrl) {
   const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
   const bridge = buildHtmlViewerExternalLinkBridge();
-  const voiceBridge = buildHtmlViewerVoiceBridge();
-  let output = String(html || "");
+  let output = sanitizeHtmlReportForViewer(String(html || ""), sourceUrl);
   if (/<head[^>]*>/i.test(output)) {
     output = output.replace(/<head[^>]*>/i, (match) => `${match}\n${base}`);
   } else {
     output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}</head><body>${output}</body></html>`;
   }
   if (/<\/body>/i.test(output)) {
-    output = output.replace(/<\/body>/i, `${voiceBridge}\n${bridge}\n</body>`);
+    output = output.replace(/<\/body>/i, `${bridge}\n</body>`);
   } else {
-    output += voiceBridge + bridge;
+    output += bridge;
   }
+  return output;
+}
+
+function sanitizeHtmlReportForViewer(html, sourceUrl) {
+  const source = new URL(sourceUrl, window.location.href);
+  const siteAssets = new URL("/assets/img/", window.location.origin).href;
+  let output = html;
+
+  output = output.replace(
+    /src=(["'])(?:\.\/)?(?:LOGO%20consultora|LOGO consultora)\.png\1/gi,
+    `src="${siteAssets}logo-completo.png"`
+  );
+  output = output.replace(
+    /src=(["'])(?:\.\/)?(?:XK3Y2GCMVL7G45EJEBLR462TBE|javier-milei-y-la-ministra-de-seguridad-patricia-bullrich-durante-un-acto-de-campana-foto-afp-CAWLGEFH2JFQDK2AOUMY37ZIJA)\.avif\1/gi,
+    `src="${siteAssets}drCdm1JPm_720x0__1.jpg"`
+  );
+  output = output.replace(
+    /src=(["'])(?:\.\/)?drCdm1JPm_720x0__1\.jpg\1/gi,
+    `src="${siteAssets}drCdm1JPm_720x0__1.jpg"`
+  );
+  output = output.replace(/<button\b[^>]*id=(["'])tts-btn\1[\s\S]*?<\/button>/gi, "");
+  output = output.replace(/<script\b[^>]*>[\s\S]*?(?:speechSynthesis|SpeechSynthesisUtterance|ttsBtn)[\s\S]*?<\/script>/gi, "");
+
+  if (source.protocol === "file:") {
+    output = output.replace(/src=(["'])\.?\/?([^"']+\.(?:png|jpe?g|webp|gif|svg))\1/gi, (match, quote, asset) => {
+      if (/^(https?:|data:|blob:)/i.test(asset)) return match;
+      return `src="${new URL(asset, source).href}"`;
+    });
+  }
+
   return output;
 }
 
