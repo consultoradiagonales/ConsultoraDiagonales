@@ -1146,6 +1146,7 @@ async function openHtmlReportViewer(url, title) {
             <h2 id="html-viewer-title" data-html-viewer-title>Graficos</h2>
           </div>
           <div class="html-viewer__actions">
+            <button type="button" data-html-viewer-speech>Escuchar</button>
             <button type="button" data-html-viewer-whatsapp>WhatsApp</button>
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
@@ -1156,6 +1157,11 @@ async function openHtmlReportViewer(url, title) {
     document.body.appendChild(viewer);
 
     viewer.addEventListener("click", (event) => {
+      const speechButton = event.target.closest("[data-html-viewer-speech]");
+      if (speechButton) {
+        toggleHtmlViewerSpeech(viewer, speechButton);
+        return;
+      }
       const whatsappButton = event.target.closest("[data-html-viewer-whatsapp]");
       if (whatsappButton) {
         shareHtmlViewerByWhatsapp(viewer.__cdHtmlViewer || { url, title });
@@ -1172,6 +1178,7 @@ async function openHtmlReportViewer(url, title) {
   viewer.querySelector("[data-html-viewer-title]").textContent = title;
   viewer.__cdHtmlViewer = { url, title };
   viewer.__cdHtmlSpeechText = "";
+  resetHtmlViewerSpeechButton(viewer.querySelector("[data-html-viewer-speech]"), true);
   const frame = viewer.querySelector("[data-html-viewer-frame]");
   frame.removeAttribute("src");
   frame.srcdoc = buildHtmlViewerLoading();
@@ -1183,8 +1190,10 @@ async function openHtmlReportViewer(url, title) {
     const html = await fetchHtmlForViewer(url);
     frame.srcdoc = normalizeHtmlForViewer(html, url);
     viewer.__cdHtmlSpeechText = buildHtmlViewerSpeechText(html, title);
+    resetHtmlViewerSpeechButton(viewer.querySelector("[data-html-viewer-speech]"), false);
   } catch (error) {
     frame.srcdoc = buildHtmlViewerError(url);
+    resetHtmlViewerSpeechButton(viewer.querySelector("[data-html-viewer-speech]"), true);
     console.warn("No se pudo cargar el HTML en el visor interno", error);
   }
 }
@@ -1358,6 +1367,7 @@ async function fetchHtmlForViewer(url) {
 function normalizeHtmlForViewer(html, sourceUrl) {
   const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
   const bridge = buildHtmlViewerExternalLinkBridge();
+  const voiceBridge = buildHtmlViewerVoiceBridge();
   let output = sanitizeHtmlReportForViewer(String(html || ""), sourceUrl);
   if (/<head[^>]*>/i.test(output)) {
     output = output.replace(/<head[^>]*>/i, (match) => `${match}\n${base}`);
@@ -1365,9 +1375,9 @@ function normalizeHtmlForViewer(html, sourceUrl) {
     output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}</head><body>${output}</body></html>`;
   }
   if (/<\/body>/i.test(output)) {
-    output = output.replace(/<\/body>/i, `${bridge}\n</body>`);
+    output = output.replace(/<\/body>/i, `${bridge}\n${voiceBridge}\n</body>`);
   } else {
-    output += bridge;
+    output += bridge + voiceBridge;
   }
   return output;
 }
@@ -1389,9 +1399,6 @@ function sanitizeHtmlReportForViewer(html, sourceUrl) {
     /src=(["'])(?:\.\/)?drCdm1JPm_720x0__1\.jpg\1/gi,
     `src="${siteAssets}drCdm1JPm_720x0__1.jpg"`
   );
-  output = output.replace(/<button\b[^>]*id=(["'])tts-btn\1[\s\S]*?<\/button>/gi, "");
-  output = output.replace(/<script\b[^>]*>[\s\S]*?(?:speechSynthesis|SpeechSynthesisUtterance|ttsBtn)[\s\S]*?<\/script>/gi, "");
-
   if (source.protocol === "file:") {
     output = output.replace(/src=(["'])\.?\/?([^"']+\.(?:png|jpe?g|webp|gif|svg))\1/gi, (match, quote, asset) => {
       if (/^(https?:|data:|blob:)/i.test(asset)) return match;
