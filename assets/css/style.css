@@ -1095,6 +1095,81 @@ body[data-page="contacto"] .section-title {
   background: #a7ecff;
 }
 
+.private-report-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 91;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 12, 20, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.private-report-modal.is-open {
+  display: flex;
+}
+
+.private-report-modal__dialog {
+  position: relative;
+  width: min(520px, 100%);
+  border: 1px solid rgba(139, 207, 241, 0.28);
+  border-radius: 8px;
+  padding: clamp(1.1rem, 3vw, 1.6rem);
+  color: #fff;
+  background: #062d3e;
+  box-shadow: 0 28px 80px rgba(0, 12, 22, 0.42);
+}
+
+.private-report-modal__dialog h2 {
+  margin: 0 0 0.75rem;
+  color: #fff;
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  font-weight: 900;
+}
+
+.private-report-modal__dialog p {
+  color: rgba(226, 240, 248, 0.84);
+  line-height: 1.6;
+}
+
+.private-report-modal__close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  min-height: 34px;
+  border: 1px solid rgba(139, 207, 241, 0.32);
+  border-radius: 8px;
+  padding: 0 0.75rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.private-report-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.1rem;
+}
+
+.private-report-modal__actions .primary-link,
+.private-report-modal__actions .secondary-link {
+  border-color: rgba(130, 216, 255, 0.82);
+  color: #06264a;
+  background: #82d8ff;
+}
+
+.private-report-modal__actions .primary-link:hover,
+.private-report-modal__actions .secondary-link:hover {
+  color: #041a33;
+  background: #a7ecff;
+}
+
 body[data-page="servicios"] .subpage {
   background:
     linear-gradient(35deg, rgba(2, 31, 49, 0.8) 0%, rgba(5, 62, 86, 0.56) 34%, rgba(83, 207, 235, 0.2) 68%, rgba(222, 250, 255, 0.1) 100%),

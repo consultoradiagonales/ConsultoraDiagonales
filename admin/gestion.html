@@ -187,6 +187,16 @@
         border-color: rgba(255, 255, 255, 0.48);
       }
 
+      button[data-private] {
+        border-color: rgba(130, 216, 255, 0.82);
+        color: #06264a;
+        background: #82d8ff;
+      }
+
+      button[data-private]:hover {
+        background: #a7ecff;
+      }
+
       button.danger {
         border-color: rgba(255, 143, 143, 0.56);
         color: #ffdede;
@@ -234,6 +244,11 @@
         align-items: center;
         border-bottom: 1px solid rgba(139, 207, 241, 0.16);
         padding: 16px 0;
+      }
+
+      .report-row.is-private {
+        border-color: rgba(255, 198, 109, 0.3);
+        background: linear-gradient(90deg, rgba(255, 198, 109, 0.12), transparent 58%);
       }
 
       .report-title {
@@ -400,18 +415,21 @@
             const pdf = report.pdf_url
               ? `<a class="button" href="${escapeHtml(report.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`
               : "";
+            const isPrivate = report.is_private === true || String(report.is_private) === "true";
             return `
-              <article class="report-row">
+              <article class="report-row ${isPrivate ? "is-private" : ""}">
                 <div>
                   <div class="report-title">${escapeHtml(report.titulo)}</div>
                   <div class="report-meta">
                     <div>${escapeHtml([report.localidad, report.provincia].filter(Boolean).join(", "))}</div>
                     <div>${escapeHtml(report.fecha || "")}</div>
                     ${fileName}
+                    <div>Estado: ${isPrivate ? "Privada" : "Publica"}</div>
                   </div>
                 </div>
                 <div class="actions">
                   ${pdf}
+                  <button type="button" data-private="${escapeHtml(report.id)}">${isPrivate ? "Poner publica" : "Poner privada"}</button>
                   <button type="button" data-edit="${escapeHtml(report.id)}">Modificar</button>
                   <button class="danger" type="button" data-delete="${escapeHtml(report.id)}">Eliminar</button>
                 </div>
@@ -467,6 +485,29 @@
         }
       }
 
+      async function togglePrivateReport(id) {
+        const report = reports.find((item) => item.id === id);
+        if (!report) return;
+        const nextPrivate = !(report.is_private === true || String(report.is_private) === "true");
+        setStatus(nextPrivate ? "Pasando radiografia a privada..." : "Publicando radiografia...");
+        const body = new FormData();
+        body.append("id", id);
+        body.append("is_private", String(nextPrivate));
+
+        const response = await fetch(`${endpoint}/admin-upload-report`, {
+          method: "PATCH",
+          headers: headers(),
+          body,
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setStatus(data.error || "No se pudo cambiar la privacidad.");
+          return;
+        }
+        setStatus(nextPrivate ? "Radiografia marcada como privada." : "Radiografia publicada.");
+        await loadReports();
+      }
+
       function editReport(id) {
         const report = reports.find((item) => item.id === id);
         if (!report) return;
@@ -508,8 +549,10 @@
       list.addEventListener("click", (event) => {
         const edit = event.target.closest("[data-edit]");
         const del = event.target.closest("[data-delete]");
+        const priv = event.target.closest("[data-private]");
         if (edit) editReport(edit.dataset.edit);
         if (del) deleteReport(del.dataset.delete);
+        if (priv) togglePrivateReport(priv.dataset.private);
       });
 
       loadReports().catch((error) => {
