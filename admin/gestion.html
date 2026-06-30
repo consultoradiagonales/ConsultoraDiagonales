@@ -617,27 +617,45 @@
           return;
         }
 
-        const body = new FormData();
-        body.append("id", id);
-        body.append("titulo", report.titulo || "");
-        body.append("provincia", report.provincia || "");
-        body.append("localidad", report.localidad || "");
-        body.append("fecha", report.fecha || "");
-        body.append("is_private", isPrivate ? "true" : "false");
+        const buildBody = (includeMetadata = false) => {
+          const body = new FormData();
+          body.append("id", id);
+          body.append("is_private", isPrivate ? "true" : "false");
+          if (includeMetadata) {
+            body.append("titulo", report.titulo || "");
+            body.append("provincia", report.provincia || "");
+            body.append("localidad", report.localidad || "");
+            body.append("fecha", report.fecha || "");
+          }
+          return body;
+        };
 
         if (button) button.disabled = true;
         setListStatus(isPrivate ? "Cerrando acceso: la radiografia pedira registro." : "Abriendo acceso publico.");
         try {
-          const response = await fetch(`${endpoint}/admin-upload-report`, {
+          let response = await fetch(`${endpoint}/admin-upload-report`, {
             method: "PATCH",
             headers: headers(),
-            body,
+            body: buildBody(false),
           });
-          const data = await response.json().catch(() => ({}));
+          let data = await response.json().catch(() => ({}));
+          if (!response.ok && String(data.error || "").includes("titulo")) {
+            response = await fetch(`${endpoint}/admin-upload-report`, {
+              method: "PATCH",
+              headers: headers(),
+              body: buildBody(true),
+            });
+            data = await response.json().catch(() => ({}));
+          }
           if (!response.ok) {
             throw new Error(data.error || "No se pudo cambiar la privacidad.");
           }
           await loadReports();
+          const updated = reports.find((item) => item.id === id);
+          const persistedPrivate = updated?.is_private === true || String(updated?.is_private || "").toLowerCase() === "true";
+          if (persistedPrivate !== isPrivate) {
+            throw new Error("Supabase respondio, pero no guardo el estado privado. Falta actualizar la funcion admin-upload-report o la columna is_private.");
+          }
           setListStatus(isPrivate ? "Radiografia privada: ahora pedira registro antes del PDF." : "Radiografia publica: ahora abre directo.");
         } finally {
           if (button) button.disabled = false;

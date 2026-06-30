@@ -1227,6 +1227,27 @@ body[data-page="servicios"] .subpage {
   line-height: 1.08;
 }
 
+.report-privacy-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border: 1px solid rgba(255, 214, 128, 0.58);
+  border-radius: 999px;
+  margin-top: 0.9rem;
+  padding: 0.28rem 0.65rem;
+  color: #ffe8ad;
+  background: rgba(130, 88, 2, 0.22);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.latest-list .report-privacy-badge {
+  margin: 0.35rem 0 0;
+}
+
 .download-link {
   margin-top: 2rem;
   color: #fff;
