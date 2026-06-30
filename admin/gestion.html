@@ -119,7 +119,7 @@
 
       .grid {
         display: grid;
-        grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+        grid-template-columns: minmax(300px, 0.78fr) minmax(520px, 1.22fr);
         gap: 24px;
         align-items: start;
         margin-top: 32px;
@@ -163,6 +163,25 @@
         padding-top: 12px;
       }
 
+      .checkbox-field {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        line-height: 1.5;
+        text-transform: none;
+      }
+
+      .checkbox-field input {
+        width: 16px;
+        min-height: 16px;
+        margin-top: 3px;
+        accent-color: var(--blue);
+      }
+
       button,
       a.button {
         display: inline-flex;
@@ -204,6 +223,14 @@
         font-size: 0.92rem;
       }
 
+      .list-status {
+        min-height: 18px;
+        padding: 0 22px 14px;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.4;
+      }
+
       .list-head {
         display: flex;
         align-items: center;
@@ -223,28 +250,82 @@
 
       .report-list {
         display: grid;
-        gap: 0;
-        padding: 0 22px 18px;
+        gap: 14px;
+        padding: 18px 22px 22px;
       }
 
       .report-row {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 14px;
-        align-items: center;
-        border-bottom: 1px solid rgba(139, 207, 241, 0.16);
-        padding: 16px 0;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        align-items: start;
+        border: 1px solid rgba(139, 207, 241, 0.18);
+        border-radius: 8px;
+        padding: 18px;
+        background: rgba(3, 27, 45, 0.42);
+      }
+
+      .report-details {
+        display: grid;
+        gap: 8px;
+        min-width: 0;
       }
 
       .report-title {
+        color: var(--text);
+        font-size: clamp(1.05rem, 1.6vw, 1.35rem);
         font-weight: 900;
+        line-height: 1.22;
+        overflow-wrap: anywhere;
       }
 
       .report-meta {
-        margin-top: 6px;
+        display: grid;
+        gap: 3px;
         color: var(--muted);
         font-size: 0.86rem;
         line-height: 1.5;
+      }
+
+      .report-meta div {
+        overflow-wrap: anywhere;
+      }
+
+      .report-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+        gap: 10px;
+      }
+
+      .report-actions button,
+      .report-actions a.button {
+        width: 100%;
+        min-width: 0;
+        padding-inline: 0.82rem;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .privacy-badge {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        border: 1px solid rgba(139, 207, 241, 0.32);
+        border-radius: 999px;
+        margin-top: 8px;
+        padding: 0.24rem 0.55rem;
+        color: rgba(244, 251, 255, 0.88);
+        background: rgba(130, 216, 255, 0.1);
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .privacy-badge.is-private {
+        border-color: rgba(255, 211, 125, 0.46);
+        color: #ffe7ad;
+        background: rgba(130, 88, 2, 0.24);
       }
 
       .empty {
@@ -270,6 +351,15 @@
         .grid,
         .report-row {
           grid-template-columns: 1fr;
+        }
+
+        .report-actions {
+          grid-template-columns: 1fr;
+        }
+
+        .report-actions button,
+        .report-actions a.button {
+          white-space: normal;
         }
       }
     </style>
@@ -319,6 +409,10 @@
               Archivo PDF
               <input name="archivo" type="file" accept=".pdf,application/pdf" />
             </label>
+            <label class="checkbox-field">
+              <input name="is_private" type="checkbox" value="true" />
+              <span>Privado: pedir registro de datos antes de abrir el PDF.</span>
+            </label>
             <div class="actions">
               <button type="submit" data-submit>Guardar PDF</button>
               <button class="hidden" type="button" data-cancel>Cancelar modificacion</button>
@@ -335,6 +429,7 @@
           <div class="report-list" data-list>
             <p class="empty">Cargando radiografias...</p>
           </div>
+          <p class="list-status" data-list-status role="status"></p>
         </section>
       </section>
     </main>
@@ -350,6 +445,7 @@
       const form = document.querySelector("[data-form]");
       const list = document.querySelector("[data-list]");
       const status = document.querySelector("[data-status]");
+      const listStatus = document.querySelector("[data-list-status]");
       const submit = document.querySelector("[data-submit]");
       const cancel = document.querySelector("[data-cancel]");
 
@@ -380,6 +476,10 @@
         status.textContent = message || "";
       }
 
+      function setListStatus(message) {
+        listStatus.textContent = message || "";
+      }
+
       function resetForm() {
         form.reset();
         form.elements.id.value = "";
@@ -397,21 +497,26 @@
         list.innerHTML = reports
           .map((report) => {
             const fileName = report.file_name ? `<div>Archivo: ${escapeHtml(report.file_name)}</div>` : "";
+            const isPrivate = report.is_private === true || String(report.is_private || "").toLowerCase() === "true";
+            const privacyLabel = isPrivate ? "Privado" : "Publico";
+            const privacyButton = isPrivate ? "Hacer publico" : "Hacer privado";
             const pdf = report.pdf_url
               ? `<a class="button" href="${escapeHtml(report.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`
               : "";
             return `
               <article class="report-row">
-                <div>
+                <div class="report-details">
                   <div class="report-title">${escapeHtml(report.titulo)}</div>
+                  <span class="privacy-badge${isPrivate ? " is-private" : ""}">${privacyLabel}</span>
                   <div class="report-meta">
                     <div>${escapeHtml([report.localidad, report.provincia].filter(Boolean).join(", "))}</div>
                     <div>${escapeHtml(report.fecha || "")}</div>
                     ${fileName}
                   </div>
                 </div>
-                <div class="actions">
+                <div class="actions report-actions">
                   ${pdf}
+                  <button type="button" data-privacy="${escapeHtml(report.id)}" data-private-next="${isPrivate ? "false" : "true"}">${privacyButton}</button>
                   <button type="button" data-edit="${escapeHtml(report.id)}">Modificar</button>
                   <button class="danger" type="button" data-delete="${escapeHtml(report.id)}">Eliminar</button>
                 </div>
@@ -423,6 +528,7 @@
 
       async function loadReports() {
         list.innerHTML = '<p class="empty">Cargando radiografias...</p>';
+        setListStatus("");
         const response = await fetch(`${endpoint}/admin-dashboard?v=${Date.now()}`, {
           headers: headers(),
         });
@@ -442,6 +548,7 @@
         }
 
         const body = new FormData(form);
+        body.set("is_private", form.elements.is_private.checked ? "true" : "false");
         if (!file) body.delete("archivo");
 
         submit.disabled = true;
@@ -476,6 +583,7 @@
         form.elements.localidad.value = report.localidad || "";
         form.elements.fecha.value = report.fecha || "";
         form.elements.archivo.value = "";
+        form.elements.is_private.checked = report.is_private === true || String(report.is_private || "").toLowerCase() === "true";
         submit.textContent = "Actualizar radiografia";
         cancel.classList.remove("hidden");
         setStatus("Modificando: cambia los datos o selecciona un PDF nuevo para reemplazar el actual.");
@@ -486,7 +594,7 @@
         const report = reports.find((item) => item.id === id);
         if (!report) return;
         if (!confirm(`Eliminar "${report.titulo}"?`)) return;
-        setStatus("Eliminando radiografia...");
+        setListStatus("Eliminando radiografia...");
         const response = await fetch(`${endpoint}/admin-upload-report?id=${encodeURIComponent(id)}`, {
           method: "DELETE",
           headers: headers({ "content-type": "application/json" }),
@@ -494,22 +602,70 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          setStatus(data.error || "No se pudo eliminar.");
+          setListStatus(data.error || "No se pudo eliminar.");
           return;
         }
         resetForm();
-        setStatus("Radiografia eliminada.");
         await loadReports();
+        setListStatus("Radiografia eliminada.");
+      }
+
+      async function setReportPrivacy(id, isPrivate, button) {
+        const report = reports.find((item) => item.id === id);
+        if (!report) {
+          setListStatus("No se encontro la radiografia seleccionada.");
+          return;
+        }
+
+        const body = new FormData();
+        body.append("id", id);
+        body.append("titulo", report.titulo || "");
+        body.append("provincia", report.provincia || "");
+        body.append("localidad", report.localidad || "");
+        body.append("fecha", report.fecha || "");
+        body.append("is_private", isPrivate ? "true" : "false");
+
+        if (button) button.disabled = true;
+        setListStatus(isPrivate ? "Cerrando acceso: la radiografia pedira registro." : "Abriendo acceso publico.");
+        try {
+          const response = await fetch(`${endpoint}/admin-upload-report`, {
+            method: "PATCH",
+            headers: headers(),
+            body,
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data.error || "No se pudo cambiar la privacidad.");
+          }
+          await loadReports();
+          setListStatus(isPrivate ? "Radiografia privada: ahora pedira registro antes del PDF." : "Radiografia publica: ahora abre directo.");
+        } finally {
+          if (button) button.disabled = false;
+        }
       }
 
       form.addEventListener("submit", saveReport);
       cancel.addEventListener("click", resetForm);
-      document.querySelector("[data-refresh]").addEventListener("click", () => loadReports().catch((error) => setStatus(error.message)));
+      document.querySelector("[data-refresh]").addEventListener("click", () => loadReports().catch((error) => setListStatus(error.message)));
       list.addEventListener("click", (event) => {
         const edit = event.target.closest("[data-edit]");
         const del = event.target.closest("[data-delete]");
-        if (edit) editReport(edit.dataset.edit);
-        if (del) deleteReport(del.dataset.delete);
+        const privacy = event.target.closest("[data-privacy]");
+        if (privacy) {
+          event.preventDefault();
+          event.stopPropagation();
+          setReportPrivacy(privacy.dataset.privacy, privacy.dataset.privateNext === "true", privacy).catch((error) => setListStatus(error.message));
+          return;
+        }
+        if (edit) {
+          event.preventDefault();
+          editReport(edit.dataset.edit);
+          return;
+        }
+        if (del) {
+          event.preventDefault();
+          deleteReport(del.dataset.delete);
+        }
       });
 
       loadReports().catch((error) => {
