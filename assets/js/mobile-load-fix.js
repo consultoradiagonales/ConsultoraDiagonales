@@ -1,6 +1,7 @@
 (function () {
   const LOADING_TEXT = "Cargando radiograf";
   const SLOGAN = "Data Analytics aplicado al territorio, opinion publica y escenarios de poder.";
+  const PRIVATE_REPORT_MARKER = "[[CD_PRIVATE]]";
 
   document.addEventListener("DOMContentLoaded", () => {
     window.setTimeout(loadReportsIfStuck, 3200);
@@ -29,12 +30,21 @@
     url.searchParams.append("order", "fecha.desc");
     url.searchParams.append("order", "created_at.desc");
 
-    const response = await fetch(url.href, {
+    let response = await fetch(url.href, {
       headers: {
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`,
       },
     });
+    if (!response.ok) {
+      url.searchParams.set("select", "id,titulo,provincia,localidad,fecha,html_url,pdf_url,created_at");
+      response = await fetch(url.href, {
+        headers: {
+          apikey: config.anonKey,
+          Authorization: `Bearer ${config.anonKey}`,
+        },
+      });
+    }
     const data = await response.json().catch(() => []);
     if (!response.ok) throw new Error(data.message || data.error || "Error de conexi&oacute;n.");
     return Array.isArray(data) ? data : [];
@@ -50,7 +60,10 @@
       const title = escapeHtml(report.titulo || "Radiograf&iacute;a sin t&iacute;tulo");
       const pdfHref = escapeAttribute(report.pdf_url || "#");
       const graphsUrl = getReportGraphsUrl(report);
-      const isPrivate = report.is_private === true || String(report.is_private || "").toLowerCase() === "true";
+      const isPrivate = report.is_private === true
+        || String(report.is_private || "").toLowerCase() === "true"
+        || String(report.localidad || "").includes(PRIVATE_REPORT_MARKER)
+        || String(report.provincia || "").includes(PRIVATE_REPORT_MARKER);
       const privateAttributes = isPrivate
         ? ` data-private-report="true" data-report-id="${escapeAttribute(report.id || "")}" data-private-title="${escapeAttribute(report.titulo || "")}"`
         : "";

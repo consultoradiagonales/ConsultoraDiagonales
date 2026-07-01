@@ -12,6 +12,7 @@ const ADMIN_SESSION_KEY = "cd:admin_unlocked";
 const ADMIN_UPLOAD_KEY = "cd:admin_upload_key";
 const PRIVATE_REPORT_REGISTRATION_KEY = "cd:private_report_after_registration";
 const PRIVATE_REPORT_TARGET_KEY = "cd:private_report_after_registration_target";
+const PRIVATE_REPORT_MARKER = "[[CD_PRIVATE]]";
 const PDFJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
 const PDFJS_WORKER_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 let adminReports = [];
@@ -1025,7 +1026,7 @@ function renderReportsLegacy(reports, container, count) {
     .map((report, index) => {
       const date = formatDate(report.fecha);
       const title = escapeHtml(report.titulo || "Radiografía sin título");
-      const place = escapeHtml(report.localidad || report.provincia || "Territorio");
+      const place = escapeHtml(cleanReportField(report.localidad) || cleanReportField(report.provincia) || "Territorio");
       const graphsUrl = getReportGraphsUrl(report);
       const graphsHref = escapeAttribute(graphsUrl || "#");
       const pdfHref = escapeAttribute(getPdfDownloadHref(report));
@@ -1083,7 +1084,7 @@ function renderReports(reports, container, count) {
     .map((report, index) => {
       const date = formatDate(report.fecha);
       const title = escapeHtml(report.titulo || "Radiografia sin titulo");
-      const place = escapeHtml(report.localidad || report.provincia || "Territorio");
+      const place = escapeHtml(cleanReportField(report.localidad) || cleanReportField(report.provincia) || "Territorio");
       const graphsUrl = getReportGraphsUrl(report);
       const graphsHref = escapeAttribute(graphsUrl || "#");
       const pdfHref = escapeAttribute(getPdfDownloadHref(report));
@@ -1134,7 +1135,14 @@ function renderReports(reports, container, count) {
 }
 
 function isPrivateReport(report) {
-  return report?.is_private === true || String(report?.is_private || "").toLowerCase() === "true";
+  return report?.is_private === true
+    || String(report?.is_private || "").toLowerCase() === "true"
+    || String(report?.localidad || "").includes(PRIVATE_REPORT_MARKER)
+    || String(report?.provincia || "").includes(PRIVATE_REPORT_MARKER);
+}
+
+function cleanReportField(value) {
+  return String(value || "").replaceAll(PRIVATE_REPORT_MARKER, "").trim();
 }
 
 function openPrivateReportModal(report, targetType = "pdf") {
@@ -1258,8 +1266,9 @@ function bindPdfDownloadLinks(container, reports) {
       }
 
       if (!hasPdfAccess() || !report.pdf_url) {
-        await logReportInterest(report, "report_access_requested", link.href);
-        window.location.href = link.href;
+        rememberPrivateReport(report, "pdf");
+        await logReportInterest(report, "report_access_requested", buildPrivateReportRegistrationLink(report, "pdf"));
+        openPrivateReportModal(report, "pdf");
         return;
       }
 
@@ -1879,9 +1888,9 @@ async function logReportInterest(report, eventType, targetUrl) {
     html_url: report.html_url || null,
     pdf_url: report.pdf_url || null,
     target_url: targetUrl || report.html_url || report.pdf_url || null,
-    lugar: report.localidad || report.provincia || null,
-    provincia: report.provincia || null,
-    localidad: report.localidad || null,
+    lugar: cleanReportField(report.localidad) || cleanReportField(report.provincia) || null,
+    provincia: cleanReportField(report.provincia) || null,
+    localidad: cleanReportField(report.localidad) || null,
   }, true);
 }
 
@@ -1894,9 +1903,9 @@ async function logPdfDownload(report) {
     email: contact.email || null,
     phone: contact.phone || null,
     full_name: contact.full_name || null,
-    lugar: report.localidad || report.provincia || null,
-    provincia: report.provincia || null,
-    localidad: report.localidad || null,
+    lugar: cleanReportField(report.localidad) || cleanReportField(report.provincia) || null,
+    provincia: cleanReportField(report.provincia) || null,
+    localidad: cleanReportField(report.localidad) || null,
     user_agent: navigator.userAgent,
   };
 
@@ -2429,7 +2438,7 @@ function isHtmlFile(file) {
 
 function buildPdfRequestLink(report) {
   const title = report.titulo || "Radiografía";
-  const place = report.localidad || report.provincia || "Territorio";
+  const place = cleanReportField(report.localidad) || cleanReportField(report.provincia) || "Territorio";
   const subject = encodeURIComponent(`Solicitud de PDF - ${title}`);
   const body = encodeURIComponent(`Solicito la versión PDF de la radiografía "${title}" (${place}). Formato solicitado: PDF.`);
   return `https://mail.google.com/mail/?view=cm&fs=1&to=info.consultoradiagonales@gmail.com&su=${subject}&body=${body}`;

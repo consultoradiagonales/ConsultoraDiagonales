@@ -448,6 +448,7 @@
       const listStatus = document.querySelector("[data-list-status]");
       const submit = document.querySelector("[data-submit]");
       const cancel = document.querySelector("[data-cancel]");
+      const PRIVATE_MARKER = "[[CD_PRIVATE]]";
 
       if (!ADMIN_KEY) {
         ADMIN_KEY = prompt("Clave de administrador") || "";
@@ -470,6 +471,27 @@
           .replaceAll(">", "&gt;")
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
+      }
+
+      function stripPrivacyMarker(value) {
+        return String(value || "").replaceAll(PRIVATE_MARKER, "").trim();
+      }
+
+      function withPrivacyMarker(value, isPrivate) {
+        const clean = stripPrivacyMarker(value);
+        if (!isPrivate) return clean;
+        return clean ? `${PRIVATE_MARKER} ${clean}` : PRIVATE_MARKER;
+      }
+
+      function isPrivateReport(report) {
+        return report?.is_private === true
+          || String(report?.is_private || "").toLowerCase() === "true"
+          || String(report?.localidad || "").includes(PRIVATE_MARKER)
+          || String(report?.provincia || "").includes(PRIVATE_MARKER);
+      }
+
+      function displayPlace(report) {
+        return [stripPrivacyMarker(report.localidad), stripPrivacyMarker(report.provincia)].filter(Boolean).join(", ");
       }
 
       function setStatus(message) {
@@ -497,7 +519,7 @@
         list.innerHTML = reports
           .map((report) => {
             const fileName = report.file_name ? `<div>Archivo: ${escapeHtml(report.file_name)}</div>` : "";
-            const isPrivate = report.is_private === true || String(report.is_private || "").toLowerCase() === "true";
+            const isPrivate = isPrivateReport(report);
             const privacyLabel = isPrivate ? "Privado" : "Publico";
             const privacyButton = isPrivate ? "Hacer publico" : "Hacer privado";
             const pdf = report.pdf_url
@@ -509,7 +531,7 @@
                   <div class="report-title">${escapeHtml(report.titulo)}</div>
                   <span class="privacy-badge${isPrivate ? " is-private" : ""}">${privacyLabel}</span>
                   <div class="report-meta">
-                    <div>${escapeHtml([report.localidad, report.provincia].filter(Boolean).join(", "))}</div>
+                    <div>${escapeHtml(displayPlace(report))}</div>
                     <div>${escapeHtml(report.fecha || "")}</div>
                     ${fileName}
                   </div>
@@ -548,7 +570,8 @@
         }
 
         const body = new FormData(form);
-        body.set("is_private", form.elements.is_private.checked ? "true" : "false");
+        body.delete("is_private");
+        body.set("localidad", withPrivacyMarker(body.get("localidad"), form.elements.is_private.checked));
         if (!file) body.delete("archivo");
 
         submit.disabled = true;
@@ -579,11 +602,11 @@
         if (!report) return;
         form.elements.id.value = report.id || "";
         form.elements.titulo.value = report.titulo || "";
-        form.elements.provincia.value = report.provincia || "";
-        form.elements.localidad.value = report.localidad || "";
+        form.elements.provincia.value = stripPrivacyMarker(report.provincia || "");
+        form.elements.localidad.value = stripPrivacyMarker(report.localidad || "");
         form.elements.fecha.value = report.fecha || "";
         form.elements.archivo.value = "";
-        form.elements.is_private.checked = report.is_private === true || String(report.is_private || "").toLowerCase() === "true";
+        form.elements.is_private.checked = isPrivateReport(report);
         submit.textContent = "Actualizar radiografia";
         cancel.classList.remove("hidden");
         setStatus("Modificando: cambia los datos o selecciona un PDF nuevo para reemplazar el actual.");
@@ -617,46 +640,35 @@
           return;
         }
 
-        const buildBody = (includeMetadata = false) => {
+        const buildBody = () => {
           const body = new FormData();
           body.append("id", id);
-          body.append("is_private", isPrivate ? "true" : "false");
-          if (includeMetadata) {
-            body.append("titulo", report.titulo || "");
-            body.append("provincia", report.provincia || "");
-            body.append("localidad", report.localidad || "");
-            body.append("fecha", report.fecha || "");
-          }
+          body.append("titulo", report.titulo || "");
+          body.append("provincia", stripPrivacyMarker(report.provincia || ""));
+          body.append("localidad", withPrivacyMarker(report.localidad || "", isPrivate));
+          body.append("fecha", report.fecha || "");
           return body;
         };
 
         if (button) button.disabled = true;
         setListStatus(isPrivate ? "Cerrando acceso: la radiografia pedira registro." : "Abriendo acceso publico.");
         try {
-          let response = await fetch(`${endpoint}/admin-upload-report`, {
+          const response = await fetch(`${endpoint}/admin-upload-report`, {
             method: "PATCH",
             headers: headers(),
-            body: buildBody(false),
+            body: buildBody(),
           });
-          let data = await response.json().catch(() => ({}));
-          if (!response.ok && String(data.error || "").includes("titulo")) {
-            response = await fetch(`${endpoint}/admin-upload-report`, {
-              method: "PATCH",
-              headers: headers(),
-              body: buildBody(true),
-            });
-            data = await response.json().catch(() => ({}));
-          }
+          const data = await response.json().catch(() => ({}));
           if (!response.ok) {
             throw new Error(data.error || "No se pudo cambiar la privacidad.");
           }
           await loadReports();
           const updated = reports.find((item) => item.id === id);
-          const persistedPrivate = updated?.is_private === true || String(updated?.is_private || "").toLowerCase() === "true";
+          const persistedPrivate = isPrivateReport(updated);
           if (persistedPrivate !== isPrivate) {
-            throw new Error("Supabase respondio, pero no guardo el estado privado. Falta actualizar la funcion admin-upload-report o la columna is_private.");
+            throw new Error("Supabase respondio, pero no guardo el estado privado. Volve a intentar con Actualizar.");
           }
-          setListStatus(isPrivate ? "Radiografia privada: ahora pedira registro antes del PDF." : "Radiografia publica: ahora abre directo.");
+          setListStatus(isPrivate ? "Radiografia privada: ahora pedira registro antes del HTML y el PDF." : "Radiografia publica: ahora abre directo.");
         } finally {
           if (button) button.disabled = false;
         }

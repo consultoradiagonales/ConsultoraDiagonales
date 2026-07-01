@@ -4,6 +4,7 @@
   const GMAIL_VERIFIED_KEY = "cd:gmail_verified";
   const PRIVATE_REPORT_REGISTRATION_KEY = "cd:private_report_after_registration";
   const PRIVATE_REPORT_TARGET_KEY = "cd:private_report_after_registration_target";
+  const PRIVATE_REPORT_MARKER = "[[CD_PRIVATE]]";
 
   document.querySelector(".access-panel")?.remove();
   document.querySelector("[data-reports]")?.classList.remove("gated");
@@ -32,7 +33,8 @@
     const report = findReportForLink(reports, link);
     if (!report) return;
 
-    if (isPrivateReport(report) && !hasPrivateReportAccess()) {
+    const shouldAskForRegistration = !hasPrivateReportAccess() && (isPrivateReport(report) || targetType === "pdf" || !report.pdf_url);
+    if (shouldAskForRegistration) {
       const registrationLink = buildRegistrationLink(report, targetType);
       rememberPrivateReport(report, targetType);
       try {
@@ -90,7 +92,7 @@
       container.querySelectorAll("[data-pdf-download]").forEach((link) => {
         const report = findReportForLink(reports, link);
         if (!report) return;
-        const needsRegistration = isPrivateReport(report) && !hasPrivateReportAccess();
+        const needsRegistration = !hasPrivateReportAccess() && Boolean(report.pdf_url);
         if (report.pdf_url) link.href = needsRegistration ? buildRegistrationLink(report, "pdf") : report.pdf_url;
         const text = needsRegistration ? "PDF: Solo con registro" : report.pdf_url ? "Abrir PDF" : "PDF no disponible";
         const label = link.querySelector("strong");
@@ -179,18 +181,30 @@
     url.searchParams.set("select", "id,titulo,provincia,localidad,fecha,html_url,pdf_url,is_private,created_at");
     url.searchParams.append("order", "fecha.desc");
     url.searchParams.append("order", "created_at.desc");
-    const response = await fetch(url.href, {
+    let response = await fetch(url.href, {
       headers: {
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`,
       },
     });
+    if (!response.ok) {
+      url.searchParams.set("select", "id,titulo,provincia,localidad,fecha,html_url,pdf_url,created_at");
+      response = await fetch(url.href, {
+        headers: {
+          apikey: config.anonKey,
+          Authorization: `Bearer ${config.anonKey}`,
+        },
+      });
+    }
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
   }
 
   function isPrivateReport(report) {
-    return report?.is_private === true || String(report?.is_private || "").toLowerCase() === "true";
+    return report?.is_private === true
+      || String(report?.is_private || "").toLowerCase() === "true"
+      || String(report?.localidad || "").includes(PRIVATE_REPORT_MARKER)
+      || String(report?.provincia || "").includes(PRIVATE_REPORT_MARKER);
   }
 
   function hasPrivateReportAccess() {
