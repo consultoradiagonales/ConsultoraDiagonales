@@ -18,6 +18,7 @@
     const fullName = String(new FormData(form).get("full_name") || "").trim();
     const email = String(new FormData(form).get("email") || "").trim().toLowerCase();
     const organization = String(new FormData(form).get("organization") || "").trim();
+    const requestContext = getPrivateRequestContext();
 
     if (!phone) {
       if (status) status.textContent = "Dejanos un celular para habilitar la lectura.";
@@ -40,7 +41,7 @@
       phone_validation_status: "phone_verified",
       consent_terms: true,
       last_seen_at: new Date().toISOString(),
-      tags: ["descarga_pdf", "celular_validado"],
+      tags: Array.from(new Set(["descarga_pdf", "celular_validado", requestContext ? "solicitud_radiografia" : ""].filter(Boolean))),
     };
 
     localStorage.setItem(CONTACT_STORAGE_KEY, JSON.stringify({ ...getStoredContact(), ...contact }));
@@ -48,11 +49,12 @@
 
     try {
       await saveContact(contact);
+      if (requestContext) await saveVisitorEvent(contact, requestContext);
     } catch (error) {
       console.warn("No se pudo guardar el contacto remoto", error);
     }
 
-    if (status) status.textContent = "Listo. Te llevamos a las radiografias.";
+    if (status) status.textContent = requestContext ? "Listo. Solicitud registrada." : "Listo. Te llevamos a las radiografias.";
     window.location.href = getRedirectTarget();
   }
 
@@ -74,6 +76,44 @@
     if (!response.ok) throw new Error(`contactos ${response.status}`);
   }
 
+  async function saveVisitorEvent(contact, requestContext) {
+    const config = window.CD_SUPABASE || {};
+    if (!config.url || !config.anonKey) return;
+
+    const event = {
+      visitor_id: contact.visitor_id,
+      event_type: "private_report_registration_submitted",
+      page: "registro",
+      path: window.location.pathname,
+      metadata: {
+        radiografia_id: requestContext.reportId || null,
+        title: requestContext.reportTitle || null,
+        target_type: requestContext.targetType || "pdf",
+        contact: {
+          email: contact.email || null,
+          phone: contact.phone || null,
+          full_name: contact.full_name || null,
+          organization: contact.organization || null,
+          phone_validation_status: contact.phone_validation_status || null,
+        },
+      },
+      user_agent: navigator.userAgent,
+    };
+
+    const response = await fetch(`${config.url}/rest/v1/visitor_events`, {
+      method: "POST",
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`,
+        "content-type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify(event),
+    });
+
+    if (!response.ok) throw new Error(`visitor_events ${response.status}`);
+  }
+
   function getRedirectTarget() {
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next");
@@ -87,6 +127,16 @@
     } catch (_) {
       return "../repositorio/index.html?v=phone-access";
     }
+  }
+
+  function getPrivateRequestContext() {
+    const params = new URLSearchParams(window.location.search);
+    const reportId = params.get("report") || sessionStorage.getItem("cd:private_report_after_registration") || "";
+    const targetType = params.get("target") || params.get("private_target") || sessionStorage.getItem("cd:private_report_after_registration_target") || "pdf";
+    const reportTitle = params.get("pdf") || params.get("titulo") || params.get("title") || "";
+
+    if (!reportId && !reportTitle && !params.get("next")) return null;
+    return { reportId, targetType, reportTitle };
   }
 
   function getStoredContact() {

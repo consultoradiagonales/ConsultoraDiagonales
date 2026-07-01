@@ -1185,6 +1185,60 @@ body[data-page="contacto"] .section-title {
   background: #a7ecff;
 }
 
+.private-report-modal--registration {
+  display: flex;
+  align-items: flex-start;
+  overflow: auto;
+  padding-top: clamp(5.75rem, 10vh, 7.5rem);
+  padding-bottom: 2rem;
+}
+
+.private-report-modal__dialog--registration {
+  width: min(680px, 100%);
+}
+
+.private-report-modal__summary {
+  margin-bottom: 1rem;
+}
+
+.private-report-modal__request {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid rgba(255, 214, 128, 0.34);
+  border-radius: 8px;
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  background: rgba(130, 88, 2, 0.16);
+}
+
+.private-report-modal__request span,
+.private-report-modal__request small {
+  color: var(--blue);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.private-report-modal__request strong {
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.private-report-modal--registration .registration-form {
+  border-color: rgba(139, 207, 241, 0.24);
+  margin-top: 1rem;
+  padding: 1rem 0 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body.private-registration-open {
+  overflow: hidden;
+}
+
 body[data-page="servicios"] .subpage {
   background:
     linear-gradient(35deg, rgba(2, 31, 49, 0.8) 0%, rgba(5, 62, 86, 0.56) 34%, rgba(83, 207, 235, 0.2) 68%, rgba(222, 250, 255, 0.1) 100%),

@@ -236,6 +236,22 @@
   function openUnknownPublicTarget(link, targetType) {
     const href = link.href || "";
     if (targetType === "html" && href) {
+      if (looksLikeRadiografiaStorageUrl(href) && !hasPrivateReportAccess()) {
+        const report = {
+          id: link.dataset.reportId || null,
+          titulo: link.dataset.privateTitle || getLinkTitle(link),
+          html_url: href,
+        };
+        rememberPrivateReport(report, "html");
+        const registrationLink = buildRegistrationLink(report, "html");
+        if (typeof window.openPrivateReportModal === "function") {
+          window.openPrivateReportModal(report, "html");
+        } else {
+          openPrivateReportFallback(report, registrationLink);
+        }
+        return;
+      }
+
       if (typeof openHtmlReportViewer === "function") {
         const title = typeof getHtmlViewerTitle === "function" ? getHtmlViewerTitle(link) : "Radiografia";
         openHtmlReportViewer(new URL(href, window.location.href).href, title);
@@ -259,6 +275,17 @@
       || link.closest(".report-card")?.querySelector("h2")?.textContent?.trim()
       || link.dataset.privateTitle
       || "Radiografia";
+  }
+
+  function looksLikeRadiografiaStorageUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      return parsed.hostname.includes("supabase.co")
+        && parsed.pathname.includes("/storage/v1/object/public/radiografias/")
+        && /\.(html?|pdf)$/i.test(parsed.pathname);
+    } catch (_) {
+      return false;
+    }
   }
 
   function buildRegistrationLink(report, targetType = "pdf") {

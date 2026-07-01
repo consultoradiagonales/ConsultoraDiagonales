@@ -692,6 +692,8 @@ async function initRegistration() {
   const socialButtons = document.querySelectorAll("[data-social-provider]");
   if (!form) return;
 
+  renderPrivateRegistrationRequestContext(form);
+
   if (!supabaseClient) {
     status.textContent = "Falta conectar Supabase para validar el acceso con Gmail.";
   }
@@ -766,6 +768,61 @@ async function initRegistration() {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     await startGmailValidation();
+  });
+}
+
+function getPrivateRegistrationContext() {
+  const params = new URLSearchParams(window.location.search);
+  const reportId = params.get("report") || sessionStorage.getItem(PRIVATE_REPORT_REGISTRATION_KEY) || "";
+  const targetType = params.get("target") || params.get("private_target") || sessionStorage.getItem(PRIVATE_REPORT_TARGET_KEY) || "pdf";
+  const reportTitle = params.get("pdf") || params.get("titulo") || params.get("title") || "la radiografia seleccionada";
+  const next = params.get("next") || "";
+
+  if (!reportId && !next && !params.has("pdf")) return null;
+
+  return {
+    reportId,
+    targetType,
+    reportTitle,
+    next,
+  };
+}
+
+function renderPrivateRegistrationRequestContext(form) {
+  const context = getPrivateRegistrationContext();
+  if (!context || document.querySelector("[data-private-registration-modal]")) return;
+
+  const targetLabel = context.targetType === "html" ? "graficos HTML" : "PDF";
+  const modal = document.createElement("section");
+  modal.className = "private-report-modal private-report-modal--registration is-open";
+  modal.setAttribute("data-private-registration-modal", "");
+  modal.setAttribute("aria-hidden", "false");
+  modal.innerHTML = `
+    <div class="private-report-modal__dialog private-report-modal__dialog--registration" role="dialog" aria-modal="true" aria-labelledby="private-registration-title">
+      <h2 id="private-registration-title">Solicitar radiografia: ${escapeHtml(context.reportTitle)}</h2>
+      <p class="private-report-modal__mode">Modo: Solo con registro</p>
+      <p class="private-report-modal__summary">Carg&aacute; tus datos para solicitar el acceso al ${escapeHtml(targetLabel)}. La solicitud queda vinculada a esta radiograf&iacute;a.</p>
+      <div class="private-report-modal__request">
+        <span>Radiografia solicitada</span>
+        <strong>${escapeHtml(context.reportTitle)}</strong>
+        <small>${escapeHtml(targetLabel)}</small>
+      </div>
+      <div data-private-registration-form-slot></div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  modal.querySelector("[data-private-registration-form-slot]")?.appendChild(form);
+  document.body.classList.add("private-registration-open");
+
+  const submit = form.querySelector("[data-registration-submit]");
+  if (submit) submit.textContent = "Enviar solicitud";
+
+  trackEvent("private_report_registration_view", {
+    radiografia_id: context.reportId || null,
+    radiografia_title: context.reportTitle,
+    target_type: context.targetType,
+    next_url: context.next || null,
   });
 }
 
@@ -1639,7 +1696,7 @@ function getHtmlViewerTitle(link) {
   return rowTitle || cardTitle || "Graficos";
 }
 
-function openSharedHtmlViewerFromUrl() {
+async function openSharedHtmlViewerFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const htmlUrl = params.get("html_viewer") || params.get("html") || params.get("grafico");
   if (!htmlUrl) return;
@@ -1647,9 +1704,79 @@ function openSharedHtmlViewerFromUrl() {
   try {
     const url = new URL(htmlUrl, window.location.href).href;
     const title = params.get("titulo") || params.get("title") || "Radiografía";
-    window.setTimeout(() => openHtmlReportViewer(url, title), 250);
+    window.setTimeout(async () => {
+      const report = await findReportByHtmlUrl(url);
+      if (report && isPrivateReport(report) && !hasPdfAccess()) {
+        rememberPrivateReport(report, "html");
+        await logReportInterest(report, "report_access_requested", buildPrivateReportRegistrationLink(report, "html"));
+        openPrivateReportModal(report, "html");
+        return;
+      }
+
+      if (!report && looksLikeRadiografiaStorageUrl(url) && !hasPdfAccess()) {
+        const blockedReport = { titulo: title, html_url: url };
+        rememberPrivateReport(blockedReport, "html");
+        openPrivateReportModal(blockedReport, "html");
+        return;
+      }
+
+      openHtmlReportViewer(url, title);
+    }, 250);
   } catch (error) {
     console.warn("No se pudo abrir el HTML compartido", error);
+  }
+}
+
+async function findReportByHtmlUrl(htmlUrl) {
+  const cached = (Array.isArray(window.CD_REPORTS_CACHE) ? window.CD_REPORTS_CACHE : [])
+    .find((report) => sameUrl(report.html_url, htmlUrl));
+  if (cached) return cached;
+
+  if (!supabaseClient) return null;
+
+  try {
+    let { data, error } = await supabaseClient
+      .from("radiografias")
+      .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, is_private, created_at")
+      .eq("html_url", htmlUrl)
+      .limit(1)
+      .maybeSingle();
+
+    if (error && String(error.message || "").includes("is_private")) {
+      const fallback = await supabaseClient
+        .from("radiografias")
+        .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, created_at")
+        .eq("html_url", htmlUrl)
+        .limit(1)
+        .maybeSingle();
+      data = fallback.data;
+      error = fallback.error;
+    }
+
+    if (error) return null;
+    return data || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function sameUrl(left, right) {
+  if (!left || !right) return false;
+  try {
+    return new URL(left, window.location.href).href === new URL(right, window.location.href).href;
+  } catch (_) {
+    return String(left) === String(right);
+  }
+}
+
+function looksLikeRadiografiaStorageUrl(url) {
+  try {
+    const parsed = new URL(url, window.location.href);
+    return parsed.hostname.includes("supabase.co")
+      && parsed.pathname.includes("/storage/v1/object/public/radiografias/")
+      && /\.(html?|pdf)$/i.test(parsed.pathname);
+  } catch (_) {
+    return false;
   }
 }
 
