@@ -42,7 +42,10 @@ $email = trim($data['email'] ?? '');
 $telefono = trim($data['telefono'] ?? '');
 $organizacion = trim($data['organizacion'] ?? '');
 
-// Validar email
+$listaBlanca = [
+    'info.consultoradiagonales@gmail.com.ar,
+    // Agregar más emails aquí
+];
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
     echo json_encode(['error' => 'Email inválido']);
