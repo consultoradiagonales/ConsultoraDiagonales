@@ -1,7 +1,8 @@
-(function () {
+﻿(function () {
   const LOADING_TEXT = "Cargando radiograf";
   const SLOGAN = "Data Analytics aplicado al territorio, opinion publica y escenarios de poder.";
-  const PRIVATE_REPORT_MARKER = "[[CD_PRIVATE]]";
+  const PHONE_VERIFIED_KEY = "cd:phone_verified";
+  const GMAIL_VERIFIED_KEY = "cd:gmail_verified";
 
   document.addEventListener("DOMContentLoaded", () => {
     window.setTimeout(loadReportsIfStuck, 3200);
@@ -36,7 +37,8 @@
         Authorization: `Bearer ${config.anonKey}`,
       },
     });
-    if (!response.ok) {
+    let data = await response.json().catch(() => []);
+    if (!response.ok && isMissingColumnError(data, "is_private")) {
       url.searchParams.set("select", "id,titulo,provincia,localidad,fecha,html_url,pdf_url,created_at");
       response = await fetch(url.href, {
         headers: {
@@ -44,14 +46,14 @@
           Authorization: `Bearer ${config.anonKey}`,
         },
       });
+      data = await response.json().catch(() => []);
     }
-    const data = await response.json().catch(() => []);
     if (!response.ok) throw new Error(data.message || data.error || "Error de conexi&oacute;n.");
-    return Array.isArray(data) ? data : [];
+    return Array.isArray(data) ? data.map(normalizeReportRecord) : [];
   }
 
   function renderReports(container, reports) {
-    window.CD_REPORTS_CACHE = Array.isArray(reports) ? reports : [];
+    window.CD_REPORTS = reports;
     if (!reports.length) {
       container.innerHTML = '<div class="empty-state">Todav&iacute;a no hay radiograf&iacute;as publicadas.</div>';
       return;
@@ -59,18 +61,14 @@
 
     container.innerHTML = reports.map((report, index) => {
       const title = escapeHtml(report.titulo || "Radiograf&iacute;a sin t&iacute;tulo");
+      const isPrivate = report.is_private === true || String(report.is_private || "").toLowerCase() === "true";
+      const needsRegistration = isPrivate && !hasPrivatePdfAccess();
+      const pdfHref = escapeAttribute(isPrivate && !hasPrivatePdfAccess() ? buildRegistrationLink(report, "pdf") : buildReportAccessLink(report, "pdf"));
+      const pdfText = needsRegistration ? "Registrar datos y abrir PDF" : "Abrir PDF";
+      const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Privado</em>' : "";
       const graphsUrl = getReportGraphsUrl(report);
-      const isPrivate = report.is_private === true
-        || String(report.is_private || "").toLowerCase() === "true"
-        || String(report.localidad || "").includes(PRIVATE_REPORT_MARKER)
-        || String(report.provincia || "").includes(PRIVATE_REPORT_MARKER);
-      const pdfHref = escapeAttribute(isPrivate || !report.pdf_url ? new URL("/registro/", window.location.origin).href : report.pdf_url);
-      const privateAttributes = isPrivate
-        ? ` data-private-report="true" data-report-id="${escapeAttribute(report.id || "")}" data-private-title="${escapeAttribute(report.titulo || "")}"`
-        : "";
-      const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Modo: Solo con registro</em>' : "";
       const graphsLink = graphsUrl
-        ? `<a class="latest-report-row__graphs" href="${escapeAttribute(graphsUrl)}"${privateAttributes} data-html-viewer-open data-report-index="${index}" data-track="open_graph">${isPrivate ? "Solicitar acceso" : "Graficos"}</a>`
+        ? `<a class="latest-report-row__graphs" href="${escapeAttribute(isPrivate && !hasPrivatePdfAccess() ? buildRegistrationLink(report, "html") : buildReportAccessLink(report, "html"))}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">${needsRegistration ? "Registrar datos y abrir graficos" : "Gr&aacute;ficos"}</a>`
         : "";
       const shareHref = escapeAttribute(buildWhatsappHref(report.titulo || "Radiografia de Consultora Diagonales"));
       return `
@@ -78,7 +76,7 @@
           <time datetime="${escapeAttribute(report.fecha || "")}">${formatDate(report.fecha)}</time>
           <span>${title}${privacyBadge}</span>
           ${graphsLink}
-          <a class="latest-report-row__pdf" href="${pdfHref}"${privateAttributes}${report.pdf_url ? "" : " data-pdf-unavailable=\"true\""} data-pdf-download data-report-index="${index}" data-track="request_pdf">${isPrivate ? "Solicitar acceso" : report.pdf_url ? "Abrir PDF" : "Solicitar radiografia"}</a>
+          <a class="latest-report-row__pdf" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfText}</a>
           <a class="radiografia-share-link radiografia-share-link--list" href="${shareHref}" target="_blank" rel="noopener" aria-label="Compartir por WhatsApp: ${title}">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M16 8.5 8.8 12l7.2 3.5" />
@@ -113,6 +111,65 @@
       return new URL("/informes/radiografia-adorni-2026.html", window.location.origin).href;
     }
     return "";
+  }
+
+  function hasPrivatePdfAccess() {
+    return Boolean(localStorage.getItem(PHONE_VERIFIED_KEY) || localStorage.getItem(GMAIL_VERIFIED_KEY));
+  }
+
+  function normalizeReportRecord(report) {
+    return {
+      ...report,
+      provincia: cleanLegacyPrivateMarker(report?.provincia),
+      localidad: cleanLegacyPrivateMarker(report?.localidad),
+    };
+  }
+
+  function cleanLegacyPrivateMarker(value) {
+    return String(value || "")
+      .replaceAll("[[CD_PRIVATE]]", "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  }
+
+  function isMissingColumnError(error, column) {
+    const message = String(error?.message || "");
+    const code = String(error?.code || "");
+    return code === "42703" || (message.includes(column) && message.includes("does not exist"));
+  }
+
+  function buildRegistrationLink(report, accessTarget = "pdf") {
+    const target = new URL(window.location.href);
+    if (report?.id) target.searchParams.set("report", report.id);
+    target.searchParams.set("private_target", accessTarget);
+    const registration = new URL("/registro/", window.location.origin);
+    registration.searchParams.set("next", target.href);
+    if (report?.titulo) registration.searchParams.set("pdf", report.titulo);
+    if (report?.id) registration.searchParams.set("report", report.id);
+    registration.searchParams.set("target", accessTarget);
+    return registration.href;
+  }
+
+  function buildReportAccessLink(report, target = "pdf") {
+    const config = window.CD_SUPABASE || {};
+    if (!config.url || !report?.id) return "#";
+    const access = new URL("/functions/v1/report-access", config.url);
+    access.searchParams.set("report", report.id);
+    access.searchParams.set("target", target);
+    if (hasPrivatePdfAccess()) access.searchParams.set("visitor_id", getVisitorId());
+    return access.href;
+  }
+
+  function getVisitorId() {
+    const key = "cd:visitor_id";
+    let visitorId = localStorage.getItem(key);
+    if (!visitorId) {
+      visitorId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `visitor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem(key, visitorId);
+    }
+    return visitorId;
   }
 
   function formatDate(value) {
