@@ -988,7 +988,11 @@ function isPrivateReport(report) {
 }
 
 function hasPdfAccess() {
-  return Boolean(localStorage.getItem(PHONE_VERIFIED_KEY) || localStorage.getItem(GMAIL_VERIFIED_KEY));
+  const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
+  const gmailValidated = Boolean(contact.visitor_id) && localStorage.getItem(GMAIL_VERIFIED_KEY) === contact.visitor_id;
+  const phoneValidated = Boolean(contact.phone) && localStorage.getItem(PHONE_VERIFIED_KEY) === contact.phone;
+  const statusValidated = ["phone_verified", "gmail_verified"].includes(String(contact.phone_validation_status || ""));
+  return Boolean(contact.phone && (gmailValidated || phoneValidated || statusValidated));
 }
 
 function getReportResourceHref(report, target = "pdf", url = "") {
@@ -1018,8 +1022,13 @@ function buildReportAccessLink(report, target = "pdf") {
   const access = new URL("/functions/v1/report-access", SUPABASE_URL);
   access.searchParams.set("report", report.id);
   access.searchParams.set("target", target);
-  if (hasPdfAccess()) access.searchParams.set("visitor_id", getVisitorId());
+  if (hasPdfAccess()) access.searchParams.set("visitor_id", getAccessVisitorId());
   return access.href;
+}
+
+function getAccessVisitorId() {
+  const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
+  return contact.visitor_id || getVisitorId();
 }
 
 function rememberPrivateReport(report, target = "pdf") {
@@ -1082,6 +1091,10 @@ function bindPdfDownloadLinks(container, reports) {
 
 function openPdfViewer(report) {
   if (!report?.pdf_url) return;
+  if (isPrivateReport(report) && !hasPdfAccess()) {
+    window.location.href = buildRegistrationLink(report, "pdf");
+    return;
+  }
 
   let viewer = document.querySelector("[data-pdf-viewer]");
   if (!viewer) {
@@ -1225,6 +1238,13 @@ function initHtmlReportViewer() {
       return;
     }
 
+    if (!report && link.href.includes("/registro/")) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.location.href = link.href;
+      return;
+    }
+
     event.preventDefault();
     const accessUrl = report ? buildReportAccessLink(report, "html") : link.href;
     openHtmlReportViewer(accessUrl, getHtmlViewerTitle(link));
@@ -1240,6 +1260,11 @@ function getReportFromLink(link) {
 }
 
 async function openHtmlReportViewer(url, title) {
+  if (String(url || "").includes("/registro/")) {
+    window.location.href = url;
+    return;
+  }
+
   let viewer = document.querySelector("[data-html-viewer]");
   if (!viewer) {
     viewer = document.createElement("div");
