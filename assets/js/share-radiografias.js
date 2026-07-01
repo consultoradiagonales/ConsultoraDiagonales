@@ -46,9 +46,14 @@
 
     const title = row.querySelector("span")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
     const graphsUrl = row.dataset.graphsUrl || "";
+    const pdfHref = row.getAttribute("href") || "";
+    const pdfLabel = row.querySelector("strong")?.innerHTML || "Abrir PDF";
     const graphsLink = graphsUrl
       ? `<a class="latest-report-row__graphs" href="${escapeAttribute(graphsUrl)}" data-html-viewer-open data-report-open data-report-index="${escapeAttribute(row.dataset.reportIndex || "")}" data-track="open_graph">Gr&aacute;ficos</a>`
       : "";
+    const pdfLink = pdfHref && pdfHref !== "#"
+      ? `<a class="latest-report-row__pdf" href="${escapeAttribute(row.href)}" ${copyDataAttributes(row)}>${pdfLabel}</a>`
+      : `<span class="latest-report-row__pdf latest-report-row__pdf--disabled" aria-disabled="true">${pdfLabel || "PDF no disponible"}</span>`;
     const replacement = document.createElement("div");
     replacement.className = "latest-report-row";
     replacement.dataset.shareEnhanced = "true";
@@ -56,7 +61,7 @@
       <time datetime="${escapeAttribute(row.querySelector("time")?.getAttribute("datetime") || "")}">${row.querySelector("time")?.innerHTML || ""}</time>
       <span>${row.querySelector("span")?.innerHTML || escapeAttribute(title)}</span>
       ${graphsLink}
-      <a class="latest-report-row__pdf" href="${escapeAttribute(row.href)}" ${copyDataAttributes(row)}>Abrir PDF</a>
+      ${pdfLink}
       <a class="${SHARE_CLASS} ${SHARE_CLASS}--list" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>
     `;
     row.replaceWith(replacement);

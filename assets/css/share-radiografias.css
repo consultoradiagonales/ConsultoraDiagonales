@@ -106,6 +106,12 @@
   background: rgba(232, 213, 176, 0.1);
 }
 
+.latest-report-row__pdf--disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  pointer-events: none;
+}
+
 .latest-list .latest-report-row .radiografia-share-link {
   display: inline-grid !important;
   grid-template-columns: none !important;
