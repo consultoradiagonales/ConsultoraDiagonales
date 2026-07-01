@@ -1148,11 +1148,10 @@ function renderReports(reports, container, count) {
       const graphsHref = escapeAttribute(graphsUrl || "#");
       const pdfHref = escapeAttribute(getPdfDownloadHref(report));
       const isPrivate = isPrivateReport(report);
-      const accessGranted = hasPdfAccess();
       const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Modo: Solo con registro</em>' : "";
-      const graphLabel = "Graficos";
+      const graphLabel = isPrivate ? "Solicitar acceso" : "Graficos";
       const pdfLabel = report.pdf_url
-        ? (isPrivate && !accessGranted ? "Solicitar acceso" : "Abrir PDF")
+        ? (isPrivate ? "Solicitar acceso" : "Abrir PDF")
         : "Solicitar radiografia";
       const reportIndexAttribute = ` data-report-index="${index}"`;
       const graphsAttribute = graphsUrl ? ` data-graphs-url="${graphsHref}"` : "";
@@ -1221,10 +1220,35 @@ function openPrivateReportModal(report, targetType = "pdf") {
         <h2 id="private-report-title">Solicitar radiografia</h2>
         <p class="private-report-modal__mode">Modo: Solo con registro</p>
         <p data-private-report-detail>Esta radiografia tiene cerrado el acceso al HTML y al PDF. Para abrirla, registra tus datos.</p>
-        <div class="private-report-modal__actions">
-          <button class="primary-link" type="button" data-private-report-request>Solicitar esta radiografia</button>
-          <button class="secondary-link" type="button" data-private-report-close>Cancelar</button>
-        </div>
+        <form class="private-report-form" data-private-report-form>
+          <label>
+            <span>Telefono</span>
+            <input name="phone" type="tel" autocomplete="tel" placeholder="+54 9 ..." required />
+          </label>
+          <div class="private-report-form__grid">
+            <label>
+              <span>Nombre y apellido</span>
+              <input name="full_name" type="text" autocomplete="name" placeholder="Tu nombre" />
+            </label>
+            <label>
+              <span>Correo electronico</span>
+              <input name="email" type="email" autocomplete="email" placeholder="nombre@gmail.com" />
+            </label>
+          </div>
+          <label>
+            <span>Organizacion o rol</span>
+            <input name="organization" type="text" autocomplete="organization" placeholder="Consultora, medio, equipo..." />
+          </label>
+          <label class="checkbox-field">
+            <input name="terms" type="checkbox" required />
+            <span>Acepto el uso de mis datos para gestionar esta solicitud.</span>
+          </label>
+          <div class="private-report-modal__actions">
+            <button class="primary-link" type="submit" data-private-report-submit>Enviar solicitud</button>
+            <button class="secondary-link" type="button" data-private-report-close>Cancelar</button>
+          </div>
+          <p class="form-status" data-private-report-status role="status"></p>
+        </form>
       </div>
     `;
     document.body.appendChild(modal);
@@ -1232,15 +1256,13 @@ function openPrivateReportModal(report, targetType = "pdf") {
       if (event.target.closest("[data-private-report-close]")) {
         closePrivateReportModal(modal);
       }
-      if (event.target.closest("[data-private-report-request]")) {
-        const activeReport = modal.__activeReport || {};
-        const activeTarget = modal.__activeTarget || "pdf";
-        rememberPrivateReport(activeReport, activeTarget);
-        const registrationLink = buildPrivateReportRegistrationLink(activeReport, activeTarget);
-        logReportInterest(activeReport, "report_access_requested", registrationLink).catch(() => {}).finally(() => {
-          window.location.href = registrationLink;
-        });
-      }
+    });
+    modal.addEventListener("submit", async (event) => {
+      const form = event.target.closest("[data-private-report-form]");
+      if (!form) return;
+
+      event.preventDefault();
+      await submitPrivateReportRequest(modal, form);
     });
   }
 
@@ -1252,8 +1274,9 @@ function openPrivateReportModal(report, targetType = "pdf") {
   if (titleNode) titleNode.textContent = title ? `Solicitar radiografia: ${title}` : "Solicitar radiografia";
   if (detailNode) {
     const targetLabel = targetType === "html" ? "graficos HTML" : "PDF";
-    detailNode.textContent = `Esta radiografia esta en modo Solo con registro. Dejanos tus datos para solicitar el acceso al ${targetLabel}.`;
+    detailNode.textContent = `Esta radiografia esta privada. Completa tus datos para solicitar el acceso al ${targetLabel}. No se abrira el archivo automaticamente.`;
   }
+  hydratePrivateReportForm(modal);
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -1268,6 +1291,101 @@ function closePrivateReportModal(modal = document.querySelector("[data-private-r
   modal.classList.remove("is-open");
   modal.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
+}
+
+function hydratePrivateReportForm(modal) {
+  const form = modal.querySelector("[data-private-report-form]");
+  if (!form) return;
+
+  const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
+  if (contact.phone && !form.elements.phone.value) form.elements.phone.value = contact.phone;
+  if (contact.full_name && !form.elements.full_name.value) form.elements.full_name.value = contact.full_name;
+  if (contact.email && !form.elements.email.value) form.elements.email.value = contact.email;
+  if (contact.organization && !form.elements.organization.value) form.elements.organization.value = contact.organization;
+
+  const status = form.querySelector("[data-private-report-status]");
+  if (status) status.textContent = "";
+  const submit = form.querySelector("[data-private-report-submit]");
+  if (submit) {
+    submit.disabled = false;
+    submit.textContent = "Enviar solicitud";
+  }
+}
+
+async function submitPrivateReportRequest(modal, form) {
+  const status = form.querySelector("[data-private-report-status]");
+  const submit = form.querySelector("[data-private-report-submit]");
+  const report = modal.__activeReport || {};
+  const targetType = modal.__activeTarget || "pdf";
+  const formData = new FormData(form);
+  const phone = String(formData.get("phone") || "").trim();
+  const fullName = String(formData.get("full_name") || "").trim();
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const organization = String(formData.get("organization") || "").trim();
+
+  if (!phone) {
+    if (status) status.textContent = "Dejanos un telefono para poder responder la solicitud.";
+    return;
+  }
+
+  if (!form.elements.terms.checked) {
+    if (status) status.textContent = "Acepta el uso de datos para enviar la solicitud.";
+    return;
+  }
+
+  if (submit) {
+    submit.disabled = true;
+    submit.textContent = "Enviando...";
+  }
+  if (status) status.textContent = "Registrando solicitud.";
+
+  const contact = {
+    ...JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}"),
+    visitor_id: getVisitorId(),
+    auth_user_id: null,
+    email,
+    phone,
+    full_name: fullName,
+    organization,
+    social_provider: "request_form",
+    access_reason: "private_report_request",
+    phone_validation_status: "request_submitted",
+    consent_terms: true,
+    last_seen_at: new Date().toISOString(),
+    tags: Array.from(new Set(["solicitud_radiografia", "radiografia_privada", targetType === "html" ? "solicitud_html" : "solicitud_pdf"])),
+  };
+
+  persistLocalContact(contact);
+
+  try {
+    await upsertContact(contact);
+    await upsertVisitorProfile(contact);
+  } catch (error) {
+    console.warn("No se pudo guardar el contacto remoto", error);
+  }
+
+  await trackEvent("private_report_registration_submitted", {
+    radiografia_id: report.id || null,
+    title: report.titulo || report.title || null,
+    html_url: report.html_url || null,
+    pdf_url: report.pdf_url || null,
+    target_type: targetType,
+    lugar: cleanReportField(report.localidad) || cleanReportField(report.provincia) || null,
+    contact: {
+      email,
+      phone,
+      full_name: fullName,
+      organization,
+      phone_validation_status: contact.phone_validation_status,
+    },
+  });
+  await logReportInterest(report, "report_access_requested", buildPrivateReportRegistrationLink(report, targetType));
+
+  if (status) status.textContent = "Solicitud enviada. Consultora Diagonales recibio tus datos y la radiografia solicitada.";
+  if (submit) {
+    submit.disabled = true;
+    submit.textContent = "Solicitud enviada";
+  }
 }
 
 window.openPrivateReportModal = openPrivateReportModal;
@@ -1320,7 +1438,7 @@ window.buildPrivateReportRegistrationLink = buildPrivateReportRegistrationLink;
 window.rememberPrivateReport = rememberPrivateReport;
 
 function getPdfDownloadHref(report) {
-  if (report?.pdf_url && (!isPrivateReport(report) || hasPdfAccess())) return report.pdf_url;
+  if (report?.pdf_url && !isPrivateReport(report) && hasPdfAccess()) return report.pdf_url;
   return buildPrivateReportRegistrationLink(report, "pdf");
 }
 
@@ -1331,7 +1449,7 @@ function bindPdfDownloadLinks(container, reports) {
       if (!report) return;
 
       event.preventDefault();
-      if (isPrivateReport(report) && !hasPdfAccess()) {
+      if (isPrivateReport(report)) {
         rememberPrivateReport(report, "pdf");
         await logReportInterest(report, "report_access_requested", buildPrivateReportRegistrationLink(report, "pdf"));
         openPrivateReportModal(report, "pdf");
@@ -1469,7 +1587,7 @@ function bindReportOpenLinks(container, reports) {
       const report = reports[Number(link.dataset.reportIndex)];
       if (!report) return;
 
-      if (isPrivateReport(report) && !hasPdfAccess()) {
+      if (isPrivateReport(report)) {
         event.preventDefault();
         rememberPrivateReport(report, "html");
         await logReportInterest(report, "report_access_requested", buildPrivateReportRegistrationLink(report, "html"));
@@ -1489,7 +1607,7 @@ function initHtmlReportViewer() {
 
     event.preventDefault();
     const cachedReport = findCachedReportForLink(link);
-    if ((cachedReport ? isPrivateReport(cachedReport) : link.dataset.privateReport === "true") && !hasPdfAccess()) {
+    if (cachedReport ? isPrivateReport(cachedReport) : link.dataset.privateReport === "true") {
       const report = {
         ...(cachedReport || {}),
         id: cachedReport?.id || link.dataset.reportId || null,
@@ -1706,14 +1824,14 @@ async function openSharedHtmlViewerFromUrl() {
     const title = params.get("titulo") || params.get("title") || "Radiografía";
     window.setTimeout(async () => {
       const report = await findReportByHtmlUrl(url);
-      if (report && isPrivateReport(report) && !hasPdfAccess()) {
+      if (report && isPrivateReport(report)) {
         rememberPrivateReport(report, "html");
         await logReportInterest(report, "report_access_requested", buildPrivateReportRegistrationLink(report, "html"));
         openPrivateReportModal(report, "html");
         return;
       }
 
-      if (!report && looksLikeRadiografiaStorageUrl(url) && !hasPdfAccess()) {
+      if (!report && looksLikeRadiografiaStorageUrl(url)) {
         const blockedReport = { titulo: title, html_url: url };
         rememberPrivateReport(blockedReport, "html");
         openPrivateReportModal(blockedReport, "html");

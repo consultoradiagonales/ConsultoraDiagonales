@@ -33,7 +33,7 @@
     }
 
     const isMissingTarget = targetType === "pdf" ? !report.pdf_url : !report.html_url && !link.href;
-    const shouldAskForRegistration = isMissingTarget || (!hasPrivateReportAccess() && isPrivateReport(report));
+    const shouldAskForRegistration = isMissingTarget || isPrivateReport(report) || (targetType === "pdf" && !hasPrivateReportAccess());
     if (shouldAskForRegistration) {
       const registrationLink = buildRegistrationLink(report, targetType);
       rememberPrivateReport(report, targetType);
@@ -92,7 +92,7 @@
       container.querySelectorAll("[data-pdf-download]").forEach((link) => {
         const report = findReportForLink(reports, link);
         if (!report) return;
-        const needsRegistration = isPrivateReport(report) && !hasPrivateReportAccess();
+        const needsRegistration = isPrivateReport(report) || !hasPrivateReportAccess();
         if (report.pdf_url && !needsRegistration) {
           link.href = report.pdf_url;
           delete link.dataset.pdfUnavailable;
@@ -100,7 +100,7 @@
           link.href = buildRegistrationLink(report, "pdf");
           if (!report.pdf_url) link.dataset.pdfUnavailable = "true";
         }
-        const text = !report.pdf_url ? "Solicitar radiografia" : needsRegistration ? "Solicitar acceso" : "Abrir PDF";
+        const text = !report.pdf_url ? "Solicitar radiografia" : isPrivateReport(report) ? "Solicitar acceso" : needsRegistration ? "Validar acceso" : "Abrir PDF";
         const label = link.querySelector("strong");
         if (label) label.textContent = text;
         if (link.classList.contains("request-link")) link.textContent = text;
@@ -114,8 +114,8 @@
       container.querySelectorAll("[data-html-viewer-open]").forEach((link) => {
         const report = findReportForLink(reports, link);
         if (!report) return;
-        const needsRegistration = isPrivateReport(report) && !hasPrivateReportAccess();
-        link.textContent = needsRegistration ? "HTML: Solo con registro" : "Graficos";
+        const needsRegistration = isPrivateReport(report);
+        link.textContent = needsRegistration ? "Solicitar acceso" : "Graficos";
         if (isPrivateReport(report)) {
           link.dataset.privateReport = "true";
           link.dataset.reportId = report.id || "";
@@ -141,6 +141,11 @@
       const targetType = params.get("target") || params.get("private_target") || sessionStorage.getItem(PRIVATE_REPORT_TARGET_KEY) || "pdf";
       sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_KEY);
       sessionStorage.removeItem(PRIVATE_REPORT_TARGET_KEY);
+
+      if (isPrivateReport(report)) {
+        openPrivateReportModal(report, targetType);
+        return;
+      }
 
       if (targetType === "html" && report.html_url) {
         if (typeof openHtmlReportViewer === "function") {
@@ -236,7 +241,7 @@
   function openUnknownPublicTarget(link, targetType) {
     const href = link.href || "";
     if (targetType === "html" && href) {
-      if (looksLikeRadiografiaStorageUrl(href) && !hasPrivateReportAccess()) {
+      if (looksLikeRadiografiaStorageUrl(href)) {
         const report = {
           id: link.dataset.reportId || null,
           titulo: link.dataset.privateTitle || getLinkTitle(link),

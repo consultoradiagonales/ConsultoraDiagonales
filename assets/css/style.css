@@ -1185,6 +1185,58 @@ body[data-page="contacto"] .section-title {
   background: #a7ecff;
 }
 
+.private-report-form {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.private-report-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.private-report-form label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.private-report-form label span {
+  color: var(--blue);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.private-report-form input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid rgba(139, 207, 241, 0.28);
+  border-radius: 8px;
+  padding: 0 0.85rem;
+  color: #fff;
+  background: rgba(3, 7, 12, 0.68);
+  outline: none;
+}
+
+.private-report-form input:focus {
+  border-color: rgba(130, 216, 255, 0.68);
+  box-shadow: 0 0 0 3px rgba(130, 216, 255, 0.12);
+}
+
+.private-report-form .checkbox-field {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+}
+
+.private-report-form .checkbox-field input {
+  width: 18px;
+  min-height: 18px;
+  margin-top: 0.2rem;
+}
+
 .private-report-modal--registration {
   display: flex;
   align-items: flex-start;
@@ -1237,6 +1289,12 @@ body[data-page="contacto"] .section-title {
 
 body.private-registration-open {
   overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .private-report-form__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 body[data-page="servicios"] .subpage {

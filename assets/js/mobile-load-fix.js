@@ -59,18 +59,18 @@
 
     container.innerHTML = reports.map((report, index) => {
       const title = escapeHtml(report.titulo || "Radiograf&iacute;a sin t&iacute;tulo");
-      const pdfHref = escapeAttribute(report.pdf_url || new URL("/registro/", window.location.origin).href);
       const graphsUrl = getReportGraphsUrl(report);
       const isPrivate = report.is_private === true
         || String(report.is_private || "").toLowerCase() === "true"
         || String(report.localidad || "").includes(PRIVATE_REPORT_MARKER)
         || String(report.provincia || "").includes(PRIVATE_REPORT_MARKER);
+      const pdfHref = escapeAttribute(isPrivate || !report.pdf_url ? new URL("/registro/", window.location.origin).href : report.pdf_url);
       const privateAttributes = isPrivate
         ? ` data-private-report="true" data-report-id="${escapeAttribute(report.id || "")}" data-private-title="${escapeAttribute(report.titulo || "")}"`
         : "";
       const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Modo: Solo con registro</em>' : "";
       const graphsLink = graphsUrl
-        ? `<a class="latest-report-row__graphs" href="${escapeAttribute(graphsUrl)}"${privateAttributes} data-html-viewer-open data-report-index="${index}" data-track="open_graph">Graficos</a>`
+        ? `<a class="latest-report-row__graphs" href="${escapeAttribute(graphsUrl)}"${privateAttributes} data-html-viewer-open data-report-index="${index}" data-track="open_graph">${isPrivate ? "Solicitar acceso" : "Graficos"}</a>`
         : "";
       const shareHref = escapeAttribute(buildWhatsappHref(report.titulo || "Radiografia de Consultora Diagonales"));
       return `
@@ -78,7 +78,7 @@
           <time datetime="${escapeAttribute(report.fecha || "")}">${formatDate(report.fecha)}</time>
           <span>${title}${privacyBadge}</span>
           ${graphsLink}
-          <a class="latest-report-row__pdf" href="${pdfHref}"${privateAttributes}${report.pdf_url ? "" : " data-pdf-unavailable=\"true\""} data-pdf-download data-report-index="${index}" data-track="request_pdf">${report.pdf_url ? "Abrir PDF" : "Solicitar radiografia"}</a>
+          <a class="latest-report-row__pdf" href="${pdfHref}"${privateAttributes}${report.pdf_url ? "" : " data-pdf-unavailable=\"true\""} data-pdf-download data-report-index="${index}" data-track="request_pdf">${isPrivate ? "Solicitar acceso" : report.pdf_url ? "Abrir PDF" : "Solicitar radiografia"}</a>
           <a class="radiografia-share-link radiografia-share-link--list" href="${shareHref}" target="_blank" rel="noopener" aria-label="Compartir por WhatsApp: ${title}">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M16 8.5 8.8 12l7.2 3.5" />

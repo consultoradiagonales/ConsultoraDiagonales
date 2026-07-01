@@ -11,7 +11,7 @@
       const link = event.target.closest("[data-pdf-download]");
       if (!link) return;
 
-      if (link.dataset.privateReport === "true" && !hasPrivateReportAccess()) {
+      if (link.dataset.privateReport === "true") {
         event.preventDefault();
         event.stopImmediatePropagation();
         const report = {
