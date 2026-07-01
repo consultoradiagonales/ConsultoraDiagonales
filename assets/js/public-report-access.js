@@ -4,7 +4,6 @@
   const GMAIL_VERIFIED_KEY = "cd:gmail_verified";
   const PRIVATE_REPORT_REGISTRATION_KEY = "cd:private_report_after_registration";
   const PRIVATE_REPORT_TARGET_KEY = "cd:private_report_after_registration_target";
-  const PRIVATE_REPORT_MARKER = "[[CD_PRIVATE]]";
 
   document.querySelector(".access-panel")?.remove();
   document.querySelector("[data-reports]")?.classList.remove("gated");
@@ -33,7 +32,7 @@
     }
 
     const isMissingTarget = targetType === "pdf" ? !report.pdf_url : !report.html_url && !link.href;
-    const shouldAskForRegistration = isMissingTarget || isPrivateReport(report) || (targetType === "pdf" && !hasPrivateReportAccess());
+    const shouldAskForRegistration = isMissingTarget || isPrivateReport(report);
     if (shouldAskForRegistration) {
       const registrationLink = buildRegistrationLink(report, targetType);
       rememberPrivateReport(report, targetType);
@@ -92,7 +91,7 @@
       container.querySelectorAll("[data-pdf-download]").forEach((link) => {
         const report = findReportForLink(reports, link);
         if (!report) return;
-        const needsRegistration = isPrivateReport(report) || !hasPrivateReportAccess();
+        const needsRegistration = isPrivateReport(report);
         if (report.pdf_url && !needsRegistration) {
           link.href = report.pdf_url;
           delete link.dataset.pdfUnavailable;
@@ -221,9 +220,7 @@
 
   function isPrivateReport(report) {
     return report?.is_private === true
-      || String(report?.is_private || "").toLowerCase() === "true"
-      || String(report?.localidad || "").includes(PRIVATE_REPORT_MARKER)
-      || String(report?.provincia || "").includes(PRIVATE_REPORT_MARKER);
+      || String(report?.is_private || "").toLowerCase() === "true";
   }
 
   function hasPrivateReportAccess() {
