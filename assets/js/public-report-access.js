@@ -239,17 +239,11 @@
     const href = link.href || "";
     if (targetType === "html" && href) {
       if (looksLikeRadiografiaStorageUrl(href)) {
-        const report = {
-          id: link.dataset.reportId || null,
-          titulo: link.dataset.privateTitle || getLinkTitle(link),
-          html_url: href,
-        };
-        rememberPrivateReport(report, "html");
-        const registrationLink = buildRegistrationLink(report, "html");
-        if (typeof window.openPrivateReportModal === "function") {
-          window.openPrivateReportModal(report, "html");
+        if (typeof openHtmlReportViewer === "function") {
+          const title = typeof getHtmlViewerTitle === "function" ? getHtmlViewerTitle(link) : getLinkTitle(link);
+          openHtmlReportViewer(new URL(href, window.location.href).href, title);
         } else {
-          openPrivateReportFallback(report, registrationLink);
+          window.location.href = href;
         }
         return;
       }
