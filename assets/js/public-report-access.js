@@ -44,7 +44,7 @@
       if (typeof window.openPrivateReportModal === "function") {
         window.openPrivateReportModal(report, targetType);
       } else {
-        window.location.href = registrationLink;
+        openPrivateReportFallback(report, registrationLink);
       }
       return;
     }
@@ -92,7 +92,7 @@
         if (!report) return;
         const needsRegistration = isPrivateReport(report) && !hasPrivateReportAccess();
         if (report.pdf_url) link.href = needsRegistration ? buildRegistrationLink(report, "pdf") : report.pdf_url;
-        const text = needsRegistration ? "PDF privado" : report.pdf_url ? "Abrir PDF" : "PDF no disponible";
+        const text = needsRegistration ? "PDF: Solo con registro" : report.pdf_url ? "Abrir PDF" : "PDF no disponible";
         const label = link.querySelector("strong");
         if (label) label.textContent = text;
         if (link.classList.contains("request-link")) link.textContent = text;
@@ -107,7 +107,7 @@
         const report = findReportForLink(reports, link);
         if (!report) return;
         const needsRegistration = isPrivateReport(report) && !hasPrivateReportAccess();
-        link.textContent = needsRegistration ? "HTML privado" : "Graficos";
+        link.textContent = needsRegistration ? "HTML: Solo con registro" : "Graficos";
         if (isPrivateReport(report)) {
           link.dataset.privateReport = "true";
           link.dataset.reportId = report.id || "";
@@ -219,5 +219,44 @@
     }
     if (report?.id) sessionStorage.setItem(PRIVATE_REPORT_REGISTRATION_KEY, report.id);
     sessionStorage.setItem(PRIVATE_REPORT_TARGET_KEY, targetType || "pdf");
+  }
+
+  function openPrivateReportFallback(report, registrationLink) {
+    let modal = document.querySelector("[data-private-report-fallback]");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.className = "private-report-modal is-open";
+      modal.setAttribute("data-private-report-fallback", "");
+      modal.innerHTML = `
+        <div class="private-report-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="private-report-fallback-title">
+          <button class="private-report-modal__close" type="button" data-private-report-fallback-close aria-label="Cerrar">Cerrar</button>
+          <h2 id="private-report-fallback-title">Radiografia privada</h2>
+          <p class="private-report-modal__mode">Modo: Solo con registro</p>
+          <p>Esta radiografia tiene cerrado el acceso al HTML y al PDF. Para abrirla, registra tus datos.</p>
+          <div class="private-report-modal__actions">
+            <a class="primary-link" data-private-report-fallback-request href="#">Registrar datos</a>
+            <button class="secondary-link" type="button" data-private-report-fallback-close>Cancelar</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.addEventListener("click", (event) => {
+        if (event.target.closest("[data-private-report-fallback-close]")) {
+          modal.classList.remove("is-open");
+          document.body.style.overflow = "";
+          return;
+        }
+        if (event.target.closest("[data-private-report-fallback-request]")) {
+          event.preventDefault();
+          window.location.href = modal.__registrationLink || registrationLink;
+        }
+      });
+    }
+
+    modal.__registrationLink = registrationLink;
+    const title = modal.querySelector("#private-report-fallback-title");
+    if (title) title.textContent = report?.titulo ? `Radiografia privada: ${report.titulo}` : "Radiografia privada";
+    modal.classList.add("is-open");
+    document.body.style.overflow = "hidden";
   }
 })();

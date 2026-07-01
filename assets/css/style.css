@@ -1134,6 +1134,21 @@ body[data-page="contacto"] .section-title {
   line-height: 1.6;
 }
 
+.private-report-modal__mode {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid rgba(255, 214, 128, 0.62);
+  border-radius: 999px;
+  margin: 0 0 0.9rem;
+  padding: 0.32rem 0.72rem;
+  color: #ffe8ad !important;
+  background: rgba(130, 88, 2, 0.24);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .private-report-modal__close {
   position: absolute;
   top: 0.85rem;

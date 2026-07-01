@@ -1089,10 +1089,10 @@ function renderReports(reports, container, count) {
       const pdfHref = escapeAttribute(getPdfDownloadHref(report));
       const isPrivate = isPrivateReport(report);
       const accessGranted = hasPdfAccess();
-      const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Privado: HTML y PDF</em>' : "";
-      const graphLabel = isPrivate && !accessGranted ? "HTML privado" : "Graficos";
+      const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Modo: Solo con registro</em>' : "";
+      const graphLabel = isPrivate && !accessGranted ? "HTML: Solo con registro" : "Graficos";
       const pdfLabel = report.pdf_url
-        ? (isPrivate && !accessGranted ? "PDF privado" : accessGranted ? "Abrir PDF" : "Validar acceso")
+        ? (isPrivate && !accessGranted ? "PDF: Solo con registro" : accessGranted ? "Abrir PDF" : "Validar acceso")
         : "PDF no disponible";
       const reportIndexAttribute = ` data-report-index="${index}"`;
       const graphsAttribute = graphsUrl ? ` data-graphs-url="${graphsHref}"` : "";
@@ -1148,9 +1148,10 @@ function openPrivateReportModal(report, targetType = "pdf") {
       <div class="private-report-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="private-report-title">
         <button class="private-report-modal__close" type="button" data-private-report-close aria-label="Cerrar">Cerrar</button>
         <h2 id="private-report-title">Radiografia privada</h2>
-        <p>La presente Radiografia e informe grafico ahora son privados</p>
+        <p class="private-report-modal__mode">Modo: Solo con registro</p>
+        <p>Esta radiografia tiene cerrado el acceso al HTML y al PDF. Para abrirla, registra tus datos.</p>
         <div class="private-report-modal__actions">
-          <button class="primary-link" type="button" data-private-report-request>Solicitar</button>
+          <button class="primary-link" type="button" data-private-report-request>Registrar datos</button>
           <button class="secondary-link" type="button" data-private-report-close>Cancelar</button>
         </div>
       </div>
