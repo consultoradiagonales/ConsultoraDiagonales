@@ -448,7 +448,6 @@
       const listStatus = document.querySelector("[data-list-status]");
       const submit = document.querySelector("[data-submit]");
       const cancel = document.querySelector("[data-cancel]");
-      const PRIVATE_MARKER = "[[CD_PRIVATE]]";
 
       if (!ADMIN_KEY) {
         ADMIN_KEY = prompt("Clave de administrador") || "";
@@ -473,25 +472,12 @@
           .replaceAll("'", "&#039;");
       }
 
-      function stripPrivacyMarker(value) {
-        return String(value || "").replaceAll(PRIVATE_MARKER, "").trim();
-      }
-
-      function withPrivacyMarker(value, isPrivate) {
-        const clean = stripPrivacyMarker(value);
-        if (!isPrivate) return clean;
-        return clean ? `${PRIVATE_MARKER} ${clean}` : PRIVATE_MARKER;
-      }
-
       function isPrivateReport(report) {
-        return report?.is_private === true
-          || String(report?.is_private || "").toLowerCase() === "true"
-          || String(report?.localidad || "").includes(PRIVATE_MARKER)
-          || String(report?.provincia || "").includes(PRIVATE_MARKER);
+        return report?.is_private === true || String(report?.is_private || "").toLowerCase() === "true";
       }
 
       function displayPlace(report) {
-        return [stripPrivacyMarker(report.localidad), stripPrivacyMarker(report.provincia)].filter(Boolean).join(", ");
+        return [report.localidad, report.provincia].filter(Boolean).join(", ");
       }
 
       function setStatus(message) {
@@ -570,8 +556,7 @@
         }
 
         const body = new FormData(form);
-        body.delete("is_private");
-        body.set("localidad", withPrivacyMarker(body.get("localidad"), form.elements.is_private.checked));
+        body.set("is_private", form.elements.is_private.checked ? "true" : "false");
         if (!file) body.delete("archivo");
 
         submit.disabled = true;
@@ -602,8 +587,8 @@
         if (!report) return;
         form.elements.id.value = report.id || "";
         form.elements.titulo.value = report.titulo || "";
-        form.elements.provincia.value = stripPrivacyMarker(report.provincia || "");
-        form.elements.localidad.value = stripPrivacyMarker(report.localidad || "");
+        form.elements.provincia.value = report.provincia || "";
+        form.elements.localidad.value = report.localidad || "";
         form.elements.fecha.value = report.fecha || "";
         form.elements.archivo.value = "";
         form.elements.is_private.checked = isPrivateReport(report);
@@ -644,9 +629,10 @@
           const body = new FormData();
           body.append("id", id);
           body.append("titulo", report.titulo || "");
-          body.append("provincia", stripPrivacyMarker(report.provincia || ""));
-          body.append("localidad", withPrivacyMarker(report.localidad || "", isPrivate));
+          body.append("provincia", report.provincia || "");
+          body.append("localidad", report.localidad || "");
           body.append("fecha", report.fecha || "");
+          body.append("is_private", isPrivate ? "true" : "false");
           return body;
         };
 
