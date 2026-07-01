@@ -1210,7 +1210,8 @@ body[data-page="contacto"] .section-title {
   text-transform: uppercase;
 }
 
-.private-report-form input {
+.private-report-form input,
+.private-report-form select {
   width: 100%;
   min-height: 46px;
   border: 1px solid rgba(139, 207, 241, 0.28);
@@ -1221,7 +1222,12 @@ body[data-page="contacto"] .section-title {
   outline: none;
 }
 
-.private-report-form input:focus {
+.private-report-form select {
+  appearance: none;
+}
+
+.private-report-form input:focus,
+.private-report-form select:focus {
   border-color: rgba(130, 216, 255, 0.68);
   box-shadow: 0 0 0 3px rgba(130, 216, 255, 0.12);
 }

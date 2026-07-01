@@ -1239,6 +1239,13 @@ function openPrivateReportModal(report, targetType = "pdf") {
             <span>Organizacion o rol</span>
             <input name="organization" type="text" autocomplete="organization" placeholder="Consultora, medio, equipo..." />
           </label>
+          <label>
+            <span>Enviar pedido por</span>
+            <select name="notification_channel" data-private-report-channel>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="email">Email</option>
+            </select>
+          </label>
           <label class="checkbox-field">
             <input name="terms" type="checkbox" required />
             <span>Acepto el uso de mis datos para gestionar esta solicitud.</span>
@@ -1322,6 +1329,7 @@ async function submitPrivateReportRequest(modal, form) {
   const fullName = String(formData.get("full_name") || "").trim();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const organization = String(formData.get("organization") || "").trim();
+  const notificationChannel = String(formData.get("notification_channel") || "whatsapp");
 
   if (!phone) {
     if (status) status.textContent = "Dejanos un telefono para poder responder la solicitud.";
@@ -1352,7 +1360,12 @@ async function submitPrivateReportRequest(modal, form) {
     phone_validation_status: "request_submitted",
     consent_terms: true,
     last_seen_at: new Date().toISOString(),
-    tags: Array.from(new Set(["solicitud_radiografia", "radiografia_privada", targetType === "html" ? "solicitud_html" : "solicitud_pdf"])),
+    tags: Array.from(new Set([
+      "solicitud_radiografia",
+      "radiografia_privada",
+      targetType === "html" ? "solicitud_html" : "solicitud_pdf",
+      notificationChannel === "email" ? "pedido_por_email" : "pedido_por_whatsapp",
+    ])),
   };
 
   persistLocalContact(contact);
@@ -1370,6 +1383,7 @@ async function submitPrivateReportRequest(modal, form) {
     html_url: report.html_url || null,
     pdf_url: report.pdf_url || null,
     target_type: targetType,
+    notification_channel: notificationChannel,
     lugar: cleanReportField(report.localidad) || cleanReportField(report.provincia) || null,
     contact: {
       email,
@@ -1380,12 +1394,49 @@ async function submitPrivateReportRequest(modal, form) {
     },
   });
   await logReportInterest(report, "report_access_requested", buildPrivateReportRegistrationLink(report, targetType));
+  openPrivateReportNotificationChannel({ report, targetType, contact, notificationChannel });
 
-  if (status) status.textContent = "Solicitud enviada. Consultora Diagonales recibio tus datos y la radiografia solicitada.";
+  if (status) status.textContent = notificationChannel === "email"
+    ? "Solicitud registrada. Se abrio el email para enviarla a Consultora Diagonales."
+    : "Solicitud registrada. Se abrio WhatsApp para enviarla a Consultora Diagonales.";
   if (submit) {
     submit.disabled = true;
     submit.textContent = "Solicitud enviada";
   }
+}
+
+function openPrivateReportNotificationChannel({ report, targetType, contact, notificationChannel }) {
+  const consultoraEmail = "info.consultoradiagonales@gmail.com";
+  const consultoraWhatsapp = "5492216765720";
+  const reportTitle = report.titulo || report.title || "Radiografia sin titulo";
+  const targetLabel = targetType === "html" ? "HTML / graficos" : "PDF";
+  const place = cleanReportField(report.localidad) || cleanReportField(report.provincia) || "Territorio no informado";
+  const lines = [
+    "Solicitud de radiografia privada",
+    "",
+    `Radiografia: ${reportTitle}`,
+    `Formato solicitado: ${targetLabel}`,
+    report.id ? `ID: ${report.id}` : "",
+    `Lugar: ${place}`,
+    "",
+    "Datos del solicitante:",
+    `Nombre: ${contact.full_name || "No informado"}`,
+    `Telefono: ${contact.phone || "No informado"}`,
+    `Email: ${contact.email || "No informado"}`,
+    `Organizacion/Rol: ${contact.organization || "No informado"}`,
+    "",
+    "Pedido generado desde consultoradiagonales.com.ar",
+  ].filter(Boolean);
+  const body = lines.join("\n");
+  const subject = `Solicitud de radiografia: ${reportTitle}`.slice(0, 140);
+
+  if (notificationChannel === "email") {
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(consultoraEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(gmailUrl, "_blank", "noopener");
+    return;
+  }
+
+  window.open(`https://wa.me/${consultoraWhatsapp}?text=${encodeURIComponent(body)}`, "_blank", "noopener");
 }
 
 window.openPrivateReportModal = openPrivateReportModal;
