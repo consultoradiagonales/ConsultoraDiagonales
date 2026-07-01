@@ -1013,6 +1013,7 @@ async function loadReports() {
 }
 
 function renderReportsLegacy(reports, container, count) {
+  rememberRenderedReports(reports);
   if (count) count.textContent = `Total cargadas: ${reports.length}`;
 
   if (!reports.length) {
@@ -1071,6 +1072,7 @@ function renderReportsLegacy(reports, container, count) {
 }
 
 function renderReports(reports, container, count) {
+  rememberRenderedReports(reports);
   if (count) count.textContent = `Total cargadas: ${reports.length}`;
 
   if (!reports.length) {
@@ -1091,10 +1093,10 @@ function renderReports(reports, container, count) {
       const isPrivate = isPrivateReport(report);
       const accessGranted = hasPdfAccess();
       const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Modo: Solo con registro</em>' : "";
-      const graphLabel = isPrivate && !accessGranted ? "HTML: Solo con registro" : "Graficos";
+      const graphLabel = "Graficos";
       const pdfLabel = report.pdf_url
-        ? (isPrivate && !accessGranted ? "PDF: Solo con registro" : accessGranted ? "Abrir PDF" : "Validar acceso")
-        : "PDF no disponible";
+        ? (isPrivate && !accessGranted ? "Solicitar acceso" : "Abrir PDF")
+        : "Solicitar radiografia";
       const reportIndexAttribute = ` data-report-index="${index}"`;
       const graphsAttribute = graphsUrl ? ` data-graphs-url="${graphsHref}"` : "";
       const privateAttribute = isPrivate
@@ -1141,6 +1143,10 @@ function isPrivateReport(report) {
     || String(report?.provincia || "").includes(PRIVATE_REPORT_MARKER);
 }
 
+function rememberRenderedReports(reports) {
+  window.CD_REPORTS_CACHE = Array.isArray(reports) ? reports : [];
+}
+
 function cleanReportField(value) {
   return String(value || "").replaceAll(PRIVATE_REPORT_MARKER, "").trim();
 }
@@ -1155,11 +1161,11 @@ function openPrivateReportModal(report, targetType = "pdf") {
     modal.innerHTML = `
       <div class="private-report-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="private-report-title">
         <button class="private-report-modal__close" type="button" data-private-report-close aria-label="Cerrar">Cerrar</button>
-        <h2 id="private-report-title">Radiografia privada</h2>
+        <h2 id="private-report-title">Solicitar radiografia</h2>
         <p class="private-report-modal__mode">Modo: Solo con registro</p>
-        <p>Esta radiografia tiene cerrado el acceso al HTML y al PDF. Para abrirla, registra tus datos.</p>
+        <p data-private-report-detail>Esta radiografia tiene cerrado el acceso al HTML y al PDF. Para abrirla, registra tus datos.</p>
         <div class="private-report-modal__actions">
-          <button class="primary-link" type="button" data-private-report-request>Registrar datos</button>
+          <button class="primary-link" type="button" data-private-report-request>Solicitar esta radiografia</button>
           <button class="secondary-link" type="button" data-private-report-close>Cancelar</button>
         </div>
       </div>
@@ -1183,6 +1189,14 @@ function openPrivateReportModal(report, targetType = "pdf") {
 
   modal.__activeReport = report || {};
   modal.__activeTarget = targetType || "pdf";
+  const title = String(report?.titulo || report?.title || "").trim();
+  const titleNode = modal.querySelector("#private-report-title");
+  const detailNode = modal.querySelector("[data-private-report-detail]");
+  if (titleNode) titleNode.textContent = title ? `Solicitar radiografia: ${title}` : "Solicitar radiografia";
+  if (detailNode) {
+    const targetLabel = targetType === "html" ? "graficos HTML" : "PDF";
+    detailNode.textContent = `Esta radiografia esta en modo Solo con registro. Dejanos tus datos para solicitar el acceso al ${targetLabel}.`;
+  }
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -1225,6 +1239,8 @@ function hasPdfAccess() {
   return Boolean(contact.phone && (gmailValidated || phoneValidated || statusValidated));
 }
 
+window.hasPrivateReportAccess = hasPdfAccess;
+
 function buildPrivateReportRegistrationLink(report, targetType = "pdf") {
   const next = new URL(window.location.href);
   if (report?.id) next.searchParams.set("report", report.id);
@@ -1247,7 +1263,7 @@ window.buildPrivateReportRegistrationLink = buildPrivateReportRegistrationLink;
 window.rememberPrivateReport = rememberPrivateReport;
 
 function getPdfDownloadHref(report) {
-  if (hasPdfAccess() && report.pdf_url) return report.pdf_url;
+  if (report?.pdf_url && (!isPrivateReport(report) || hasPdfAccess())) return report.pdf_url;
   return buildPrivateReportRegistrationLink(report, "pdf");
 }
 
@@ -1396,6 +1412,14 @@ function bindReportOpenLinks(container, reports) {
       const report = reports[Number(link.dataset.reportIndex)];
       if (!report) return;
 
+      if (isPrivateReport(report) && !hasPdfAccess()) {
+        event.preventDefault();
+        rememberPrivateReport(report, "html");
+        await logReportInterest(report, "report_access_requested", buildPrivateReportRegistrationLink(report, "html"));
+        openPrivateReportModal(report, "html");
+        return;
+      }
+
       await logReportInterest(report, "report_open", report.html_url || link.href);
     });
   });
@@ -1407,13 +1431,16 @@ function initHtmlReportViewer() {
     if (!link) return;
 
     event.preventDefault();
-    if (link.dataset.privateReport === "true" && !hasPdfAccess()) {
+    const cachedReport = findCachedReportForLink(link);
+    if ((cachedReport ? isPrivateReport(cachedReport) : link.dataset.privateReport === "true") && !hasPdfAccess()) {
       const report = {
-        id: link.dataset.reportId || null,
-        titulo: link.dataset.privateTitle || getHtmlViewerTitle(link),
-        html_url: link.href || null,
+        ...(cachedReport || {}),
+        id: cachedReport?.id || link.dataset.reportId || null,
+        titulo: cachedReport?.titulo || link.dataset.privateTitle || getHtmlViewerTitle(link),
+        html_url: cachedReport?.html_url || link.href || null,
       };
       rememberPrivateReport(report, "html");
+      logReportInterest(report, "report_access_requested", buildPrivateReportRegistrationLink(report, "html")).catch(() => {});
       openPrivateReportModal(report, "html");
       return;
     }
@@ -1421,6 +1448,15 @@ function initHtmlReportViewer() {
   });
 
   openSharedHtmlViewerFromUrl();
+}
+
+function findCachedReportForLink(link) {
+  const reports = Array.isArray(window.CD_REPORTS_CACHE) ? window.CD_REPORTS_CACHE : [];
+  const byIndex = reports[Number(link.dataset.reportIndex)];
+  if (byIndex) return byIndex;
+  const reportId = link.dataset.reportId;
+  if (reportId) return reports.find((item) => item.id === reportId) || null;
+  return null;
 }
 
 async function initNewsPage() {

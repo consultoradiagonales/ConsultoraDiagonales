@@ -11,7 +11,35 @@
       const link = event.target.closest("[data-pdf-download]");
       if (!link) return;
 
+      if (link.dataset.privateReport === "true" && !hasPrivateReportAccess()) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const report = {
+          id: link.dataset.reportId || null,
+          titulo: link.dataset.privateTitle || getPdfTitle(link),
+          pdf_url: link.dataset.pdfUnavailable === "true" ? null : link.href || null,
+        };
+        if (typeof window.rememberPrivateReport === "function") window.rememberPrivateReport(report, "pdf");
+        if (typeof window.openPrivateReportModal === "function") {
+          window.openPrivateReportModal(report, "pdf");
+        }
+        return;
+      }
+
       const url = new URL(link.href, window.location.href);
+      if (link.dataset.pdfUnavailable === "true") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const report = {
+          id: link.dataset.reportId || null,
+          titulo: link.dataset.privateTitle || getPdfTitle(link),
+          pdf_url: null,
+        };
+        if (typeof window.rememberPrivateReport === "function") window.rememberPrivateReport(report, "pdf");
+        if (typeof window.openPrivateReportModal === "function") window.openPrivateReportModal(report, "pdf");
+        return;
+      }
+
       if (url.pathname.includes(REGISTRATION_PATH)) return;
 
       event.preventDefault();
@@ -70,6 +98,11 @@
     const cardTitle = link.closest(".report-card")?.querySelector("h2")?.textContent?.trim();
     const listTitle = link.closest(".latest-list a")?.querySelector("span")?.textContent?.trim();
     return cardTitle || listTitle || "Radiografia";
+  }
+
+  function hasPrivateReportAccess() {
+    if (typeof window.hasPrivateReportAccess === "function") return window.hasPrivateReportAccess();
+    return false;
   }
 
   function closePdfViewer() {

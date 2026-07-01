@@ -22,18 +22,18 @@
     if (!link || event.target.closest(".radiografia-share-link")) return;
 
     const targetType = htmlLink ? "html" : "pdf";
-    const privateMarked = link.dataset.privateReport === "true";
-    if (htmlLink && !privateMarked) return;
-    if (pdfLink || privateMarked) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
 
     const reports = await getReports();
     const report = findReportForLink(reports, link);
-    if (!report) return;
+    if (!report) {
+      openUnknownPublicTarget(link, targetType);
+      return;
+    }
 
-    const shouldAskForRegistration = !hasPrivateReportAccess() && (isPrivateReport(report) || targetType === "pdf" || !report.pdf_url);
+    const isMissingTarget = targetType === "pdf" ? !report.pdf_url : !report.html_url && !link.href;
+    const shouldAskForRegistration = isMissingTarget || (!hasPrivateReportAccess() && isPrivateReport(report));
     if (shouldAskForRegistration) {
       const registrationLink = buildRegistrationLink(report, targetType);
       rememberPrivateReport(report, targetType);
@@ -92,9 +92,15 @@
       container.querySelectorAll("[data-pdf-download]").forEach((link) => {
         const report = findReportForLink(reports, link);
         if (!report) return;
-        const needsRegistration = !hasPrivateReportAccess() && Boolean(report.pdf_url);
-        if (report.pdf_url) link.href = needsRegistration ? buildRegistrationLink(report, "pdf") : report.pdf_url;
-        const text = needsRegistration ? "PDF: Solo con registro" : report.pdf_url ? "Abrir PDF" : "PDF no disponible";
+        const needsRegistration = isPrivateReport(report) && !hasPrivateReportAccess();
+        if (report.pdf_url && !needsRegistration) {
+          link.href = report.pdf_url;
+          delete link.dataset.pdfUnavailable;
+        } else {
+          link.href = buildRegistrationLink(report, "pdf");
+          if (!report.pdf_url) link.dataset.pdfUnavailable = "true";
+        }
+        const text = !report.pdf_url ? "Solicitar radiografia" : needsRegistration ? "Solicitar acceso" : "Abrir PDF";
         const label = link.querySelector("strong");
         if (label) label.textContent = text;
         if (link.classList.contains("request-link")) link.textContent = text;
@@ -171,8 +177,14 @@
   }
 
   function getReports() {
+    const cached = getCachedReports();
+    if (cached) return Promise.resolve(cached);
     if (!reportsPromise) reportsPromise = fetchReports();
     return reportsPromise;
+  }
+
+  function getCachedReports() {
+    return Array.isArray(window.CD_REPORTS_CACHE) ? window.CD_REPORTS_CACHE : null;
   }
 
   async function fetchReports() {
@@ -197,7 +209,9 @@
       });
     }
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
+    const reports = await response.json();
+    window.CD_REPORTS_CACHE = Array.isArray(reports) ? reports : [];
+    return window.CD_REPORTS_CACHE;
   }
 
   function isPrivateReport(report) {
@@ -208,7 +222,43 @@
   }
 
   function hasPrivateReportAccess() {
-    return Boolean(localStorage.getItem(PHONE_VERIFIED_KEY) || localStorage.getItem(GMAIL_VERIFIED_KEY));
+    if (typeof window.hasPrivateReportAccess === "function") {
+      return window.hasPrivateReportAccess();
+    }
+    const contact = JSON.parse(localStorage.getItem("cd:contact") || "{}");
+    const gmailValidated = localStorage.getItem(GMAIL_VERIFIED_KEY) === contact.visitor_id;
+    const phoneValidated = localStorage.getItem(PHONE_VERIFIED_KEY) === contact.phone;
+    const statusValidated = ["phone_verified", "gmail_verified"].includes(contact.phone_validation_status);
+    if (contact.phone && (gmailValidated || phoneValidated || statusValidated)) return true;
+    return false;
+  }
+
+  function openUnknownPublicTarget(link, targetType) {
+    const href = link.href || "";
+    if (targetType === "html" && href) {
+      if (typeof openHtmlReportViewer === "function") {
+        const title = typeof getHtmlViewerTitle === "function" ? getHtmlViewerTitle(link) : "Radiografia";
+        openHtmlReportViewer(new URL(href, window.location.href).href, title);
+      } else {
+        window.location.href = href;
+      }
+      return;
+    }
+
+    if (targetType === "pdf" && href && !href.includes("/registro/")) {
+      if (typeof openPdfViewer === "function") {
+        openPdfViewer({ titulo: getLinkTitle(link), pdf_url: href });
+      } else {
+        window.location.href = href;
+      }
+    }
+  }
+
+  function getLinkTitle(link) {
+    return link.closest(".latest-report-row")?.querySelector("span")?.textContent?.trim()
+      || link.closest(".report-card")?.querySelector("h2")?.textContent?.trim()
+      || link.dataset.privateTitle
+      || "Radiografia";
   }
 
   function buildRegistrationLink(report, targetType = "pdf") {
@@ -248,7 +298,7 @@
           <p class="private-report-modal__mode">Modo: Solo con registro</p>
           <p>Esta radiografia tiene cerrado el acceso al HTML y al PDF. Para abrirla, registra tus datos.</p>
           <div class="private-report-modal__actions">
-            <a class="primary-link" data-private-report-fallback-request href="#">Registrar datos</a>
+            <a class="primary-link" data-private-report-fallback-request href="#">Solicitar esta radiografia</a>
             <button class="secondary-link" type="button" data-private-report-fallback-close>Cancelar</button>
           </div>
         </div>
