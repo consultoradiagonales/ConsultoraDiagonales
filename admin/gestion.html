@@ -432,6 +432,56 @@
           <p class="list-status" data-list-status role="status"></p>
         </section>
       </section>
+
+      <section class="grid" style="margin-top: 2rem;">
+        <form class="panel" data-medios-form>
+          <div class="list-head">
+            <h2>Notas en medios</h2>
+          </div>
+          <label>
+            Medio
+            <select name="medio" required>
+              <option value="">Elegí el medio...</option>
+              <option value="newsdigitales">News Digitales (La Plata)</option>
+              <option value="realpolitik">Realpolitik (La Plata)</option>
+              <option value="radio-buenos-aires">Radio Buenos Aires (CABA)</option>
+              <option value="aconcagua">Aconcagua Radio (Mendoza)</option>
+              <option value="la-sintesis">La Síntesis (Saladillo)</option>
+            </select>
+          </label>
+          <label>
+            URL de la nota
+            <input name="url" type="url" placeholder="https://..." required />
+          </label>
+          <label>
+            Título
+            <input name="titulo" type="text" placeholder="Título de la nota" required />
+          </label>
+          <label>
+            Fecha
+            <input name="fecha" type="date" />
+          </label>
+          <label>
+            Descripción (opcional)
+            <input name="descripcion" type="text" placeholder="Breve descripción" />
+          </label>
+          <div class="actions">
+            <button type="submit" data-medios-submit>Agregar nota</button>
+          </div>
+          <p class="status" data-medios-status></p>
+        </form>
+
+        <section class="panel">
+          <div class="list-head">
+            <h2>Notas cargadas</h2>
+            <button type="button" data-medios-refresh>Actualizar</button>
+          </div>
+          <div class="report-list" data-medios-list>
+            <p class="empty">Cargando notas...</p>
+          </div>
+          <p class="list-status" data-medios-list-status role="status"></p>
+        </section>
+      </section>
     </main>
 
     <script src="../assets/js/supabase-config.js?v=admin-gestion"></script>
@@ -686,6 +736,120 @@
 
       loadReports().catch((error) => {
         list.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
+      });
+
+      // ================= NOTAS EN MEDIOS =================
+      const MEDIOS_NOMBRES = {
+        "newsdigitales": "News Digitales",
+        "realpolitik": "Realpolitik",
+        "radio-buenos-aires": "Radio Buenos Aires",
+        "aconcagua": "Aconcagua Radio",
+        "la-sintesis": "La Síntesis",
+      };
+      const mediosForm = document.querySelector("[data-medios-form]");
+      const mediosList = document.querySelector("[data-medios-list]");
+      const mediosStatus = document.querySelector("[data-medios-status]");
+      const mediosListStatus = document.querySelector("[data-medios-list-status]");
+      const mediosSubmit = document.querySelector("[data-medios-submit]");
+      let notasMedios = [];
+
+      function renderNotasMedios() {
+        if (!notasMedios.length) {
+          mediosList.innerHTML = '<p class="empty">Todavia no hay notas cargadas.</p>';
+          return;
+        }
+        mediosList.innerHTML = notasMedios
+          .map((nota) => `
+            <article class="report-row">
+              <div class="report-details">
+                <div class="report-title">${escapeHtml(nota.titulo)}</div>
+                <span class="privacy-badge">${escapeHtml(MEDIOS_NOMBRES[nota.medio] || nota.medio)}</span>
+                <div class="report-meta">
+                  <div>${escapeHtml(nota.fecha || "")}</div>
+                  ${nota.descripcion ? `<div>${escapeHtml(nota.descripcion)}</div>` : ""}
+                </div>
+              </div>
+              <div class="actions report-actions">
+                <a class="button" href="${escapeHtml(nota.url)}" target="_blank" rel="noopener">Abrir nota</a>
+                <button class="danger" type="button" data-medios-delete="${escapeHtml(nota.id)}">Eliminar</button>
+              </div>
+            </article>`)
+          .join("");
+      }
+
+      async function loadNotasMedios() {
+        mediosList.innerHTML = '<p class="empty">Cargando notas...</p>';
+        mediosListStatus.textContent = "";
+        const response = await fetch(`${endpoint}/admin-medios?v=${Date.now()}`, { headers: headers() });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "No se pudieron cargar las notas.");
+        notasMedios = data.notas || [];
+        renderNotasMedios();
+      }
+
+      mediosForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const body = {
+          medio: mediosForm.elements.medio.value,
+          url: mediosForm.elements.url.value.trim(),
+          titulo: mediosForm.elements.titulo.value.trim(),
+          fecha: mediosForm.elements.fecha.value || "",
+          descripcion: mediosForm.elements.descripcion.value.trim(),
+        };
+        if (!body.medio || !body.url || !body.titulo) {
+          mediosStatus.textContent = "Elegí el medio, pegá la URL y poné un título.";
+          return;
+        }
+        mediosSubmit.disabled = true;
+        mediosSubmit.textContent = "Agregando...";
+        mediosStatus.textContent = "Guardando nota...";
+        try {
+          const response = await fetch(`${endpoint}/admin-medios`, {
+            method: "POST",
+            headers: headers({ "content-type": "application/json" }),
+            body: JSON.stringify(body),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || "No se pudo guardar la nota.");
+          mediosForm.reset();
+          mediosStatus.textContent = "Nota agregada. Ya aparece en la página de medios.";
+          await loadNotasMedios();
+        } catch (error) {
+          mediosStatus.textContent = error.message;
+        } finally {
+          mediosSubmit.disabled = false;
+          mediosSubmit.textContent = "Agregar nota";
+        }
+      });
+
+      mediosList.addEventListener("click", async (event) => {
+        const del = event.target.closest("[data-medios-delete]");
+        if (!del) return;
+        event.preventDefault();
+        const nota = notasMedios.find((item) => item.id === del.dataset.mediosDelete);
+        if (!nota || !confirm(`Eliminar la nota "${nota.titulo}"?`)) return;
+        mediosListStatus.textContent = "Eliminando nota...";
+        try {
+          const response = await fetch(`${endpoint}/admin-medios`, {
+            method: "DELETE",
+            headers: headers({ "content-type": "application/json" }),
+            body: JSON.stringify({ id: nota.id }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || "No se pudo eliminar.");
+          await loadNotasMedios();
+          mediosListStatus.textContent = "Nota eliminada.";
+        } catch (error) {
+          mediosListStatus.textContent = error.message;
+        }
+      });
+
+      document.querySelector("[data-medios-refresh]").addEventListener("click", () => {
+        loadNotasMedios().catch((error) => (mediosListStatus.textContent = error.message));
+      });
+
+      loadNotasMedios().catch((error) => {
+        mediosList.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
       });
     </script>
   </body>

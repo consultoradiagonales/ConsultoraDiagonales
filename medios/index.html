@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Repositorio de notas y coberturas de Consultora Diagonales en medios de comunicación." />
+    <title>Nuestro trabajo en los medios | Consultora Diagonales</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260702-medios" />
+    <style>
+      .medios-shell{min-height:100vh;padding:9rem 1.5rem 5rem;background:linear-gradient(180deg,rgba(187,241,255,.9),rgba(72,164,189,.78) 38%,#062236 100%)}
+      .medios-inner{width:min(100%,1180px);margin:0 auto}
+      .medios-head{display:grid;gap:1rem;margin-bottom:2rem}
+      .medios-head h1{max-width:850px;color:#08253d;font-size:clamp(2.4rem,6vw,5rem);font-weight:950;line-height:.95}
+      .medios-head p{max-width:720px;color:#12354b;font-size:1.05rem;line-height:1.7}
+      .medios-tabs{display:flex;flex-wrap:wrap;gap:.75rem;margin:1.5rem 0 2.5rem}
+      .medios-tab{border:1px solid rgba(7,45,70,.2);border-radius:999px;padding:.75rem 1.1rem;color:#08253d;background:rgba(255,255,255,.42);font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;cursor:pointer;transition:all .2s}
+      .medios-tab:hover{border-color:#009AFE}
+      .medios-tab.is-active{color:#fff;background:#08364a;border-color:#08364a}
+      .medio-section{margin-bottom:3rem;scroll-margin-top:132px}
+      .medio-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:.75rem 1.25rem;margin-bottom:1.1rem;padding-bottom:.7rem;border-bottom:2px solid rgba(0,58,144,.25)}
+      .medio-header h2{color:#003A90;font-size:clamp(1.5rem,3vw,2.2rem);font-weight:950}
+      .medio-header .medio-meta{color:#12354b;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:.75rem}
+      .medio-header .medio-count{margin-left:auto;color:#08364a;background:rgba(255,255,255,.55);border:1px solid rgba(7,45,70,.18);border-radius:999px;padding:.35rem .85rem;font-weight:900;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}
+      .notas-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+      .nota-card{display:grid;align-content:start;gap:.7rem;border:1px solid rgba(139,207,241,.3);border-radius:14px;padding:1.15rem;color:#fff;background:rgba(3,27,45,.82);text-decoration:none;box-shadow:0 20px 50px rgba(0,14,24,.22);transition:transform .18s,border-color .18s}
+      .nota-card:hover{transform:translateY(-3px);border-color:#6ED5FF}
+      .nota-card small{color:#79dfff;font-weight:900;text-transform:uppercase;letter-spacing:.14em}
+      .nota-card h3{font-size:1.1rem;font-weight:900;line-height:1.25}
+      .nota-card p{color:rgba(232,247,255,.78);line-height:1.5;font-size:.9rem}
+      .nota-card span{color:#dff8ff;font-size:.74rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em}
+      .medio-empty{grid-column:1/-1;border:1px dashed rgba(7,45,70,.35);border-radius:14px;padding:1.2rem;color:#12354b;background:rgba(255,255,255,.35);font-weight:700}
+      @media(max-width:900px){.notas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      @media(max-width:640px){.medios-shell{padding:7.5rem 1rem 4rem}.notas-grid{grid-template-columns:1fr}.medios-head h1{font-size:2.5rem}.medio-header .medio-count{margin-left:0}}
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-[#080d14] text-white antialiased" data-page="medios">
+    <header class="site-header is-solid" data-header>
+      <a class="brand" href="../index.html" aria-label="Consultora Diagonales"><img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo /><img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo /></a>
+      <nav class="desktop-nav" aria-label="Navegación principal"><a href="../index.html" data-nav="inicio">Inicio</a><a href="../servicios/index.html" data-nav="servicios">Servicios</a><a href="../repositorio/index.html" data-nav="radiografias">Radiografías</a><a href="../noticias/index.html" data-nav="noticias">Noticias</a><a href="../contacto/index.html" data-nav="contacto">Contacto</a><a href="../admin/index.html" data-nav="admin">Admin</a></nav>
+      <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle><span></span><span></span><span></span></button>
+    </header>
+    <div class="mobile-menu" data-mobile-menu aria-hidden="true"><a href="../index.html">Inicio</a><a href="../servicios/index.html">Servicios</a><a href="../repositorio/index.html">Radiografías</a><a href="../noticias/index.html">Noticias</a><a href="../contacto/index.html">Contacto</a><a href="../admin/index.html">Admin</a></div>
+
+    <main class="medios-shell">
+      <section class="medios-inner">
+        <div class="medios-head">
+          <p class="eyebrow">Prensa</p>
+          <h1>Nuestro trabajo en los medios.</h1>
+          <p>Repositorio de notas, coberturas y entrevistas de Consultora Diagonales, organizado por medio de comunicación.</p>
+        </div>
+        <div class="medios-tabs" data-medios-tabs aria-label="Filtrar por medio">
+          <button class="medios-tab is-active" type="button" data-medio-tab="all">Todos</button>
+        </div>
+        <div data-medios-list></div>
+      </section>
+    </main>
+
+    <footer class="site-footer"><span>&copy; CONSULTORA DIAGONALES | Data Analytics.</span></footer>
+
+    <script src="../assets/js/supabase-config.js?v=20260531-gmail-access"></script>
+    <script src="../assets/js/main.js?v=20260702-medios"></script>
+    <script src="../assets/js/medios-data.js?v=20260702-medios"></script>
+    <script>
+      (async function () {
+        const CATALOGO = [
+          { slug: "newsdigitales", nombre: "News Digitales", ubicacion: "La Plata", tipo: "Portal de noticias" },
+          { slug: "realpolitik", nombre: "Realpolitik", ubicacion: "La Plata", tipo: "Portal de noticias" },
+          { slug: "radio-buenos-aires", nombre: "Radio Buenos Aires", ubicacion: "CABA", tipo: "Radio" },
+          { slug: "aconcagua", nombre: "Aconcagua Radio", ubicacion: "Mendoza", tipo: "Radio / Podcast" },
+          { slug: "la-sintesis", nombre: "La Síntesis", ubicacion: "Saladillo", tipo: "Diario digital" },
+        ];
+
+        async function cargarNotas() {
+          // 1) Supabase: fuente principal (se cargan desde el admin)
+          const config = window.CD_SUPABASE || {};
+          if (config.url && config.anonKey) {
+            try {
+              const response = await fetch(
+                `${config.url}/rest/v1/notas_medios?select=*&order=fecha.desc,created_at.desc`,
+                { headers: { apikey: config.anonKey, Authorization: `Bearer ${config.anonKey}` } }
+              );
+              if (response.ok) {
+                const rows = await response.json();
+                if (Array.isArray(rows)) return rows;
+              }
+            } catch (_) {
+              // Cae al respaldo estático
+            }
+          }
+          // 2) Respaldo estático (medios-data.js)
+          const estaticos = Array.isArray(window.CD_MEDIOS) ? window.CD_MEDIOS : [];
+          return estaticos.flatMap((medio) =>
+            (medio.notas || []).map((nota) => ({ ...nota, medio: medio.slug }))
+          );
+        }
+
+        const notas = await cargarNotas();
+        const medios = CATALOGO.map((medio) => ({
+          ...medio,
+          notas: notas.filter((nota) => nota.medio === medio.slug),
+        }));
+
+        const list = document.querySelector("[data-medios-list]");
+        const tabs = document.querySelector("[data-medios-tabs]");
+        if (!list || !tabs) return;
+
+        const escapeHtml = (value) =>
+          String(value || "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+
+        const formatFecha = (value) => {
+          if (!value) return "";
+          const [year, month] = String(value).split("-");
+          const meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+          const m = Number(month);
+          return m >= 1 && m <= 12 ? `${meses[m - 1]} ${year}` : escapeHtml(value);
+        };
+
+        // Tabs por medio
+        medios.forEach((medio) => {
+          const tab = document.createElement("button");
+          tab.type = "button";
+          tab.className = "medios-tab";
+          tab.dataset.medioTab = medio.slug;
+          tab.textContent = medio.nombre;
+          tabs.appendChild(tab);
+        });
+
+        // Secciones por medio
+        list.innerHTML = medios
+          .map((medio) => {
+            const notas = Array.isArray(medio.notas) ? medio.notas : [];
+            const cards = notas.length
+              ? notas
+                  .map(
+                    (nota) => `
+                      <a class="nota-card" href="${escapeHtml(nota.url)}" target="_blank" rel="noopener noreferrer">
+                        <small>${formatFecha(nota.fecha)}</small>
+                        <h3>${escapeHtml(nota.titulo)}</h3>
+                        <p>${escapeHtml(nota.descripcion)}</p>
+                        <span>Abrir nota →</span>
+                      </a>`
+                  )
+                  .join("")
+              : '<div class="medio-empty">Todavía no hay notas cargadas para este medio.</div>';
+
+            return `
+              <section class="medio-section" id="${escapeHtml(medio.slug)}" data-medio-section="${escapeHtml(medio.slug)}">
+                <div class="medio-header">
+                  <h2>${escapeHtml(medio.nombre)}</h2>
+                  <span class="medio-meta">${escapeHtml(medio.tipo)} · ${escapeHtml(medio.ubicacion)}</span>
+                  <span class="medio-count">${notas.length} ${notas.length === 1 ? "nota" : "notas"}</span>
+                </div>
+                <div class="notas-grid">${cards}</div>
+              </section>`;
+          })
+          .join("");
+
+        function applyFilter(slug) {
+          document.querySelectorAll("[data-medio-tab]").forEach((tab) => {
+            tab.classList.toggle("is-active", tab.dataset.medioTab === slug);
+          });
+          document.querySelectorAll("[data-medio-section]").forEach((section) => {
+            section.style.display = slug === "all" || section.dataset.medioSection === slug ? "" : "none";
+          });
+        }
+
+        tabs.addEventListener("click", (event) => {
+          const tab = event.target.closest("[data-medio-tab]");
+          if (!tab) return;
+          const slug = tab.dataset.medioTab;
+          applyFilter(slug);
+          if (slug !== "all") history.replaceState(null, "", `#${slug}`);
+          else history.replaceState(null, "", location.pathname);
+        });
+
+        // Si llega con #realpolitik (desde el logo del inicio), filtrar directo
+        const initial = location.hash.replace("#", "");
+        if (initial && medios.some((m) => m.slug === initial)) applyFilter(initial);
+      })();
+    </script>
+  </body>
+</html>
