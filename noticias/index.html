@@ -22,13 +22,71 @@
     <div class="mobile-menu" data-mobile-menu aria-hidden="true"><a href="../index.html">Inicio</a><a href="../servicios/index.html">Servicios</a><a href="../repositorio/index.html">Radiografías</a><a href="index.html">Noticias</a><a href="../contacto/index.html">Contacto</a><a href="../admin/index.html">Admin</a></div>
     <main class="news-shell">
       <section class="news-inner">
-        <div class="news-head"><p class="eyebrow">Noticias</p><h1>Actualidad para leer el territorio.</h1><p>Seguimiento de noticias políticas, económicas, sanitarias y coyunturales que alimentan la toma de decisiones y el monitoreo de usuarios registrados o identificados por IP.</p></div>
+        <div class="news-head"><p class="eyebrow">Noticias</p><h1>Actualidad para leer el territorio.</h1><p>Seguimiento de noticias políticas, económicas, sanitarias y coyunturales que alimentan la toma de decisiones.</p></div>
         <div class="news-controls" aria-label="Filtrar noticias por categoría"><button class="news-filter is-active" type="button" data-news-filter="all">Todas</button><button class="news-filter" type="button" data-news-filter="politica">Política</button><button class="news-filter" type="button" data-news-filter="economia">Economía</button><button class="news-filter" type="button" data-news-filter="salud">Salud</button><button class="news-filter" type="button" data-news-filter="otros">Otros</button></div>
         <div class="news-grid" data-news-list><div class="news-empty">Cargando noticias.</div></div>
+
+        <section style="margin-top:3.5rem" aria-label="Nuestro trabajo en los medios">
+          <p style="color:#08253d;font-weight:900;text-transform:uppercase;letter-spacing:.12em;font-size:.85rem;margin-bottom:1.1rem">Nuestro trabajo en los medios</p>
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.8rem" data-medios-logos></div>
+        </section>
       </section>
     </main>
     <footer class="site-footer"><span>&copy; CONSULTORA DIAGONALES | Data Analytics.</span></footer>
     <script src="../assets/js/supabase-config.js?v=20260531-gmail-access"></script>
-    <script src="../assets/js/main.js?v=20260627-news-section"></script>
+    <script src="../assets/js/main.js?v=20260702-news"></script>
+    <script>
+      (async function(){
+        const cfg = window.CD_SUPABASE || {};
+        const esc = v => String(v||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+        const fFecha = v => { if(!v) return ""; const [y,m]=String(v).split("-"); const M=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"]; const n=Number(m); return n>=1&&n<=12?`${M[n-1]} ${y}`:esc(v); };
+
+        // ---- Noticias desde Supabase ----
+        const listEl = document.querySelector("[data-news-list]");
+        let noticias = [];
+        try {
+          const r = await fetch(`${cfg.url}/rest/v1/noticias?select=*&order=fecha.desc,created_at.desc`, {headers:{apikey:cfg.anonKey,Authorization:`Bearer ${cfg.anonKey}`}});
+          if(r.ok){ const d = await r.json(); if(Array.isArray(d)) noticias = d; }
+        } catch(_){}
+        function renderNoticias(cat){
+          const items = cat && cat!=="all" ? noticias.filter(n=>n.categoria===cat) : noticias;
+          listEl.innerHTML = items.length ? items.map(n=>`
+            <a class="news-card" href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">
+              <small>${fFecha(n.fecha)}${n.fuente?" · "+esc(n.fuente):""}</small>
+              <h2>${esc(n.titulo)}</h2>
+              ${n.descripcion?`<p>${esc(n.descripcion)}</p>`:""}
+              <span>Leer nota →</span>
+            </a>`).join("") : '<div class="news-empty">Todavía no hay noticias cargadas en esta categoría.</div>';
+        }
+        renderNoticias("all");
+        document.querySelectorAll("[data-news-filter]").forEach(b=>b.addEventListener("click",()=>{
+          document.querySelectorAll("[data-news-filter]").forEach(x=>x.classList.toggle("is-active",x===b));
+          renderNoticias(b.dataset.newsFilter);
+        }));
+
+        // ---- Logos de medios (desde tabla, link al repositorio) ----
+        const FALLBACK_MEDIOS = [
+          {slug:"newsdigitales",nombre:"News Digitales",ubicacion:"La Plata"},
+          {slug:"realpolitik",nombre:"Realpolitik",ubicacion:"La Plata"},
+          {slug:"radio-buenos-aires",nombre:"Radio Buenos Aires",ubicacion:"CABA"},
+          {slug:"aconcagua",nombre:"Aconcagua Radio",ubicacion:"Mendoza"},
+          {slug:"la-sintesis",nombre:"La Síntesis",ubicacion:"Saladillo"},
+        ];
+        let MEDIOS = FALLBACK_MEDIOS;
+        try {
+          const rm = await fetch(`${cfg.url}/rest/v1/medios?select=*&order=orden.asc,nombre.asc`, {headers:{apikey:cfg.anonKey,Authorization:`Bearer ${cfg.anonKey}`}});
+          if(rm.ok){ const dm = await rm.json(); if(Array.isArray(dm)&&dm.length) MEDIOS = dm; }
+        } catch(_){}
+        const logos = document.querySelector("[data-medios-logos]");
+        if(logos){
+          logos.style.gridTemplateColumns = `repeat(${Math.min(MEDIOS.length,5)||1},minmax(0,1fr))`;
+          logos.innerHTML = MEDIOS.map(m=>`
+            <a href="../medios/index.html#${esc(m.slug)}" style="display:grid;place-items:center;gap:.35rem;padding:1.1rem .8rem;border:1px solid rgba(7,45,70,.18);border-radius:14px;background:rgba(3,27,45,.82);color:#fff;text-decoration:none;text-align:center;min-height:96px">
+              <strong style="font-size:.98rem;font-weight:900;line-height:1.15">${esc(m.nombre)}</strong>
+              <span style="color:#79dfff;font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em">${esc(m.ubicacion||"")}</span>
+            </a>`).join("");
+        }
+      })();
+    </script>
   </body>
 </html>

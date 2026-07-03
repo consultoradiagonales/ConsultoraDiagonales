@@ -28,7 +28,8 @@
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    if (isPrivateReport(report) && !hasPrivatePdfAccess()) {
+    if (isPrivateReport(report)) {
+      // Las radiografias privadas NUNCA se abren: solo se registra la solicitud.
       const registrationLink = buildRegistrationLink(report, target);
       rememberPrivateReport(report, target);
       try {
@@ -36,7 +37,11 @@
       } catch (_) {
         // El registro de interes no debe bloquear el formulario de acceso.
       }
-      window.location.href = registrationLink;
+      if (typeof window.openPrivateReportModal === "function") {
+        window.openPrivateReportModal(report, target);
+      } else {
+        window.location.href = registrationLink;
+      }
       return;
     }
 
@@ -77,10 +82,11 @@
       container.querySelectorAll("[data-pdf-download]").forEach((link) => {
         const report = reports[Number(link.dataset.reportIndex)];
         if (!report?.pdf_url) return;
-        const needsRegistration = isPrivateReport(report) && !hasPrivatePdfAccess();
-        link.href = isPrivateReport(report) && !hasPrivatePdfAccess() ? buildRegistrationLink(report, "pdf") : buildReportAccessLink(report, "pdf");
+        const isPrivate = isPrivateReport(report);
+        if (isPrivate) link.dataset.privateReport = "true";
+        link.href = isPrivate ? buildRegistrationLink(report, "pdf") : buildReportAccessLink(report, "pdf");
         const label = link.querySelector("strong");
-        const text = needsRegistration ? "Registrar datos y abrir PDF" : "Abrir PDF";
+        const text = isPrivate ? "Solicitar acceso" : "Abrir PDF";
         if (label) label.textContent = text;
         if (link.classList.contains("request-link")) link.textContent = text;
         if (link.classList.contains("latest-report-row__pdf")) link.textContent = text;
@@ -90,9 +96,10 @@
         const report = reports[Number(link.dataset.reportIndex)];
         const graphsUrl = getReportGraphsUrl(report, link.href);
         if (!graphsUrl || graphsUrl === "#") return;
-        const needsRegistration = isPrivateReport(report) && !hasPrivatePdfAccess();
-        link.href = isPrivateReport(report) && !hasPrivatePdfAccess() ? buildRegistrationLink(report, "html") : buildReportAccessLink(report, "html");
-        link.textContent = needsRegistration ? "Registrar datos y abrir graficos" : "Graficos";
+        const isPrivate = isPrivateReport(report);
+        if (isPrivate) link.dataset.privateReport = "true";
+        link.href = isPrivate ? buildRegistrationLink(report, "html") : buildReportAccessLink(report, "html");
+        link.textContent = isPrivate ? "Solicitar graficos" : "Graficos";
       });
     } catch (_) {
       // El cargador principal conserva su mensaje de error.
@@ -122,6 +129,11 @@
       const report = reports.find((item) => item.id === reportId);
       sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_KEY);
       sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY);
+
+      if (isPrivateReport(report)) {
+        // Privadas: la solicitud queda registrada; el contenido no se autoabre.
+        return;
+      }
 
       if (target === "html") {
         const graphsUrl = getReportGraphsUrl(report);

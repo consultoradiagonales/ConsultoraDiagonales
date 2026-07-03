@@ -11,10 +11,15 @@
       const link = event.target.closest("[data-pdf-download]");
       if (!link) return;
 
-      if (link.dataset.privateReport === "true") {
+      const indexedReport = getIndexedReport(link);
+      const isPrivateLink =
+        link.dataset.privateReport === "true" ||
+        (indexedReport && (indexedReport.is_private === true || String(indexedReport.is_private || "").toLowerCase() === "true"));
+
+      if (isPrivateLink) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        const report = {
+        const report = indexedReport || {
           id: link.dataset.reportId || null,
           titulo: link.dataset.privateTitle || getPdfTitle(link),
           pdf_url: link.dataset.pdfUnavailable === "true" ? null : link.href || null,
@@ -22,6 +27,12 @@
         if (typeof window.rememberPrivateReport === "function") window.rememberPrivateReport(report, "pdf");
         if (typeof window.openPrivateReportModal === "function") {
           window.openPrivateReportModal(report, "pdf");
+        } else {
+          const registration = new URL("/registro/", window.location.origin);
+          if (report?.id) registration.searchParams.set("report", report.id);
+          if (report?.titulo) registration.searchParams.set("pdf", report.titulo);
+          registration.searchParams.set("target", "pdf");
+          window.location.href = registration.href;
         }
         return;
       }
@@ -92,6 +103,14 @@
     document.body.classList.add("pdf-viewer-open");
 
     if (isMobileViewport()) renderMobilePdf(viewer, pdfUrl);
+  }
+
+  function getIndexedReport(link) {
+    const rawIndex = link?.dataset?.reportIndex;
+    if (rawIndex === undefined || rawIndex === "") return null;
+    const index = Number(rawIndex);
+    if (!Number.isInteger(index)) return null;
+    return Array.isArray(window.CD_REPORTS) ? window.CD_REPORTS[index] || null : null;
   }
 
   function getPdfTitle(link) {

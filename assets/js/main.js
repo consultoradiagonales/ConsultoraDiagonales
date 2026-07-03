@@ -854,17 +854,19 @@ function renderReports(reports, container, count) {
       const place = escapeHtml(cleanLegacyPrivateMarker(report.localidad || report.provincia || "Territorio"));
       const graphsUrl = getReportGraphsUrl(report);
       const isPrivate = isPrivateReport(report);
-      const needsRegistration = isPrivate && !hasPdfAccess();
       const graphsHref = escapeAttribute(getReportResourceHref(report, "html", graphsUrl));
       const pdfHref = escapeAttribute(getReportResourceHref(report, "pdf", report.pdf_url));
       const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Privado</em>' : "";
-      const pdfLabel = report.pdf_url ? (needsRegistration ? "Registrar datos y abrir PDF" : "Abrir PDF") : "PDF no disponible";
+      const pdfLabel = isPrivate ? "Solicitar acceso" : (report.pdf_url ? "Abrir PDF" : "PDF no disponible");
       const reportIndexAttribute = ` data-report-index="${index}"`;
+      const privateAttribute = isPrivate
+        ? ` data-private-report="true" data-report-id="${escapeAttribute(report.id || "")}" data-private-title="${escapeAttribute(report.titulo || "")}"${report.pdf_url ? "" : ' data-pdf-unavailable="true"'}`
+        : "";
       const graphsAttribute = graphsUrl ? ` data-graphs-url="${graphsHref}"` : "";
 
       if (isCompactList) {
         return `
-          <a href="${pdfHref}"${reportIndexAttribute}${graphsAttribute} data-pdf-download data-track="request_pdf">
+          <a href="${pdfHref}"${reportIndexAttribute}${graphsAttribute}${privateAttribute} data-pdf-download data-track="request_pdf">
             <time datetime="${escapeAttribute(report.fecha || "")}">${date}</time>
             <span>${title}${privacyBadge}</span>
             <strong>${pdfLabel}</strong>
@@ -883,8 +885,8 @@ function renderReports(reports, container, count) {
             ${privacyBadge}
           </div>
           <div class="report-actions">
-            ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">GrÃ¡ficos</a>` : ""}
-            <a class="request-link" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>
+            ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}"${privateAttribute} data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">GrÃ¡ficos</a>` : ""}
+            <a class="request-link" href="${pdfHref}"${privateAttribute} data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>
           </div>
         </article>
       `;
@@ -997,7 +999,9 @@ function hasPdfAccess() {
 
 function getReportResourceHref(report, target = "pdf", url = "") {
   if (!url) return "#";
-  if (isPrivateReport(report) && !hasPdfAccess()) return buildRegistrationLink(report, target);
+  // Las radiografias privadas NUNCA exponen un enlace de acceso directo:
+  // siempre se solicita acceso mediante registro (base de datos de solicitudes).
+  if (isPrivateReport(report)) return buildRegistrationLink(report, target);
   return buildReportAccessLink(report, target);
 }
 
@@ -1037,6 +1041,22 @@ function rememberPrivateReport(report, target = "pdf") {
   sessionStorage.setItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY, target);
 }
 
+async function requestPrivateReportAccess(report, target = "pdf") {
+  // Flujo unico para radiografias privadas: registrar la solicitud (base de datos)
+  // sin abrir jamas el contenido. El acceso lo habilita el administrador.
+  rememberPrivateReport(report, target);
+  try {
+    await logReportInterest(report, "report_access_requested", buildRegistrationLink(report, target));
+  } catch (_) {
+    // La solicitud no depende del registro analitico.
+  }
+  if (typeof window.openPrivateReportModal === "function") {
+    window.openPrivateReportModal(report, target);
+    return;
+  }
+  window.location.href = buildRegistrationLink(report, target);
+}
+
 function openPendingPrivateReport(reports) {
   if (!hasPdfAccess()) return;
   const params = new URLSearchParams(window.location.search);
@@ -1044,6 +1064,12 @@ function openPendingPrivateReport(reports) {
   if (!pendingId) return;
   const report = reports.find((item) => item.id === pendingId);
   if (!report) return;
+  if (isPrivateReport(report)) {
+    // Las privadas no se autoabren tras el registro: quedan como solicitud pendiente.
+    sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_KEY);
+    sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY);
+    return;
+  }
   const pendingTarget = sessionStorage.getItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY) || params.get("private_target") || params.get("target") || "pdf";
   sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_KEY);
   sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY);
@@ -1075,11 +1101,8 @@ function bindPdfDownloadLinks(container, reports) {
         return;
       }
 
-      if (isPrivateReport(report) && !hasPdfAccess()) {
-        const registrationLink = buildRegistrationLink(report, "pdf");
-        rememberPrivateReport(report, "pdf");
-        await logReportInterest(report, "report_access_requested", registrationLink);
-        window.location.href = registrationLink;
+      if (isPrivateReport(report)) {
+        await requestPrivateReportAccess(report, "pdf");
         return;
       }
 
@@ -1091,8 +1114,8 @@ function bindPdfDownloadLinks(container, reports) {
 
 function openPdfViewer(report) {
   if (!report?.pdf_url) return;
-  if (isPrivateReport(report) && !hasPdfAccess()) {
-    window.location.href = buildRegistrationLink(report, "pdf");
+  if (isPrivateReport(report)) {
+    requestPrivateReportAccess(report, "pdf");
     return;
   }
 
@@ -1211,7 +1234,7 @@ function bindReportOpenLinks(container, reports) {
     link.addEventListener("click", async (event) => {
       const report = reports[Number(link.dataset.reportIndex)];
       if (!report) return;
-      if (isPrivateReport(report) && !hasPdfAccess()) return;
+      if (isPrivateReport(report)) return;
 
       await logReportInterest(report, "report_open", report.html_url || link.href);
     });
@@ -1224,17 +1247,14 @@ function initHtmlReportViewer() {
     if (!link) return;
 
     const report = getReportFromLink(link);
-    if (report && isPrivateReport(report) && !hasPdfAccess()) {
+    const linkLooksPrivate = link.dataset.privateReport === "true";
+    if ((report && isPrivateReport(report)) || (!report && linkLooksPrivate)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      const registrationLink = buildRegistrationLink(report, "html");
-      rememberPrivateReport(report, "html");
-      try {
-        await logReportInterest(report, "report_access_requested", registrationLink);
-      } catch (_) {
-        // La validacion de acceso no debe depender del registro analitico.
-      }
-      window.location.href = registrationLink;
+      await requestPrivateReportAccess(
+        report || { id: link.dataset.reportId || null, titulo: link.dataset.privateTitle || getHtmlViewerTitle(link) },
+        "html"
+      );
       return;
     }
 

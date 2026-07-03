@@ -1,8 +1,7 @@
 (function () {
   const PRIVATE_MARKER = "[[CD_PRIVATE]]";
   const REGISTRATION_URL = "/registro/";
-  const API_ENDPOINT = "/api/solicitar-radiografia.php";
-  
+
   let modalOpen = false;
 
   // Interceptar clics en PDFs y gráficos privados
@@ -27,13 +26,11 @@
     const isPrivate = isPrivateReport(report);
     if (!isPrivate) return; // Dejar pasar públicos
 
-    const hasAccess = hasValidRegistration(report.id);
-    if (!hasAccess) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      openAccessModal(report);
-      return;
-    }
+    // Las radiografías privadas NUNCA se abren desde la web:
+    // toda persona interesada registra su solicitud (base de datos).
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openAccessModal(report);
   }
 
   function isPrivateReport(report) {
@@ -45,15 +42,10 @@
     );
   }
 
-  function hasValidRegistration(reportId) {
-    const registrations = JSON.parse(localStorage.getItem("cd:private_registrations") || "{}");
-    const reg = registrations[reportId];
-    if (!reg) return false;
-    
-    // Validar que el email esté confirmado o que tenga token válido
-    const now = Date.now();
-    return (reg.verified === true || reg.expiresAt > now);
-  }
+  // Exponer el modal para main.js y pdf-viewer.js
+  window.openPrivateReportModal = function (report) {
+    openAccessModal(report || {});
+  };
 
   function openAccessModal(report) {
     if (modalOpen) return;
@@ -71,9 +63,10 @@
     if (title) title.textContent = `Acceso: ${escapeHtml(report.titulo || "Radiografía")}`;
     
     if (form) {
-      form.dataset.reportId = report.id;
+      form.dataset.reportId = report.id || "";
       form.reset();
-      form.querySelector("[name='radiografiaId']").value = report.id;
+      const idField = form.querySelector("[name='radiografiaId']");
+      if (idField) idField.value = report.id || "";
     }
 
     modal.hidden = false;
@@ -105,42 +98,50 @@
           <div class="access-modal__content">
             <h2 id="access-modal-title" class="access-modal__title" data-modal-title>Acceso a radiografía privada</h2>
             <p class="access-modal__description">
-              Esta radiografía es privada. Completá tu información para acceder.
+              Esta radiografía es privada. Elegí cómo querés recibirla (podés marcar ambas opciones). No es obligatorio dejar tu nombre.
             </p>
             
             <form class="access-modal__form" data-registration-form>
               <input type="hidden" name="radiografiaId" />
-              
-              <label class="access-modal__label">
-                <span>Nombre completo</span>
-                <input 
-                  type="text" 
-                  name="nombre" 
-                  placeholder="Tu nombre" 
-                  required 
-                  autocomplete="name"
-                  minlength="3"
-                />
-              </label>
 
-              <label class="access-modal__label">
+              <div class="access-modal__channels">
+                <label class="access-modal__channel">
+                  <input type="checkbox" name="canal_email" data-channel="email" />
+                  <span>Recibir por Email</span>
+                </label>
+                <label class="access-modal__channel">
+                  <input type="checkbox" name="canal_whatsapp" data-channel="whatsapp" />
+                  <span>Recibir por WhatsApp</span>
+                </label>
+              </div>
+
+              <label class="access-modal__label" data-field="email" hidden>
                 <span>Email</span>
                 <input 
                   type="email" 
                   name="email" 
                   placeholder="tu@email.com" 
-                  required 
                   autocomplete="email"
                 />
               </label>
 
-              <label class="access-modal__label">
-                <span>Teléfono (opcional)</span>
+              <label class="access-modal__label" data-field="whatsapp" hidden>
+                <span>WhatsApp / Celular</span>
                 <input 
                   type="tel" 
                   name="telefono" 
                   placeholder="+54 9 ..." 
                   autocomplete="tel"
+                />
+              </label>
+
+              <label class="access-modal__label">
+                <span>Nombre (opcional)</span>
+                <input 
+                  type="text" 
+                  name="nombre" 
+                  placeholder="Tu nombre" 
+                  autocomplete="name"
                 />
               </label>
 
@@ -155,7 +156,7 @@
               </label>
 
               <button type="submit" class="access-modal__button access-modal__button--primary">
-                Solicitar acceso
+                Solicitar radiografía
               </button>
               
               <p class="access-modal__status" role="status" data-modal-status></p>
@@ -219,15 +220,16 @@
 
         .access-modal__close {
           position: absolute;
-          top: 1rem;
-          right: 1rem;
-          width: 32px;
-          height: 32px;
-          border: none;
-          background: rgba(139, 207, 241, 0.1);
-          border-radius: 50%;
-          color: rgba(219, 246, 255, 0.8);
-          font-size: 1.5rem;
+          top: 12px;
+          right: 12px;
+          width: 34px;
+          height: 34px;
+          border: 1px solid rgba(139, 207, 241, 0.35);
+          background: rgba(139, 207, 241, 0.12);
+          border-radius: 6px;
+          color: #dbf6ff;
+          font-size: 1.4rem;
+          font-weight: 700;
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -236,8 +238,56 @@
         }
 
         .access-modal__close:hover {
-          background: rgba(139, 207, 241, 0.2);
+          background: #C62828;
+          border-color: #C62828;
+          color: #ffffff;
+        }
+
+        .access-modal__channels {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.75rem;
+        }
+
+        .access-modal__channel {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 0.7rem 0.9rem;
+          border: 1px solid rgba(139, 207, 241, 0.28);
+          border-radius: 8px;
+          background: rgba(3, 8, 13, 0.5);
           color: #dbf6ff;
+          font-size: 0.82rem;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: all 0.2s;
+          user-select: none;
+        }
+
+        .access-modal__channel:hover {
+          border-color: rgba(139, 207, 241, 0.55);
+        }
+
+        .access-modal__channel:has(input:checked) {
+          border-color: #009AFE;
+          background: rgba(0, 154, 254, 0.18);
+          color: #82d8ff;
+        }
+
+        .access-modal__channel input {
+          width: 18px;
+          height: 18px;
+          accent-color: #009AFE;
+          cursor: pointer;
+        }
+
+        @media (max-width: 480px) {
+          .access-modal__channels {
+            grid-template-columns: 1fr;
+          }
         }
 
         .access-modal__content {
@@ -384,6 +434,21 @@
       if (e.key === "Escape" && !modal.hidden) closeAccessModal();
     });
 
+    // Mostrar el campo correspondiente al canal elegido (no excluyentes)
+    form.querySelectorAll("[data-channel]").forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        const field = form.querySelector(`[data-field="${checkbox.dataset.channel}"]`);
+        if (!field) return;
+        field.hidden = !checkbox.checked;
+        const input = field.querySelector("input");
+        if (input) {
+          input.required = checkbox.checked;
+          if (checkbox.checked) input.focus();
+          else input.value = "";
+        }
+      });
+    });
+
     form.addEventListener("submit", handleRegistrationSubmit);
   }
 
@@ -395,16 +460,30 @@
     const submit = form.querySelector('button[type="submit"]');
     const reportId = form.dataset.reportId;
 
+    const wantsEmail = form.querySelector("[name='canal_email']")?.checked === true;
+    const wantsWhatsapp = form.querySelector("[name='canal_whatsapp']")?.checked === true;
+
     const formData = {
       radiografiaId: reportId,
-      nombre: form.querySelector("[name='nombre']").value.trim(),
-      email: form.querySelector("[name='email']").value.trim().toLowerCase(),
-      telefono: form.querySelector("[name='telefono']").value.trim(),
-      organizacion: form.querySelector("[name='organizacion']").value.trim(),
+      nombre: form.querySelector("[name='nombre']")?.value.trim() || "",
+      email: form.querySelector("[name='email']")?.value.trim().toLowerCase() || "",
+      telefono: form.querySelector("[name='telefono']")?.value.trim() || "",
+      organizacion: form.querySelector("[name='organizacion']")?.value.trim() || "",
+      canales: [wantsEmail ? "email" : "", wantsWhatsapp ? "whatsapp" : ""].filter(Boolean),
     };
 
-    if (!formData.nombre || !formData.email) {
-      status.textContent = "Nombre y email son requeridos";
+    if (!wantsEmail && !wantsWhatsapp) {
+      status.textContent = "Elegí al menos un canal: Email o WhatsApp.";
+      status.classList.add("is-error");
+      return;
+    }
+    if (wantsEmail && !formData.email) {
+      status.textContent = "Marcaste Email: ingresá tu correo.";
+      status.classList.add("is-error");
+      return;
+    }
+    if (wantsWhatsapp && !formData.telefono) {
+      status.textContent = "Marcaste WhatsApp: ingresá tu celular.";
       status.classList.add("is-error");
       return;
     }
@@ -414,34 +493,24 @@
     status.classList.remove("is-error", "is-success");
 
     try {
-      const response = await fetch(API_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      await savePrivateAccessRequest(formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || "No se pudo procesar la solicitud");
-      }
-
-      // Guardar el registro localmente
+      // Registro local de la solicitud (solo constancia, NO habilita acceso)
       const registrations = JSON.parse(localStorage.getItem("cd:private_registrations") || "{}");
       registrations[reportId] = {
-        verified: response.ok && data.success,
+        verified: false,
         email: formData.email,
         timestamp: Date.now(),
-        expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 días
       };
       localStorage.setItem("cd:private_registrations", JSON.stringify(registrations));
 
-      status.textContent = data.message || "✓ Solicitud registrada. El administrador revisará tu acceso pronto.";
+      const canales = formData.canales.map((c) => (c === "email" ? "Email" : "WhatsApp")).join(" y ");
+      status.textContent = `✓ Solicitud registrada. Te enviaremos la radiografía por ${canales}.`;
       status.classList.add("is-success");
 
       setTimeout(() => {
         closeAccessModal();
-      }, 2000);
+      }, 2500);
     } catch (error) {
       status.textContent = `Error: ${error.message}`;
       status.classList.add("is-error");
@@ -450,7 +519,68 @@
     }
   }
 
+  async function savePrivateAccessRequest(formData) {
+    let saved = false;
+
+    // 1) Guardar/actualizar el contacto en la tabla "contactos" (base de datos de leads)
+    if (typeof window.saveLead === "function" && (formData.email || formData.telefono)) {
+      try {
+        await window.saveLead({
+          email: formData.email,
+          phone: formData.telefono || "",
+          fullName: formData.nombre,
+          organization: formData.organizacion || "",
+          interest: `solicitud_radiografia_privada:${formData.radiografiaId || ""}`,
+        });
+        saved = true;
+      } catch (error) {
+        console.warn("saveLead fallo, se intenta registro directo", error);
+      }
+    }
+
+    // 2) Registrar el evento de solicitud vía edge function:
+    //    ahí el backend captura y guarda la IP + geolocalización del solicitante.
+    const config = window.CD_SUPABASE || {};
+    if (config.url && config.anonKey) {
+      try {
+        const visitorId = localStorage.getItem("cd:visitor_id") || `anon-${Date.now()}`;
+        localStorage.setItem("cd:visitor_id", visitorId);
+        const response = await fetch(`${config.url}/functions/v1/track-visitor-event`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${config.anonKey}`,
+            apikey: config.anonKey,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            visitor_id: visitorId,
+            event_type: "private_report_access_requested",
+            page: document.body.dataset.page || "",
+            path: location.pathname,
+            metadata: {
+              radiografia_id: formData.radiografiaId || null,
+              delivery_channels: formData.canales,
+              contact: {
+                full_name: formData.nombre || null,
+                email: formData.email || null,
+                phone: formData.telefono || null,
+                organization: formData.organizacion || null,
+              },
+            },
+            user_agent: navigator.userAgent,
+          }),
+        });
+        if (response.ok) saved = true;
+      } catch (error) {
+        console.warn("No se pudo registrar el evento de solicitud", error);
+      }
+    }
+
+    if (!saved) throw new Error("No se pudo registrar la solicitud. Intentá nuevamente.");
+  }
+
   async function getReports() {
+    if (Array.isArray(window.CD_REPORTS) && window.CD_REPORTS.length) return window.CD_REPORTS;
     const config = window.CD_SUPABASE || {};
     const url = new URL("/rest/v1/radiografias", config.url);
     url.searchParams.set("select", "id,titulo,provincia,localidad,fecha,html_url,pdf_url,is_private,created_at");

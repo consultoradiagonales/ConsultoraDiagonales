@@ -434,19 +434,32 @@
       </section>
 
       <section class="grid" style="margin-top: 2rem;">
+        <form class="panel" data-medio-nuevo-form>
+          <div class="list-head"><h2>Medios de comunicación</h2></div>
+          <p style="color:#8bcff1;font-size:.82rem;line-height:1.5;margin:-.3rem 0 .3rem">Agregá acá un medio nuevo y después vas a poder cargarle notas.</p>
+          <label>Nombre del medio<input name="nombre" type="text" placeholder="Ej: Diario Popular" required /></label>
+          <label>Ubicación<input name="ubicacion" type="text" placeholder="Ej: La Plata" /></label>
+          <label>Tipo<input name="tipo" type="text" placeholder="Ej: Portal de noticias / Radio / Diario" /></label>
+          <div class="actions"><button type="submit" data-medio-nuevo-submit>Agregar medio</button></div>
+          <p class="status" data-medio-nuevo-status></p>
+        </form>
+
+        <section class="panel">
+          <div class="list-head"><h2>Medios cargados</h2><button type="button" data-medios-cat-refresh>Actualizar</button></div>
+          <div class="report-list" data-medios-catalogo><p class="empty">Cargando medios...</p></div>
+          <p class="list-status" data-medios-cat-status role="status"></p>
+        </section>
+      </section>
+
+      <section class="grid" style="margin-top: 2rem;">
         <form class="panel" data-medios-form>
           <div class="list-head">
             <h2>Notas en medios</h2>
           </div>
           <label>
             Medio
-            <select name="medio" required>
-              <option value="">Elegí el medio...</option>
-              <option value="newsdigitales">News Digitales (La Plata)</option>
-              <option value="realpolitik">Realpolitik (La Plata)</option>
-              <option value="radio-buenos-aires">Radio Buenos Aires (CABA)</option>
-              <option value="aconcagua">Aconcagua Radio (Mendoza)</option>
-              <option value="la-sintesis">La Síntesis (Saladillo)</option>
+            <select name="medio" required data-medios-select>
+              <option value="">Cargá primero un medio arriba...</option>
             </select>
           </label>
           <label>
@@ -480,6 +493,35 @@
             <p class="empty">Cargando notas...</p>
           </div>
           <p class="list-status" data-medios-list-status role="status"></p>
+        </section>
+      </section>
+
+      <section class="grid" style="margin-top: 2rem;">
+        <form class="panel" data-news-form>
+          <div class="list-head"><h2>Cargar noticia</h2></div>
+          <label>
+            Categoría
+            <select name="categoria" required>
+              <option value="">Elegí la categoría...</option>
+              <option value="politica">Política</option>
+              <option value="economia">Economía</option>
+              <option value="salud">Salud</option>
+              <option value="otros">Otros</option>
+            </select>
+          </label>
+          <label>URL de la noticia<input name="url" type="url" placeholder="https://..." required /></label>
+          <label>Título<input name="titulo" type="text" placeholder="Título de la noticia" required /></label>
+          <label>Fuente / medio (opcional)<input name="fuente" type="text" placeholder="Ej: Clarín, La Nación" /></label>
+          <label>Fecha<input name="fecha" type="date" /></label>
+          <label>Descripción (opcional)<input name="descripcion" type="text" placeholder="Breve resumen" /></label>
+          <div class="actions"><button type="submit" data-news-submit>Agregar noticia</button></div>
+          <p class="status" data-news-status></p>
+        </form>
+
+        <section class="panel">
+          <div class="list-head"><h2>Noticias cargadas</h2><button type="button" data-news-refresh>Actualizar</button></div>
+          <div class="report-list" data-news-list-admin><p class="empty">Cargando noticias...</p></div>
+          <p class="list-status" data-news-list-status role="status"></p>
         </section>
       </section>
     </main>
@@ -738,14 +780,52 @@
         list.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
       });
 
+      // ================= CATÁLOGO DE MEDIOS =================
+      let MEDIOS_CAT = [];               // [{slug,nombre,ubicacion,tipo}]
+      let MEDIOS_NOMBRES = {};           // slug -> nombre (se llena dinámico)
+      const medioNuevoForm = document.querySelector("[data-medio-nuevo-form]");
+      const medioNuevoStatus = document.querySelector("[data-medio-nuevo-status]");
+      const medioNuevoSubmit = document.querySelector("[data-medio-nuevo-submit]");
+      const mediosCatalogo = document.querySelector("[data-medios-catalogo]");
+      const mediosCatStatus = document.querySelector("[data-medios-cat-status]");
+      const mediosSelect = document.querySelector("[data-medios-select]");
+
+      function renderMediosCatalogo() {
+        MEDIOS_NOMBRES = {};
+        MEDIOS_CAT.forEach((m) => (MEDIOS_NOMBRES[m.slug] = m.nombre));
+        // Dropdown de "cargar nota"
+        if (mediosSelect) {
+          mediosSelect.innerHTML = MEDIOS_CAT.length
+            ? '<option value="">Elegí el medio...</option>' +
+              MEDIOS_CAT.map((m) => `<option value="${escapeHtml(m.slug)}">${escapeHtml(m.nombre)}${m.ubicacion ? " (" + escapeHtml(m.ubicacion) + ")" : ""}</option>`).join("")
+            : '<option value="">Cargá primero un medio arriba...</option>';
+        }
+        // Listado del catálogo
+        if (!MEDIOS_CAT.length) { mediosCatalogo.innerHTML = '<p class="empty">Todavia no hay medios cargados.</p>'; return; }
+        mediosCatalogo.innerHTML = MEDIOS_CAT.map((m) => `
+          <article class="report-row">
+            <div class="report-details">
+              <div class="report-title">${escapeHtml(m.nombre)}</div>
+              <div class="report-meta"><div>${escapeHtml(m.tipo || "")}${m.ubicacion ? " · " + escapeHtml(m.ubicacion) : ""}</div></div>
+            </div>
+            <div class="actions report-actions">
+              <a class="button" href="../medios/index.html#${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver repositorio</a>
+              <button class="danger" type="button" data-medio-cat-delete="${escapeHtml(m.slug)}">Eliminar</button>
+            </div>
+          </article>`).join("");
+      }
+      async function loadMediosCatalogo() {
+        mediosCatalogo.innerHTML = '<p class="empty">Cargando medios...</p>';
+        mediosCatStatus.textContent = "";
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/medios?select=*&order=orden.asc,nombre.asc&v=${Date.now()}`,
+          { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } });
+        const data = await response.json().catch(() => []);
+        if (!response.ok) throw new Error(data.message || "No se pudieron cargar los medios.");
+        MEDIOS_CAT = Array.isArray(data) ? data : [];
+        renderMediosCatalogo();
+      }
+
       // ================= NOTAS EN MEDIOS =================
-      const MEDIOS_NOMBRES = {
-        "newsdigitales": "News Digitales",
-        "realpolitik": "Realpolitik",
-        "radio-buenos-aires": "Radio Buenos Aires",
-        "aconcagua": "Aconcagua Radio",
-        "la-sintesis": "La Síntesis",
-      };
       const mediosForm = document.querySelector("[data-medios-form]");
       const mediosList = document.querySelector("[data-medios-list]");
       const mediosStatus = document.querySelector("[data-medios-status]");
@@ -777,13 +857,28 @@
           .join("");
       }
 
+      async function cdAdminRpc(fn, payload) {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+          method: "POST",
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "content-type": "application/json" },
+          body: JSON.stringify({ p_key: ADMIN_KEY, ...payload }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || data.error || "No se pudo completar la operacion.");
+        return data;
+      }
+      async function cdRestList(table) {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&order=fecha.desc,created_at.desc&v=${Date.now()}`,
+          { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } });
+        const data = await response.json().catch(() => []);
+        if (!response.ok) throw new Error(data.message || "No se pudieron cargar los datos.");
+        return Array.isArray(data) ? data : [];
+      }
+
       async function loadNotasMedios() {
         mediosList.innerHTML = '<p class="empty">Cargando notas...</p>';
         mediosListStatus.textContent = "";
-        const response = await fetch(`${endpoint}/admin-medios?v=${Date.now()}`, { headers: headers() });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || "No se pudieron cargar las notas.");
-        notasMedios = data.notas || [];
+        notasMedios = await cdRestList("notas_medios");
         renderNotasMedios();
       }
 
@@ -804,13 +899,10 @@
         mediosSubmit.textContent = "Agregando...";
         mediosStatus.textContent = "Guardando nota...";
         try {
-          const response = await fetch(`${endpoint}/admin-medios`, {
-            method: "POST",
-            headers: headers({ "content-type": "application/json" }),
-            body: JSON.stringify(body),
+          await cdAdminRpc("notas_medios_admin", {
+            p_action: "insert", p_medio: body.medio, p_titulo: body.titulo,
+            p_descripcion: body.descripcion, p_url: body.url, p_fecha: body.fecha || null,
           });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(data.error || "No se pudo guardar la nota.");
           mediosForm.reset();
           mediosStatus.textContent = "Nota agregada. Ya aparece en la página de medios.";
           await loadNotasMedios();
@@ -830,13 +922,7 @@
         if (!nota || !confirm(`Eliminar la nota "${nota.titulo}"?`)) return;
         mediosListStatus.textContent = "Eliminando nota...";
         try {
-          const response = await fetch(`${endpoint}/admin-medios`, {
-            method: "DELETE",
-            headers: headers({ "content-type": "application/json" }),
-            body: JSON.stringify({ id: nota.id }),
-          });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(data.error || "No se pudo eliminar.");
+          await cdAdminRpc("notas_medios_admin", { p_action: "delete", p_id: nota.id });
           await loadNotasMedios();
           mediosListStatus.textContent = "Nota eliminada.";
         } catch (error) {
@@ -848,8 +934,122 @@
         loadNotasMedios().catch((error) => (mediosListStatus.textContent = error.message));
       });
 
-      loadNotasMedios().catch((error) => {
-        mediosList.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
+      // --- Alta de medio nuevo ---
+      medioNuevoForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const nombre = medioNuevoForm.elements.nombre.value.trim();
+        const ubicacion = medioNuevoForm.elements.ubicacion.value.trim();
+        const tipo = medioNuevoForm.elements.tipo.value.trim();
+        if (!nombre) { medioNuevoStatus.textContent = "Poné el nombre del medio."; return; }
+        medioNuevoSubmit.disabled = true; medioNuevoSubmit.textContent = "Agregando...";
+        medioNuevoStatus.textContent = "Guardando medio...";
+        try {
+          await cdAdminRpc("medios_admin", { p_action: "insert", p_nombre: nombre, p_ubicacion: ubicacion, p_tipo: tipo });
+          medioNuevoForm.reset();
+          medioNuevoStatus.textContent = "Medio agregado. Ya podés cargarle notas abajo.";
+          await loadMediosCatalogo();
+        } catch (error) { medioNuevoStatus.textContent = error.message; }
+        finally { medioNuevoSubmit.disabled = false; medioNuevoSubmit.textContent = "Agregar medio"; }
+      });
+
+      // --- Baja de medio ---
+      mediosCatalogo.addEventListener("click", async (event) => {
+        const del = event.target.closest("[data-medio-cat-delete]");
+        if (!del) return;
+        event.preventDefault();
+        const medio = MEDIOS_CAT.find((m) => m.slug === del.dataset.medioCatDelete);
+        if (!medio) return;
+        if (!confirm(`Eliminar el medio "${medio.nombre}"? Se borran también sus notas.`)) return;
+        mediosCatStatus.textContent = "Eliminando medio...";
+        try {
+          await cdAdminRpc("medios_admin", { p_action: "delete", p_slug: medio.slug });
+          await loadMediosCatalogo();
+          await loadNotasMedios();
+          mediosCatStatus.textContent = "Medio eliminado.";
+        } catch (error) { mediosCatStatus.textContent = error.message; }
+      });
+
+      document.querySelector("[data-medios-cat-refresh]").addEventListener("click", () => {
+        loadMediosCatalogo().catch((error) => (mediosCatStatus.textContent = error.message));
+      });
+
+      // Cargar catálogo primero (llena el dropdown), luego las notas
+      loadMediosCatalogo()
+        .catch((error) => { mediosCatalogo.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`; })
+        .finally(() => {
+          loadNotasMedios().catch((error) => {
+            mediosList.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
+          });
+        });
+
+      // ================= NOTICIAS =================
+      const CAT_NOMBRES = { politica: "Política", economia: "Economía", salud: "Salud", otros: "Otros" };
+      const newsForm = document.querySelector("[data-news-form]");
+      const newsListAdmin = document.querySelector("[data-news-list-admin]");
+      const newsStatus = document.querySelector("[data-news-status]");
+      const newsListStatus = document.querySelector("[data-news-list-status]");
+      const newsSubmit = document.querySelector("[data-news-submit]");
+      let noticiasAdmin = [];
+
+      function renderNoticiasAdmin() {
+        if (!noticiasAdmin.length) { newsListAdmin.innerHTML = '<p class="empty">Todavia no hay noticias cargadas.</p>'; return; }
+        newsListAdmin.innerHTML = noticiasAdmin.map((n) => `
+          <article class="report-row">
+            <div class="report-details">
+              <div class="report-title">${escapeHtml(n.titulo)}</div>
+              <span class="privacy-badge">${escapeHtml(CAT_NOMBRES[n.categoria] || n.categoria)}</span>
+              <div class="report-meta"><div>${escapeHtml(n.fecha || "")}${n.fuente ? " · " + escapeHtml(n.fuente) : ""}</div>${n.descripcion ? `<div>${escapeHtml(n.descripcion)}</div>` : ""}</div>
+            </div>
+            <div class="actions report-actions">
+              <a class="button" href="${escapeHtml(n.url)}" target="_blank" rel="noopener">Abrir</a>
+              <button class="danger" type="button" data-news-delete="${escapeHtml(n.id)}">Eliminar</button>
+            </div>
+          </article>`).join("");
+      }
+      async function loadNoticiasAdmin() {
+        newsListAdmin.innerHTML = '<p class="empty">Cargando noticias...</p>';
+        newsListStatus.textContent = "";
+        noticiasAdmin = await cdRestList("noticias");
+        renderNoticiasAdmin();
+      }
+      newsForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const body = {
+          categoria: newsForm.elements.categoria.value,
+          url: newsForm.elements.url.value.trim(),
+          titulo: newsForm.elements.titulo.value.trim(),
+          fuente: newsForm.elements.fuente.value.trim(),
+          fecha: newsForm.elements.fecha.value || "",
+          descripcion: newsForm.elements.descripcion.value.trim(),
+        };
+        if (!body.categoria || !body.url || !body.titulo) { newsStatus.textContent = "Elegí categoría, pegá la URL y poné un título."; return; }
+        newsSubmit.disabled = true; newsSubmit.textContent = "Agregando..."; newsStatus.textContent = "Guardando noticia...";
+        try {
+          await cdAdminRpc("noticias_admin", {
+            p_action: "insert", p_categoria: body.categoria, p_titulo: body.titulo,
+            p_descripcion: body.descripcion, p_url: body.url, p_fuente: body.fuente, p_fecha: body.fecha || null,
+          });
+          newsForm.reset();
+          newsStatus.textContent = "Noticia agregada. Ya aparece en la página de noticias.";
+          await loadNoticiasAdmin();
+        } catch (error) { newsStatus.textContent = error.message; }
+        finally { newsSubmit.disabled = false; newsSubmit.textContent = "Agregar noticia"; }
+      });
+      newsListAdmin.addEventListener("click", async (event) => {
+        const del = event.target.closest("[data-news-delete]");
+        if (!del) return;
+        event.preventDefault();
+        const n = noticiasAdmin.find((item) => item.id === del.dataset.newsDelete);
+        if (!n || !confirm(`Eliminar la noticia "${n.titulo}"?`)) return;
+        newsListStatus.textContent = "Eliminando...";
+        try { await cdAdminRpc("noticias_admin", { p_action: "delete", p_id: n.id }); await loadNoticiasAdmin(); newsListStatus.textContent = "Noticia eliminada."; }
+        catch (error) { newsListStatus.textContent = error.message; }
+      });
+      document.querySelector("[data-news-refresh]").addEventListener("click", () => {
+        loadNoticiasAdmin().catch((error) => (newsListStatus.textContent = error.message));
+      });
+      loadNoticiasAdmin().catch((error) => {
+        newsListAdmin.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
       });
     </script>
   </body>

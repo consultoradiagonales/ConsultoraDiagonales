@@ -63,7 +63,8 @@
     <script src="../assets/js/medios-data.js?v=20260702-medios"></script>
     <script>
       (async function () {
-        const CATALOGO = [
+        const config = window.CD_SUPABASE || {};
+        const FALLBACK = [
           { slug: "newsdigitales", nombre: "News Digitales", ubicacion: "La Plata", tipo: "Portal de noticias" },
           { slug: "realpolitik", nombre: "Realpolitik", ubicacion: "La Plata", tipo: "Portal de noticias" },
           { slug: "radio-buenos-aires", nombre: "Radio Buenos Aires", ubicacion: "CABA", tipo: "Radio" },
@@ -71,9 +72,18 @@
           { slug: "la-sintesis", nombre: "La Síntesis", ubicacion: "Saladillo", tipo: "Diario digital" },
         ];
 
+        async function cargarCatalogo() {
+          if (config.url && config.anonKey) {
+            try {
+              const r = await fetch(`${config.url}/rest/v1/medios?select=*&order=orden.asc,nombre.asc`,
+                { headers: { apikey: config.anonKey, Authorization: `Bearer ${config.anonKey}` } });
+              if (r.ok) { const d = await r.json(); if (Array.isArray(d) && d.length) return d; }
+            } catch (_) {}
+          }
+          return FALLBACK;
+        }
+
         async function cargarNotas() {
-          // 1) Supabase: fuente principal (se cargan desde el admin)
-          const config = window.CD_SUPABASE || {};
           if (config.url && config.anonKey) {
             try {
               const response = await fetch(
@@ -84,18 +94,13 @@
                 const rows = await response.json();
                 if (Array.isArray(rows)) return rows;
               }
-            } catch (_) {
-              // Cae al respaldo estático
-            }
+            } catch (_) {}
           }
-          // 2) Respaldo estático (medios-data.js)
           const estaticos = Array.isArray(window.CD_MEDIOS) ? window.CD_MEDIOS : [];
-          return estaticos.flatMap((medio) =>
-            (medio.notas || []).map((nota) => ({ ...nota, medio: medio.slug }))
-          );
+          return estaticos.flatMap((medio) => (medio.notas || []).map((nota) => ({ ...nota, medio: medio.slug })));
         }
 
-        const notas = await cargarNotas();
+        const [CATALOGO, notas] = await Promise.all([cargarCatalogo(), cargarNotas()]);
         const medios = CATALOGO.map((medio) => ({
           ...medio,
           notas: notas.filter((nota) => nota.medio === medio.slug),

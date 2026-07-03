@@ -14,20 +14,39 @@
 
     const status = document.querySelector("[data-registration-status]");
     const submit = document.querySelector("[data-registration-submit]");
-    const phone = String(new FormData(form).get("phone") || "").trim();
-    const fullName = String(new FormData(form).get("full_name") || "").trim();
-    const email = String(new FormData(form).get("email") || "").trim().toLowerCase();
-    const organization = String(new FormData(form).get("organization") || "").trim();
+    const data = new FormData(form);
+    const hasChannelInputs = form.querySelector("[data-channel]") != null;
+    const phone = String(data.get("phone") || "").trim();
+    const fullName = String(data.get("full_name") || "").trim();
+    const email = String(data.get("email") || "").trim().toLowerCase();
+    const organization = String(data.get("organization") || "").trim();
     const requestContext = getPrivateRequestContext();
 
-    if (!phone) {
-      if (status) status.textContent = "Dejanos un celular para habilitar la lectura.";
+    const channels = [];
+    if (hasChannelInputs) {
+      if (data.get("canal_email") != null) channels.push("email");
+      if (data.get("canal_whatsapp") != null) channels.push("whatsapp");
+
+      if (!channels.length) {
+        if (status) status.textContent = "Elegí al menos un canal: Email o WhatsApp.";
+        return;
+      }
+      if (channels.includes("email") && !email) {
+        if (status) status.textContent = "Marcaste Email: ingresá tu correo.";
+        return;
+      }
+      if (channels.includes("whatsapp") && !phone) {
+        if (status) status.textContent = "Marcaste WhatsApp: ingresá tu celular.";
+        return;
+      }
+    } else if (!phone && !email) {
+      if (status) status.textContent = "Dejanos un email o un celular para enviarte la radiografía.";
       return;
     }
 
     if (submit) {
       submit.disabled = true;
-      submit.textContent = "Guardando celular...";
+      submit.textContent = "Enviando solicitud...";
     }
     if (status) status.textContent = "Guardando contacto.";
 
@@ -37,24 +56,45 @@
       email,
       full_name: fullName,
       organization,
-      access_reason: "pdf_download",
-      phone_validation_status: "phone_verified",
+      access_reason: requestContext ? "solicitud_radiografia_privada" : "pdf_download",
+      phone_validation_status: phone ? "phone_verified" : "pending",
       consent_terms: true,
       last_seen_at: new Date().toISOString(),
-      tags: Array.from(new Set(["descarga_pdf", "celular_validado", requestContext ? "solicitud_radiografia" : ""].filter(Boolean))),
+      tags: Array.from(
+        new Set([
+          requestContext ? "solicitud_radiografia" : "descarga_pdf",
+          channels.includes("email") || email ? "canal_email" : "",
+          channels.includes("whatsapp") || (!channels.length && phone) ? "canal_whatsapp" : "",
+          phone ? "celular_validado" : "",
+        ].filter(Boolean)),
+      ),
     };
 
     localStorage.setItem(CONTACT_STORAGE_KEY, JSON.stringify({ ...getStoredContact(), ...contact }));
-    localStorage.setItem(PHONE_VERIFIED_KEY, phone);
+    if (phone) localStorage.setItem(PHONE_VERIFIED_KEY, phone);
 
     try {
       await saveContact(contact);
-      if (requestContext) await saveVisitorEvent(contact, requestContext);
+      await saveVisitorEvent(contact, requestContext, channels);
     } catch (error) {
       console.warn("No se pudo guardar el contacto remoto", error);
     }
 
-    if (status) status.textContent = requestContext ? "Listo. Solicitud registrada." : "Listo. Te llevamos a las radiografias.";
+    const channelNames = (channels.length ? channels : [phone ? "whatsapp" : "", email ? "email" : ""].filter(Boolean))
+      .map((c) => (c === "email" ? "Email" : "WhatsApp"))
+      .join(" y ");
+    if (status) {
+      status.textContent = requestContext
+        ? `Listo. Solicitud registrada: te enviaremos la radiografía por ${channelNames || "el canal indicado"}.`
+        : "Listo. Te llevamos a las radiografias.";
+    }
+    if (requestContext) {
+      if (submit) submit.textContent = "Solicitud enviada ✓";
+      window.setTimeout(() => {
+        window.location.href = getRedirectTarget();
+      }, 2200);
+      return;
+    }
     window.location.href = getRedirectTarget();
   }
 
@@ -76,19 +116,20 @@
     if (!response.ok) throw new Error(`contactos ${response.status}`);
   }
 
-  async function saveVisitorEvent(contact, requestContext) {
+  async function saveVisitorEvent(contact, requestContext, channels = []) {
     const config = window.CD_SUPABASE || {};
     if (!config.url || !config.anonKey) return;
 
     const event = {
       visitor_id: contact.visitor_id,
-      event_type: "private_report_registration_submitted",
+      event_type: requestContext ? "private_report_registration_submitted" : "reader_registration_submitted",
       page: "registro",
       path: window.location.pathname,
       metadata: {
-        radiografia_id: requestContext.reportId || null,
-        title: requestContext.reportTitle || null,
-        target_type: requestContext.targetType || "pdf",
+        radiografia_id: requestContext?.reportId || null,
+        title: requestContext?.reportTitle || null,
+        target_type: requestContext?.targetType || "pdf",
+        delivery_channels: channels,
         contact: {
           email: contact.email || null,
           phone: contact.phone || null,
@@ -100,18 +141,18 @@
       user_agent: navigator.userAgent,
     };
 
-    const response = await fetch(`${config.url}/rest/v1/visitor_events`, {
+    // Edge function: el backend captura y persiste IP + geolocalización del solicitante.
+    const response = await fetch(`${config.url}/functions/v1/track-visitor-event`, {
       method: "POST",
       headers: {
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`,
         "content-type": "application/json",
-        Prefer: "return=minimal",
       },
       body: JSON.stringify(event),
     });
 
-    if (!response.ok) throw new Error(`visitor_events ${response.status}`);
+    if (!response.ok) throw new Error(`track-visitor-event ${response.status}`);
   }
 
   function getRedirectTarget() {
