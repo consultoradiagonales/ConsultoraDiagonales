@@ -829,32 +829,48 @@ const panels=document.querySelectorAll('section.panel');
 const nav=document.querySelector('nav.tabs');
 const menuToggle=document.querySelector('.menu-toggle');
 
+function closeTabsMenu(){
+  if (nav) nav.classList.remove('open');
+  if (menuToggle) menuToggle.setAttribute('aria-expanded','false');
+}
+
+function activateTab(tab){
+  const panel = tab && document.getElementById(tab.dataset.t);
+  if (!panel) return;
+  tabs.forEach(x=>x.classList.remove('active'));
+  panels.forEach(p=>p.classList.remove('active'));
+  tab.classList.add('active');
+  panel.classList.add('active');
+  closeTabsMenu();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 function setCompactHeader(){
   const compact=window.scrollY>80;
   document.body.classList.toggle('compact',compact);
-  if(!compact){
-    nav.classList.remove('open');
-    menuToggle.setAttribute('aria-expanded','false');
-  }
+  if(!compact) closeTabsMenu();
 }
 
-menuToggle.addEventListener('click',()=>{
-  const open=nav.classList.toggle('open');
-  menuToggle.setAttribute('aria-expanded',String(open));
-});
+if (menuToggle && nav) {
+  menuToggle.addEventListener('click',()=>{
+    const open=nav.classList.toggle('open');
+    menuToggle.setAttribute('aria-expanded',String(open));
+  });
+}
 
 window.addEventListener('scroll',setCompactHeader,{passive:true});
 setCompactHeader();
 
 tabs.forEach(t=>{
+  t.setAttribute('role','button');
+  t.setAttribute('tabindex','0');
   t.addEventListener('click',()=>{
-    tabs.forEach(x=>x.classList.remove('active'));
-    panels.forEach(p=>p.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById(t.dataset.t).classList.add('active');
-    nav.classList.remove('open');
-    menuToggle.setAttribute('aria-expanded','false');
-    window.scrollTo({top:0,behavior:'smooth'});
+    activateTab(t);
+  });
+  t.addEventListener('keydown',(event)=>{
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    activateTab(t);
   });
 });
 </script>
