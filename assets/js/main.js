@@ -915,7 +915,6 @@ function openUrlViewer(url, title, label = "Contenido") {
             <h2 id="url-viewer-title" data-url-viewer-title>Vista previa</h2>
           </div>
           <div class="html-viewer__actions">
-            <a data-url-viewer-source target="_blank" rel="noopener noreferrer">Abrir fuente</a>
             <button type="button" data-url-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
@@ -933,7 +932,6 @@ function openUrlViewer(url, title, label = "Contenido") {
 
   viewer.querySelector("[data-url-viewer-label]").textContent = label;
   viewer.querySelector("[data-url-viewer-title]").textContent = title;
-  viewer.querySelector("[data-url-viewer-source]").href = url;
   viewer.querySelector("[data-url-viewer-frame]").src = url;
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
@@ -1519,7 +1517,6 @@ async function openHtmlReportViewer(url, title) {
           </div>
           <div class="html-viewer__actions">
             <button type="button" data-html-voice-toggle>Escuchar informe</button>
-            <a data-html-viewer-source target="_blank" rel="noopener noreferrer">Abrir archivo</a>
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
@@ -1538,8 +1535,6 @@ async function openHtmlReportViewer(url, title) {
   }
 
   viewer.querySelector("[data-html-viewer-title]").textContent = title;
-  const source = viewer.querySelector("[data-html-viewer-source]");
-  if (source) source.href = url;
   viewer.cdHtmlVoiceText = "";
   const voice = viewer.querySelector("[data-html-voice-toggle]");
   if (voice) {
@@ -1916,7 +1911,7 @@ function buildHtmlViewerLoading() {
 }
 
 function buildHtmlViewerError(url) {
-  return `<!doctype html><html><body style="margin:0;display:grid;min-height:100vh;place-items:center;background:#061522;color:#dff9ff;font-family:Arial,sans-serif;text-align:center;padding:24px"><div><h1 style="font-size:20px">No se pudo cargar el HTML dentro del visor.</h1><p>Prob&aacute; abrir el archivo desde el panel admin y volver a cargarlo.</p><a style="color:#7ce3ff" href="${escapeAttribute(url)}" target="_blank" rel="noopener">Abrir archivo</a></div></body></html>`;
+  return `<!doctype html><html><body style="margin:0;display:grid;min-height:100vh;place-items:center;background:#061522;color:#dff9ff;font-family:Arial,sans-serif;text-align:center;padding:24px"><div><h1 style="font-size:20px">No se pudo cargar el HTML dentro del visor.</h1><p>Prob&aacute; volver a cargar la radiograf&iacute;a desde el repositorio.</p></div></body></html>`;
 }
 
 async function logReportInterest(report, eventType, targetUrl) {
