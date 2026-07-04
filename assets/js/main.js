@@ -1621,7 +1621,6 @@ function redirectToRegistrationForAccessUrl(accessUrl) {
 function normalizeHtmlForViewer(html, sourceUrl) {
   const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
   const bridge = buildHtmlViewerExternalLinkBridge();
-  const voiceBridge = buildHtmlViewerVoiceBridge();
   const responsivePatch = buildHtmlViewerResponsivePatch();
   let output = sanitizeHtmlReportForViewer(String(html || ""), sourceUrl);
   if (/<head[^>]*>/i.test(output)) {
@@ -1630,9 +1629,9 @@ function normalizeHtmlForViewer(html, sourceUrl) {
     output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}${responsivePatch.style}</head><body>${output}</body></html>`;
   }
   if (/<\/body>/i.test(output)) {
-    output = output.replace(/<\/body>/i, `${responsivePatch.script}\n${bridge}\n${voiceBridge}\n</body>`);
+    output = output.replace(/<\/body>/i, `${responsivePatch.script}\n${bridge}\n</body>`);
   } else {
-    output += responsivePatch.script + bridge + voiceBridge;
+    output += responsivePatch.script + bridge;
   }
   return output;
 }
@@ -1671,6 +1670,10 @@ function buildHtmlViewerResponsivePatch() {
     body{width:100%;max-width:100%;overflow-x:hidden}
     img,video,audio,canvas{max-width:100%;height:auto}
     audio{display:block;width:100%;min-height:44px}
+    #tts-btn,
+    [data-cd-voice-widget],
+    .cd-voice-widget,
+    [data-cd-voice-toggle]{display:none!important;visibility:hidden!important;pointer-events:none!important}
     svg{height:auto;max-width:100%}
     .chart-box,.chart-wrapper,.chart-container,.graph-box,.viz-card,.figure,.figura{
       max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
