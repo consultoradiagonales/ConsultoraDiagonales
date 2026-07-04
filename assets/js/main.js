@@ -1904,6 +1904,7 @@ async function loadAdminDashboard() {
     downloads: document.querySelector("[data-admin-downloads]"),
     contacts: document.querySelector("[data-admin-contacts]"),
     events: document.querySelector("[data-admin-events]"),
+    alerts: document.querySelector("[data-admin-alerts]"),
   };
 
   setAdminDashboardStatus("Cargando radiografías/PDF.");
@@ -1918,6 +1919,7 @@ async function loadAdminDashboard() {
     renderAdminList(containers.downloads, JSON.parse(localStorage.getItem("cd:pdf_downloads") || "[]").slice(-8).reverse(), "Sin consumos locales.");
     renderAdminList(containers.contacts, [JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}")].filter((item) => item.phone || item.email), "Sin contactos locales.");
     renderAdminList(containers.events, JSON.parse(localStorage.getItem("cd:events") || "[]").slice(-12).reverse(), "Sin eventos locales.");
+    renderAdminList(containers.alerts, [], "Sin alertas locales.");
     return;
   }
 
@@ -1939,6 +1941,7 @@ async function loadAdminDashboard() {
     renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", renderAdminDownloadItem);
     renderAdminList(containers.contacts, data.audience || data.contacts || [], "Todavía no hay contactos o intereses registrados.", renderAdminAudienceItem);
     renderAdminList(containers.events, data.events || [], "Todavía no hay eventos.", renderAdminEventItem);
+    renderAdminList(containers.alerts, getAdminRequestAlerts(data.events || []), "No hay solicitudes privadas pendientes.", renderAdminRequestAlertItem);
   } catch (error) {
     setAdminDashboardStatus(`No se pudo cargar el listado: ${error.message}`);
     Object.values(containers).forEach((container) => renderAdminList(container, [], `No se pudo cargar: ${error.message}`));
@@ -2176,6 +2179,53 @@ function renderAdminEventItem(item) {
       <small>${escapeHtml(formatAdminDateTime(item.created_at))}</small>
     </div>
   `;
+}
+
+function getAdminRequestAlerts(events = []) {
+  return events
+    .filter((item) => ["private_report_access_requested", "private_report_registration_submitted", "report_access_requested"].includes(String(item.event_type || "")))
+    .slice(0, 12);
+}
+
+function renderAdminRequestAlertItem(item) {
+  const metadata = item.metadata || {};
+  const contact = metadata.contact || {};
+  const title = item.radiografia_title || metadata.title || metadata.radiografia_title || metadata.report_title || "Radiografía privada";
+  const channels = metadata.delivery_channels || [];
+  const person = contact.full_name || contact.phone || contact.email || "Visitante sin nombre";
+  const phone = contact.phone || "";
+  const email = contact.email || "";
+  const message = buildAdminReplyMessage({ title, person, phone, email, event: item });
+  const whatsappHref = phone ? `https://wa.me/${normalizeWhatsappPhone(phone)}?text=${encodeURIComponent(message)}` : "";
+  const emailHref = email ? `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(`Radiografía solicitada: ${title}`)}&body=${encodeURIComponent(message)}` : "";
+  return `
+    <div class="admin-list-item" data-event-has-ip="${item.ip_address ? "true" : "false"}">
+      <strong>Alerta: solicitud privada</strong>
+      <span>${escapeHtml(title)}</span>
+      <span>${escapeHtml(person)}${channels.length ? ` · Canal pedido: ${escapeHtml(channels.map((c) => c === "email" ? "Email" : "WhatsApp").join(" y "))}` : ""}</span>
+      <small>${escapeHtml(formatAdminDateTime(item.created_at))}</small>
+      <div class="admin-list-actions">
+        ${whatsappHref ? `<a class="admin-action-button" href="${escapeAttribute(whatsappHref)}" target="_blank" rel="noopener">Responder WhatsApp</a>` : ""}
+        ${emailHref ? `<a class="admin-action-button" href="${escapeAttribute(emailHref)}">Responder Email</a>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function buildAdminReplyMessage({ title, person }) {
+  return [
+    `Hola ${person || ""}`.trim() + ".",
+    `Gracias por solicitar la radiografía "${title}".`,
+    "Te respondemos desde Consultora Diagonales para coordinar el envío.",
+  ].join("\n");
+}
+
+function normalizeWhatsappPhone(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("549")) return digits;
+  if (digits.startsWith("54")) return `549${digits.slice(2)}`;
+  return digits;
 }
 
 function formatAdminDateTime(value) {

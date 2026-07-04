@@ -1,6 +1,8 @@
 (function () {
   const PRIVATE_MARKER = "[[CD_PRIVATE]]";
   const REGISTRATION_URL = "/registro/";
+  const CONSULTORA_WHATSAPP = "5492216765720";
+  const CONSULTORA_EMAIL = "info.consultoradiagonales@gmail.com";
 
   let modalOpen = false;
 
@@ -465,6 +467,7 @@
 
     const formData = {
       radiografiaId: reportId,
+      titulo: getCurrentReportTitle(reportId),
       nombre: form.querySelector("[name='nombre']")?.value.trim() || "",
       email: form.querySelector("[name='email']")?.value.trim().toLowerCase() || "",
       telefono: form.querySelector("[name='telefono']")?.value.trim() || "",
@@ -505,7 +508,8 @@
       localStorage.setItem("cd:private_registrations", JSON.stringify(registrations));
 
       const canales = formData.canales.map((c) => (c === "email" ? "Email" : "WhatsApp")).join(" y ");
-      status.textContent = `✓ Solicitud registrada. Te enviaremos la radiografía por ${canales}.`;
+      openSelectedContactChannels(formData);
+      status.textContent = `✓ Solicitud registrada. Se abrió ${canales} para enviar el pedido.`;
       status.classList.add("is-success");
 
       setTimeout(() => {
@@ -559,6 +563,7 @@
             path: location.pathname,
             metadata: {
               radiografia_id: formData.radiografiaId || null,
+              title: formData.titulo || null,
               delivery_channels: formData.canales,
               contact: {
                 full_name: formData.nombre || null,
@@ -579,6 +584,38 @@
     if (!saved) throw new Error("No se pudo registrar la solicitud. Intentá nuevamente.");
   }
 
+  function openSelectedContactChannels(formData) {
+    const title = formData.titulo || getCurrentReportTitle(formData.radiografiaId);
+    const message = buildRequestMessage(formData, title);
+
+    if (formData.canales.includes("whatsapp")) {
+      window.open(`https://wa.me/${CONSULTORA_WHATSAPP}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+    }
+
+    if (formData.canales.includes("email")) {
+      const subject = `Solicitud de radiografía privada: ${title}`;
+      window.location.href = `mailto:${CONSULTORA_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+    }
+  }
+
+  function buildRequestMessage(formData, title) {
+    return [
+      "Hola Consultora Diagonales.",
+      `Solicito acceso a la radiografía privada: ${title}.`,
+      `Canal solicitado: ${formData.canales.map((c) => (c === "email" ? "Email" : "WhatsApp")).join(" y ")}.`,
+      formData.nombre ? `Nombre: ${formData.nombre}.` : "",
+      formData.organizacion ? `Organización: ${formData.organizacion}.` : "",
+      formData.email ? `Email del solicitante: ${formData.email}.` : "",
+      formData.telefono ? `WhatsApp/celular del solicitante: ${formData.telefono}.` : "",
+      formData.radiografiaId ? `ID de radiografía: ${formData.radiografiaId}.` : "",
+      `Página: ${window.location.href}`,
+    ].filter(Boolean).join("\n");
+  }
+
+  function getCurrentReportTitle(reportId) {
+    const report = (Array.isArray(window.CD_REPORTS) ? window.CD_REPORTS : []).find((item) => item.id === reportId);
+    return report?.titulo || document.querySelector("[data-modal-title]")?.textContent?.replace(/^Acceso:\s*/i, "").trim() || "Radiografía privada";
+  }
   async function getReports() {
     if (Array.isArray(window.CD_REPORTS) && window.CD_REPORTS.length) return window.CD_REPORTS;
     const config = window.CD_SUPABASE || {};
