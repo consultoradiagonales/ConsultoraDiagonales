@@ -1614,9 +1614,9 @@ function normalizeHtmlForViewer(html, sourceUrl) {
     output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}${responsivePatch.style}</head><body>${output}</body></html>`;
   }
   if (/<\/body>/i.test(output)) {
-    output = output.replace(/<\/body>/i, `${anchorBridge}\n${responsivePatch.script}\n${interactionPatch}\n${bridge}\n${voiceBridge}\n</body>`);
+    output = output.replace(/<\/body>/i, `${responsivePatch.script}\n${interactionPatch}\n${anchorBridge}\n${bridge}\n${voiceBridge}\n</body>`);
   } else {
-    output += anchorBridge + responsivePatch.script + interactionPatch + bridge + voiceBridge;
+    output += responsivePatch.script + interactionPatch + anchorBridge + bridge + voiceBridge;
   }
   return output;
 }
@@ -1745,6 +1745,8 @@ function buildHtmlViewerAnchorBridge() {
       document.addEventListener("click", function (event) {
         var link = event.target && event.target.closest ? event.target.closest("a[href]") : null;
         if (!link) return;
+        if (link.matches(".tab, [data-t], [data-tab]") || link.closest(".tabs, nav.tabs, [role='tablist']")) return;
+        if ((link.getAttribute("onclick") || "").indexOf("show(") !== -1) return;
         var href = link.getAttribute("href") || "";
         var hashIndex = href.indexOf("#");
         if (hashIndex === -1) return;
@@ -1852,7 +1854,14 @@ function buildHtmlViewerVoiceBridge() {
       var state = { chunks: [], index: 0, reading: false };
       var button = document.querySelector("[data-cd-voice-toggle]");
       var status = document.querySelector("[data-cd-voice-status]");
-      function supported(){ return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window; }
+      function speechHost(){
+        if ("speechSynthesis" in window && "SpeechSynthesisUtterance" in window) return window;
+        try {
+          if (window.parent && "speechSynthesis" in window.parent && "SpeechSynthesisUtterance" in window.parent) return window.parent;
+        } catch (_) {}
+        return null;
+      }
+      function supported(){ return !!speechHost(); }
       function cleanText(){
         var clone = document.body.cloneNode(true);
         clone.querySelectorAll("script,style,noscript,svg,canvas,iframe,audio,video,nav,header,footer,[data-cd-voice-widget]").forEach(function(node){ node.remove(); });
@@ -1875,16 +1884,19 @@ function buildHtmlViewerVoiceBridge() {
         if (status) status.textContent = reading ? "Leyendo..." : "";
       }
       function stop(){
-        if (supported()) window.speechSynthesis.cancel();
+        var host = speechHost();
+        if (host) host.speechSynthesis.cancel();
         state.chunks = []; state.index = 0; setReading(false);
       }
       function next(){
         if (!state.chunks.length || state.index >= state.chunks.length) { stop(); return; }
-        var utterance = new SpeechSynthesisUtterance(state.chunks[state.index]);
+        var host = speechHost();
+        if (!host) { stop(); return; }
+        var utterance = new host.SpeechSynthesisUtterance(state.chunks[state.index]);
         utterance.lang = "es-AR"; utterance.rate = 0.95; utterance.pitch = 1;
         utterance.onend = function(){ state.index += 1; next(); };
         utterance.onerror = function(){ stop(); };
-        window.speechSynthesis.speak(utterance);
+        host.speechSynthesis.speak(utterance);
       }
       function toggle(){
         if (!supported()) { alert("Este navegador no permite lectura en voz desde la web."); return; }
