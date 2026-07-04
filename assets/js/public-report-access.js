@@ -114,7 +114,7 @@
 
     const params = new URLSearchParams(window.location.search);
     const reportId = params.get("report") || sessionStorage.getItem(PRIVATE_REPORT_REGISTRATION_KEY);
-    const target = sessionStorage.getItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY) || params.get("private_target") || params.get("target") || "pdf";
+    const target = params.get("private_target") || params.get("target") || sessionStorage.getItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY) || "pdf";
     if (!reportId) return;
 
     try {
@@ -204,7 +204,11 @@
   }
 
   function hasPrivatePdfAccess() {
-    return Boolean(localStorage.getItem(PHONE_VERIFIED_KEY) || localStorage.getItem(GMAIL_VERIFIED_KEY));
+    const contact = JSON.parse(localStorage.getItem("cd:contact") || "{}");
+    const gmailValidated = Boolean(contact.visitor_id) && localStorage.getItem(GMAIL_VERIFIED_KEY) === contact.visitor_id;
+    const phoneValidated = Boolean(contact.phone) && localStorage.getItem(PHONE_VERIFIED_KEY) === contact.phone;
+    const statusValidated = ["phone_verified", "gmail_verified"].includes(String(contact.phone_validation_status || ""));
+    return Boolean(contact.phone && (gmailValidated || phoneValidated || statusValidated));
   }
 
   function buildRegistrationLink(report, accessTarget = "pdf") {
@@ -225,8 +229,13 @@
     const access = new URL("/functions/v1/report-access", config.url);
     access.searchParams.set("report", report.id);
     access.searchParams.set("target", target);
-    if (hasPrivatePdfAccess()) access.searchParams.set("visitor_id", getVisitorId());
+    if (hasPrivatePdfAccess()) access.searchParams.set("visitor_id", getAccessVisitorId());
     return access.href;
+  }
+
+  function getAccessVisitorId() {
+    const contact = JSON.parse(localStorage.getItem("cd:contact") || "{}");
+    return contact.visitor_id || getVisitorId();
   }
 
   function getVisitorId() {

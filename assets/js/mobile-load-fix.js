@@ -114,7 +114,11 @@
   }
 
   function hasPrivatePdfAccess() {
-    return Boolean(localStorage.getItem(PHONE_VERIFIED_KEY) || localStorage.getItem(GMAIL_VERIFIED_KEY));
+    const contact = JSON.parse(localStorage.getItem("cd:contact") || "{}");
+    const gmailValidated = Boolean(contact.visitor_id) && localStorage.getItem(GMAIL_VERIFIED_KEY) === contact.visitor_id;
+    const phoneValidated = Boolean(contact.phone) && localStorage.getItem(PHONE_VERIFIED_KEY) === contact.phone;
+    const statusValidated = ["phone_verified", "gmail_verified"].includes(String(contact.phone_validation_status || ""));
+    return Boolean(contact.phone && (gmailValidated || phoneValidated || statusValidated));
   }
 
   function normalizeReportRecord(report) {
