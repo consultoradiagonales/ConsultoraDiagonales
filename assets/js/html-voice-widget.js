@@ -1,4 +1,5 @@
 (function () {
+  return;
   if (document.querySelector("[data-cd-voice-widget]")) return;
 
   const style = document.createElement("style");
