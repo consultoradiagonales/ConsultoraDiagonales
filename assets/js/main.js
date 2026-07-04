@@ -17,6 +17,7 @@ const LEGACY_PRIVATE_MARKER = "[[CD_PRIVATE]]";
 const PDFJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
 const PDFJS_WORKER_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 let adminReports = [];
+const reportSpeechState = { chunks: [], index: 0, button: null, reading: false };
 
 initNavigation();
 initLogoFallbacks();
@@ -26,6 +27,7 @@ initLoginModal();
 initTracking();
 initLeadForms();
 initHtmlReportViewer();
+initHtmlVoiceBridgeMessages();
 
 if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
@@ -1133,11 +1135,13 @@ function openPdfViewer(report) {
               <h2 id="pdf-viewer-title" data-pdf-viewer-title>Documento</h2>
             </div>
             <div class="pdf-viewer__actions">
+              <button type="button" data-pdf-voice-toggle>Escuchar informe</button>
+              <a data-pdf-viewer-source target="_blank" rel="noopener noreferrer">Abrir PDF</a>
               <button type="button" data-pdf-viewer-close aria-label="Cerrar visor">Cerrar</button>
             </div>
           </div>
           <div class="pdf-viewer__mobile-note" data-pdf-viewer-note>
-            Cargando paginas del PDF dentro de la web.
+            Vista previa del PDF. Si tu navegador no la muestra usa Abrir PDF.
           </div>
           <div class="pdf-viewer__pages" data-pdf-viewer-pages aria-label="Paginas del PDF"></div>
           <iframe data-pdf-viewer-frame title="Visor de PDF" loading="lazy"></iframe>
@@ -1158,6 +1162,14 @@ function openPdfViewer(report) {
   const frame = viewer.querySelector("[data-pdf-viewer-frame]");
   const pdfUrl = buildReportAccessLink(report, "pdf");
   viewer.querySelector("[data-pdf-viewer-title]").textContent = title;
+  const source = viewer.querySelector("[data-pdf-viewer-source]");
+  if (source) source.href = pdfUrl;
+  const voice = viewer.querySelector("[data-pdf-voice-toggle]");
+  if (voice) {
+    resetSpeechButton(voice);
+    voice.onclick = () => togglePdfSpeech(pdfUrl, title, voice);
+  }
+  viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
   frame.src = isMobileViewport() ? "about:blank" : pdfUrl;
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
@@ -1172,6 +1184,8 @@ function closePdfViewer() {
 
   const frame = viewer.querySelector("[data-pdf-viewer-frame]");
   viewer.classList.remove("is-open");
+  viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
+  stopReportSpeech();
   viewer.setAttribute("aria-hidden", "true");
   document.body.classList.remove("pdf-viewer-open");
   if (frame) frame.src = "about:blank";
@@ -1187,14 +1201,17 @@ async function renderMobilePdf(viewer, pdfUrl) {
   if (!pages) return;
 
   pages.replaceChildren();
+  viewer.classList.add("is-mobile-rendering");
   pages.classList.add("is-loading");
-  pages.textContent = "Cargando PDF...";
+  pages.textContent = "Preparando vista optimizada...";
 
   try {
     const pdfjs = await loadPdfJs();
-    const pdf = await pdfjs.getDocument(pdfUrl).promise;
+    const pdfData = await fetchPdfArrayBuffer(pdfUrl);
+    const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
     pages.replaceChildren();
     pages.classList.remove("is-loading");
+    viewer.classList.add("has-rendered-pages");
 
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
       const page = await pdf.getPage(pageNumber);
@@ -1214,9 +1231,191 @@ async function renderMobilePdf(viewer, pdfUrl) {
     }
   } catch (error) {
     pages.classList.remove("is-loading");
-    pages.innerHTML = '<p>No se pudo previsualizar el PDF en este navegador. Tocá "Abrir PDF" para verlo.</p>';
+    viewer.classList.remove("has-rendered-pages");
+    pages.innerHTML = `<div class="pdf-viewer__fallback"><p>No se pudo previsualizar el PDF en este navegador.</p><a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir PDF</a></div>`;
     console.warn("No se pudo renderizar el PDF movil", error);
   }
+}
+
+async function togglePdfSpeech(pdfUrl, title, button) {
+  if (reportSpeechState.reading && reportSpeechState.button === button) {
+    stopReportSpeech();
+    return;
+  }
+  if (!supportsSpeech()) {
+    alert("Este navegador no permite lectura en voz desde la web.");
+    return;
+  }
+
+  beginPrimedReportSpeech(button);
+  try {
+    const text = await extractPdfText(pdfUrl);
+    replaceReportSpeechQueue(text || title || "Informe de Consultora Diagonales", button);
+  } catch (error) {
+    console.warn("No se pudo preparar la lectura del PDF", error);
+    replaceReportSpeechQueue(title || "Informe de Consultora Diagonales", button);
+  }
+}
+
+async function toggleHtmlSpeech(url, title, button, viewer) {
+  if (reportSpeechState.reading && reportSpeechState.button === button) {
+    stopReportSpeech();
+    return;
+  }
+  if (!supportsSpeech()) {
+    alert("Este navegador no permite lectura en voz desde la web.");
+    return;
+  }
+
+  beginPrimedReportSpeech(button);
+  try {
+    let text = viewer?.cdHtmlVoiceText || "";
+    if (!text) {
+      const result = await fetchHtmlForViewer(url);
+      text = extractReadableTextFromHtml(result.html);
+      if (viewer) viewer.cdHtmlVoiceText = text;
+    }
+    replaceReportSpeechQueue(text || title || "Informe de Consultora Diagonales", button);
+  } catch (error) {
+    console.warn("No se pudo preparar la lectura del HTML", error);
+    replaceReportSpeechQueue(title || "Informe de Consultora Diagonales", button);
+  }
+}
+
+async function extractPdfText(pdfUrl) {
+  const pdfjs = await loadPdfJs();
+  const pdfData = await fetchPdfArrayBuffer(pdfUrl);
+  const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
+  const chunks = [];
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item) => item.str || "")
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (pageText) chunks.push(pageText);
+  }
+  return chunks.join("\n\n").trim();
+}
+
+async function fetchPdfArrayBuffer(pdfUrl) {
+  const response = await fetch(pdfUrl, { credentials: "omit", cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.arrayBuffer();
+}
+
+function extractReadableTextFromHtml(html) {
+  const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+  doc.querySelectorAll("script,style,noscript,svg,canvas,iframe,audio,video,nav,header,footer,[data-cd-voice-widget]").forEach((node) => node.remove());
+  return (doc.body?.innerText || doc.body?.textContent || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function supportsSpeech() {
+  return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+}
+
+function resetSpeechButton(button) {
+  if (!button) return;
+  button.disabled = false;
+  button.classList.remove("is-reading");
+  button.textContent = "Escuchar informe";
+}
+
+function setSpeechButton(button, text) {
+  if (!button) return;
+  button.disabled = false;
+  button.textContent = text;
+}
+
+function beginPrimedReportSpeech(button) {
+  startReportSpeech("Preparando la lectura del informe.", button);
+  setSpeechButton(button, "Preparando...");
+}
+
+function replaceReportSpeechQueue(text, button) {
+  const chunks = chunkSpeechText(text);
+  if (!chunks.length) {
+    stopReportSpeech();
+    alert("No encontramos texto legible para escuchar en este informe.");
+    resetSpeechButton(button);
+    return;
+  }
+
+  if (!reportSpeechState.reading || reportSpeechState.button !== button) {
+    startReportSpeech(text, button);
+    return;
+  }
+
+  reportSpeechState.chunks = chunks;
+  reportSpeechState.index = 0;
+  setSpeechButton(button, "Detener audio");
+}
+
+function startReportSpeech(text, button) {
+  stopReportSpeech();
+  const chunks = chunkSpeechText(text);
+  if (!chunks.length) {
+    alert("No encontramos texto legible para escuchar en este informe.");
+    resetSpeechButton(button);
+    return;
+  }
+
+  reportSpeechState.chunks = chunks;
+  reportSpeechState.index = 0;
+  reportSpeechState.button = button;
+  reportSpeechState.reading = true;
+  button?.classList.add("is-reading");
+  setSpeechButton(button, "Detener audio");
+  speakNextReportChunk();
+}
+
+function speakNextReportChunk() {
+  if (!reportSpeechState.reading || reportSpeechState.index >= reportSpeechState.chunks.length) {
+    stopReportSpeech();
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(reportSpeechState.chunks[reportSpeechState.index]);
+  utterance.lang = "es-AR";
+  utterance.rate = 0.95;
+  utterance.pitch = 1;
+  utterance.onend = () => {
+    reportSpeechState.index += 1;
+    speakNextReportChunk();
+  };
+  utterance.onerror = () => stopReportSpeech();
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopReportSpeech() {
+  if (supportsSpeech()) window.speechSynthesis.cancel();
+  const button = reportSpeechState.button;
+  reportSpeechState.chunks = [];
+  reportSpeechState.index = 0;
+  reportSpeechState.button = null;
+  reportSpeechState.reading = false;
+  resetSpeechButton(button);
+}
+
+function chunkSpeechText(text) {
+  const sentences = String(text || "").match(/[^.!?]+[.!?]*/g) || [];
+  const chunks = [];
+  let current = "";
+  sentences.forEach((sentence) => {
+    const next = `${current} ${sentence}`.trim();
+    if (next.length > 900 && current) {
+      chunks.push(current);
+      current = sentence.trim();
+    } else {
+      current = next;
+    }
+  });
+  if (current) chunks.push(current);
+  return chunks.slice(0, 80);
 }
 
 async function loadPdfJs() {
@@ -1271,6 +1470,26 @@ function initHtmlReportViewer() {
   });
 }
 
+function initHtmlVoiceBridgeMessages() {
+  window.addEventListener("message", (event) => {
+    const data = event.data || {};
+    if (data.type !== "cd:html-voice") return;
+    const frame = document.querySelector("[data-html-viewer-frame]");
+    if (!frame || event.source !== frame.contentWindow) return;
+
+    if (data.action === "stop") {
+      stopReportSpeech();
+      return;
+    }
+
+    if (data.action === "start") {
+      const viewer = document.querySelector("[data-html-viewer]");
+      const title = viewer?.querySelector("[data-html-viewer-title]")?.textContent || "Informe de Consultora Diagonales";
+      startReportSpeech(data.text || viewer?.cdHtmlVoiceText || title, null);
+    }
+  });
+}
+
 function getReportFromLink(link) {
   const rawIndex = link?.dataset?.reportIndex;
   if (rawIndex === undefined || rawIndex === "") return null;
@@ -1299,10 +1518,12 @@ async function openHtmlReportViewer(url, title) {
             <h2 id="html-viewer-title" data-html-viewer-title>Graficos</h2>
           </div>
           <div class="html-viewer__actions">
+            <button type="button" data-html-voice-toggle>Escuchar informe</button>
+            <a data-html-viewer-source target="_blank" rel="noopener noreferrer">Abrir archivo</a>
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
-        <iframe data-html-viewer-frame title="Visor de graficos" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-forms"></iframe>
+        <iframe data-html-viewer-frame title="Visor de graficos" loading="lazy" allow="autoplay; encrypted-media" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-forms"></iframe>
       </div>
     `;
     document.body.appendChild(viewer);
@@ -1317,6 +1538,14 @@ async function openHtmlReportViewer(url, title) {
   }
 
   viewer.querySelector("[data-html-viewer-title]").textContent = title;
+  const source = viewer.querySelector("[data-html-viewer-source]");
+  if (source) source.href = url;
+  viewer.cdHtmlVoiceText = "";
+  const voice = viewer.querySelector("[data-html-voice-toggle]");
+  if (voice) {
+    resetSpeechButton(voice);
+    voice.onclick = () => toggleHtmlSpeech(url, title, voice, viewer);
+  }
   const frame = viewer.querySelector("[data-html-viewer-frame]");
   frame.removeAttribute("src");
   frame.srcdoc = buildHtmlViewerLoading();
@@ -1325,8 +1554,9 @@ async function openHtmlReportViewer(url, title) {
   document.body.classList.add("html-viewer-open");
 
   try {
-    const html = await fetchHtmlForViewer(url);
-    frame.srcdoc = normalizeHtmlForViewer(html, url);
+    const result = await fetchHtmlForViewer(url);
+    viewer.cdHtmlVoiceText = extractReadableTextFromHtml(result.html);
+    frame.srcdoc = normalizeHtmlForViewer(result.html, result.sourceUrl);
   } catch (error) {
     frame.srcdoc = buildHtmlViewerError(url);
     console.warn("No se pudo cargar el HTML en el visor interno", error);
@@ -1341,6 +1571,7 @@ function closeHtmlReportViewer() {
   viewer.classList.remove("is-open");
   viewer.setAttribute("aria-hidden", "true");
   document.body.classList.remove("html-viewer-open");
+  stopReportSpeech();
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   if (frame) {
     frame.removeAttribute("src");
@@ -1357,12 +1588,17 @@ function getHtmlViewerTitle(link) {
 async function fetchHtmlForViewer(url) {
   const response = await fetch(url, { credentials: "omit" });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return await response.text();
+  return {
+    html: await response.text(),
+    sourceUrl: response.url || url,
+  };
 }
 
 function normalizeHtmlForViewer(html, sourceUrl) {
   const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
+  const anchorBridge = buildHtmlViewerAnchorBridge();
   const bridge = buildHtmlViewerExternalLinkBridge();
+  const interactionPatch = buildHtmlViewerInteractionPatch();
   const voiceBridge = buildHtmlViewerVoiceBridge();
   const responsivePatch = buildHtmlViewerResponsivePatch();
   let output = sanitizeHtmlReportForViewer(String(html || ""), sourceUrl);
@@ -1372,9 +1608,9 @@ function normalizeHtmlForViewer(html, sourceUrl) {
     output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}${responsivePatch.style}</head><body>${output}</body></html>`;
   }
   if (/<\/body>/i.test(output)) {
-    output = output.replace(/<\/body>/i, `${responsivePatch.script}\n${bridge}\n${voiceBridge}\n</body>`);
+    output = output.replace(/<\/body>/i, `${responsivePatch.script}\n${interactionPatch}\n${anchorBridge}\n${bridge}\n${voiceBridge}\n</body>`);
   } else {
-    output += responsivePatch.script + bridge + voiceBridge;
+    output += responsivePatch.script + interactionPatch + anchorBridge + bridge + voiceBridge;
   }
   return output;
 }
@@ -1479,6 +1715,89 @@ function buildHtmlViewerResponsivePatch() {
   return { style, script };
 }
 
+function buildHtmlViewerAnchorBridge() {
+  return `<script>
+    (function () {
+      function findTarget(id) {
+        if (!id) return null;
+        try { id = decodeURIComponent(id); } catch (_) {}
+        return document.getElementById(id) || document.querySelector('a[name="' + id.replace(/"/g, '\\\\"') + '"]');
+      }
+      document.addEventListener("click", function (event) {
+        var link = event.target && event.target.closest ? event.target.closest("a[href]") : null;
+        if (!link) return;
+        if (link.matches(".tab, [data-t], [data-tab]") || link.closest(".tabs, nav.tabs, [role='tablist']")) return;
+        if ((link.getAttribute("onclick") || "").indexOf("show(") !== -1) return;
+        var href = link.getAttribute("href") || "";
+        var hashIndex = href.indexOf("#");
+        if (hashIndex === -1) return;
+        var beforeHash = href.slice(0, hashIndex);
+        if (beforeHash && beforeHash !== window.location.pathname) {
+          if (/^https?:/i.test(beforeHash) || beforeHash.indexOf("/") !== -1) return;
+        }
+        event.preventDefault();
+        var id = href.slice(hashIndex + 1);
+        var target = findTarget(id);
+        if (target && target.scrollIntoView) target.scrollIntoView({ behavior: "smooth", block: "start" });
+        else if (!id) window.scrollTo({ top: 0, behavior: "smooth" });
+      }, true);
+    })();
+  <\\/script>`;
+}
+
+function buildHtmlViewerInteractionPatch() {
+  return `<script>
+    (function () {
+      function activatePanel(id, trigger) {
+        if (!id) return false;
+        var panel = document.getElementById(id);
+        if (!panel) return false;
+        var panelSelector = ".panel, section.panel, [role='tabpanel'], .tab-panel";
+        document.querySelectorAll(panelSelector).forEach(function (item) {
+          item.classList.remove("active", "is-active", "open");
+          if (item.matches(".panel, section.panel, [role='tabpanel'], .tab-panel")) item.style.display = "none";
+        });
+        panel.classList.add("active", "is-active");
+        panel.style.display = "";
+        if (getComputedStyle(panel).display === "none") panel.style.display = "block";
+        document.querySelectorAll(".tab, nav a, [data-t], [data-tab]").forEach(function (item) {
+          item.classList.remove("active", "is-active");
+          item.removeAttribute("aria-current");
+          if (item.getAttribute("data-t") === id || item.getAttribute("data-tab") === id || item === trigger) {
+            item.classList.add("active", "is-active");
+            item.setAttribute("aria-current", "page");
+          }
+        });
+        try { panel.scrollIntoView({ block: "start" }); } catch (_) {}
+        return true;
+      }
+      function idFromShowCall(value) {
+        var match = String(value || "").match(/show\\((['"])(.*?)\\1/);
+        return match ? match[2] : "";
+      }
+      document.addEventListener("click", function (event) {
+        var trigger = event.target && event.target.closest ? event.target.closest("a[href], .tab[data-t], [data-tab]") : null;
+        if (!trigger) return;
+        var href = trigger.getAttribute("href") || "";
+        var id = trigger.getAttribute("data-t") || trigger.getAttribute("data-tab") || idFromShowCall(trigger.getAttribute("onclick"));
+        if (!id && href.charAt(0) === "#") id = href.slice(1);
+        if (href === "#" || href === "" || id) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (id) activatePanel(id, trigger);
+        }
+      }, true);
+      window.show = function (id, el) { activatePanel(id, el || null); return false; };
+      document.querySelectorAll(".tab[data-t], [data-tab]").forEach(function (tab) {
+        tab.addEventListener("click", function (event) {
+          event.preventDefault();
+          activatePanel(tab.getAttribute("data-t") || tab.getAttribute("data-tab"), tab);
+        });
+      });
+    })();
+  <\\/script>`;
+}
+
 function buildHtmlViewerExternalLinkBridge() {
   return `<script>
     (function () {
@@ -1512,7 +1831,26 @@ function buildHtmlViewerVoiceBridge() {
       var state = { chunks: [], index: 0, reading: false };
       var button = document.querySelector("[data-cd-voice-toggle]");
       var status = document.querySelector("[data-cd-voice-status]");
-      function supported(){ return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window; }
+      function speechHost(){
+        try {
+          if (window.parent && "speechSynthesis" in window.parent && "SpeechSynthesisUtterance" in window.parent) return window.parent;
+        } catch (_) {}
+        if ("speechSynthesis" in window && "SpeechSynthesisUtterance" in window) return window;
+        return null;
+      }
+      function supported(){ return !!speechHost(); }
+      function canUseParentBridge(){
+        try { return !!(window.parent && window.parent !== window && window.parent.postMessage); }
+        catch (_) { return false; }
+      }
+      function sendToParent(action, text){
+        try {
+          window.parent.postMessage({ type: "cd:html-voice", action: action, text: text || "" }, "*");
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
       function cleanText(){
         var clone = document.body.cloneNode(true);
         clone.querySelectorAll("script,style,noscript,svg,canvas,iframe,audio,video,nav,header,footer,[data-cd-voice-widget]").forEach(function(node){ node.remove(); });
@@ -1535,22 +1873,30 @@ function buildHtmlViewerVoiceBridge() {
         if (status) status.textContent = reading ? "Leyendo..." : "";
       }
       function stop(){
-        if (supported()) window.speechSynthesis.cancel();
+        if (canUseParentBridge()) sendToParent("stop");
+        var host = speechHost();
+        if (host) host.speechSynthesis.cancel();
         state.chunks = []; state.index = 0; setReading(false);
       }
       function next(){
         if (!state.chunks.length || state.index >= state.chunks.length) { stop(); return; }
-        var utterance = new SpeechSynthesisUtterance(state.chunks[state.index]);
+        var host = speechHost();
+        if (!host) { stop(); return; }
+        var utterance = new host.SpeechSynthesisUtterance(state.chunks[state.index]);
         utterance.lang = "es-AR"; utterance.rate = 0.95; utterance.pitch = 1;
         utterance.onend = function(){ state.index += 1; next(); };
         utterance.onerror = function(){ stop(); };
-        window.speechSynthesis.speak(utterance);
+        host.speechSynthesis.speak(utterance);
       }
       function toggle(){
-        if (!supported()) { alert("Este navegador no permite lectura en voz desde la web."); return; }
         if (state.reading) { stop(); return; }
         var text = cleanText();
         if (!text) { alert("No encontramos texto legible para escuchar en este HTML."); return; }
+        if (canUseParentBridge() && sendToParent("start", text)) {
+          setReading(true);
+          return;
+        }
+        if (!supported()) { alert("Este navegador no permite lectura en voz desde la web."); return; }
         stop(); state.chunks = chunks(text); state.index = 0; setReading(true); next();
       }
       button && button.addEventListener("click", toggle);
