@@ -1153,16 +1153,10 @@ function openPdfViewer(report) {
     voice.onclick = () => togglePdfSpeech(pdfUrl, title, voice);
   }
   viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
-  if (isMobileViewport()) {
-    frame.src = "about:blank";
-  } else {
-    frame.src = pdfUrl;
-  }
+  frame.src = pdfUrl;
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
   document.body.classList.add("pdf-viewer-open");
-
-  if (isMobileViewport()) renderMobilePdf(viewer, pdfUrl);
 }
 
 function closePdfViewer() {

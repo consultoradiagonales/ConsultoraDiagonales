@@ -70,16 +70,10 @@
     }
     viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
     const frame = viewer.querySelector("[data-pdf-viewer-frame]");
-    if (isMobileViewport()) {
-      frame.src = "about:blank";
-    } else {
-      frame.src = pdfUrl;
-    }
+    frame.src = pdfUrl;
     viewer.classList.add("is-open");
     viewer.setAttribute("aria-hidden", "false");
     document.body.classList.add("pdf-viewer-open");
-
-    if (isMobileViewport()) renderMobilePdf(viewer, pdfUrl);
   }
 
   function getPdfTitle(link) {
