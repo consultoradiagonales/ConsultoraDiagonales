@@ -27,6 +27,7 @@ initLoginModal();
 initTracking();
 initLeadForms();
 initHtmlReportViewer();
+initHtmlVoiceBridgeMessages();
 
 if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
@@ -1093,10 +1094,6 @@ function bindPdfDownloadLinks(container, reports) {
       }
 
       await logPdfDownload(report);
-      if (isMobileViewport()) {
-        window.location.href = buildReportAccessLink(report, "pdf");
-        return;
-      }
       openPdfViewer(report);
     });
   });
@@ -1124,12 +1121,12 @@ function openPdfViewer(report) {
             </div>
             <div class="pdf-viewer__actions">
               <button type="button" data-pdf-voice-toggle>Escuchar informe</button>
-              <a data-pdf-viewer-source target="_blank" rel="noopener noreferrer">Abrir archivo</a>
+              <a data-pdf-viewer-source target="_blank" rel="noopener noreferrer">Abrir PDF</a>
               <button type="button" data-pdf-viewer-close aria-label="Cerrar visor">Cerrar</button>
             </div>
           </div>
           <div class="pdf-viewer__mobile-note" data-pdf-viewer-note>
-            Vista previa del PDF. Si tu navegador no la muestra usa Abrir archivo.
+            Vista previa del PDF. Si tu navegador no la muestra usa Abrir PDF.
           </div>
           <div class="pdf-viewer__pages" data-pdf-viewer-pages aria-label="Paginas del PDF"></div>
           <iframe data-pdf-viewer-frame title="Visor de PDF" loading="lazy"></iframe>
@@ -1149,10 +1146,6 @@ function openPdfViewer(report) {
   const title = report.titulo || "Radiografia";
   const frame = viewer.querySelector("[data-pdf-viewer-frame]");
   const pdfUrl = buildReportAccessLink(report, "pdf");
-  if (isMobileViewport()) {
-    window.location.href = pdfUrl;
-    return;
-  }
   viewer.querySelector("[data-pdf-viewer-title]").textContent = title;
   const source = viewer.querySelector("[data-pdf-viewer-source]");
   if (source) source.href = pdfUrl;
@@ -1228,7 +1221,7 @@ async function renderMobilePdf(viewer, pdfUrl) {
   } catch (error) {
     pages.classList.remove("is-loading");
     viewer.classList.remove("has-rendered-pages");
-    pages.innerHTML = `<p>No se pudo previsualizar el PDF en este navegador. <a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir archivo</a></p>`;
+    pages.innerHTML = `<div class="pdf-viewer__fallback"><p>No se pudo previsualizar el PDF en este navegador.</p><a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir PDF</a></div>`;
     console.warn("No se pudo renderizar el PDF movil", error);
   }
 }
@@ -1466,6 +1459,26 @@ function initHtmlReportViewer() {
     event.preventDefault();
     const accessUrl = report ? buildReportAccessLink(report, "html") : link.href;
     openHtmlReportViewer(accessUrl, getHtmlViewerTitle(link), report?.html_url || link.href);
+  });
+}
+
+function initHtmlVoiceBridgeMessages() {
+  window.addEventListener("message", (event) => {
+    const data = event.data || {};
+    if (data.type !== "cd:html-voice") return;
+    const frame = document.querySelector("[data-html-viewer-frame]");
+    if (!frame || event.source !== frame.contentWindow) return;
+
+    if (data.action === "stop") {
+      stopReportSpeech();
+      return;
+    }
+
+    if (data.action === "start") {
+      const viewer = document.querySelector("[data-html-viewer]");
+      const title = viewer?.querySelector("[data-html-viewer-title]")?.textContent || "Informe de Consultora Diagonales";
+      startReportSpeech(data.text || viewer?.cdHtmlVoiceText || title, null);
+    }
   });
 }
 
@@ -1872,6 +1885,18 @@ function buildHtmlViewerVoiceBridge() {
         return null;
       }
       function supported(){ return !!speechHost(); }
+      function canUseParentBridge(){
+        try { return !!(window.parent && window.parent !== window && window.parent.postMessage); }
+        catch (_) { return false; }
+      }
+      function sendToParent(action, text){
+        try {
+          window.parent.postMessage({ type: "cd:html-voice", action: action, text: text || "" }, "*");
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
       function cleanText(){
         var clone = document.body.cloneNode(true);
         clone.querySelectorAll("script,style,noscript,svg,canvas,iframe,audio,video,nav,header,footer,[data-cd-voice-widget]").forEach(function(node){ node.remove(); });
@@ -1894,6 +1919,7 @@ function buildHtmlViewerVoiceBridge() {
         if (status) status.textContent = reading ? "Leyendo..." : "";
       }
       function stop(){
+        if (canUseParentBridge()) sendToParent("stop");
         var host = speechHost();
         if (host) host.speechSynthesis.cancel();
         state.chunks = []; state.index = 0; setReading(false);
@@ -1909,10 +1935,14 @@ function buildHtmlViewerVoiceBridge() {
         host.speechSynthesis.speak(utterance);
       }
       function toggle(){
-        if (!supported()) { alert("Este navegador no permite lectura en voz desde la web."); return; }
         if (state.reading) { stop(); return; }
         var text = cleanText();
         if (!text) { alert("No encontramos texto legible para escuchar en este HTML."); return; }
+        if (canUseParentBridge() && sendToParent("start", text)) {
+          setReading(true);
+          return;
+        }
+        if (!supported()) { alert("Este navegador no permite lectura en voz desde la web."); return; }
         stop(); state.chunks = chunks(text); state.index = 0; setReading(true); next();
       }
       button && button.addEventListener("click", toggle);

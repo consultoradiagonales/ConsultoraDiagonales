@@ -14,7 +14,6 @@
 
       const url = new URL(link.href, window.location.href);
       if (url.pathname.includes(REGISTRATION_PATH)) return;
-      if (isMobileViewport()) return;
 
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -39,12 +38,12 @@
             </div>
             <div class="pdf-viewer__actions">
               <button type="button" data-pdf-voice-toggle>Escuchar informe</button>
-              <a data-pdf-viewer-source target="_blank" rel="noopener noreferrer">Abrir archivo</a>
+              <a data-pdf-viewer-source target="_blank" rel="noopener noreferrer">Abrir PDF</a>
               <button type="button" data-pdf-viewer-close aria-label="Cerrar visor">Cerrar</button>
             </div>
           </div>
           <div class="pdf-viewer__mobile-note" data-pdf-viewer-note>
-            Vista previa del PDF. Si tu navegador no la muestra usa Abrir archivo.
+            Vista previa del PDF. Si tu navegador no la muestra usa Abrir PDF.
           </div>
           <div class="pdf-viewer__pages" data-pdf-viewer-pages aria-label="Paginas del PDF"></div>
           <iframe data-pdf-viewer-frame title="Visor de PDF" loading="lazy"></iframe>
@@ -143,7 +142,7 @@
     } catch (error) {
       pages.classList.remove("is-loading");
       viewer.classList.remove("has-rendered-pages");
-      pages.innerHTML = `<p>No se pudo previsualizar el PDF en este navegador. <a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir archivo</a></p>`;
+      pages.innerHTML = `<div class="pdf-viewer__fallback"><p>No se pudo previsualizar el PDF en este navegador.</p><a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir PDF</a></div>`;
       console.warn("No se pudo renderizar el PDF movil", error);
     }
   }

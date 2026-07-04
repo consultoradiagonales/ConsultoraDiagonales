@@ -61,11 +61,6 @@
       // La lectura pública no debe fallar si el registro analítico no responde.
     }
 
-    if (isMobileViewport()) {
-      window.location.href = buildReportAccessLink(report, "pdf");
-      return;
-    }
-
     if (typeof openPdfViewer === "function") {
       openPdfViewer(report);
     } else {
@@ -152,11 +147,6 @@
         if (typeof logPdfDownload === "function") await logPdfDownload(report);
       } catch (_) {
         // El registro analitico no debe bloquear la apertura luego del alta.
-      }
-
-      if (isMobileViewport()) {
-        window.location.href = buildReportAccessLink(report, "pdf");
-        return;
       }
 
       if (typeof openPdfViewer === "function") {
@@ -277,7 +267,4 @@
     return fallback && fallback !== window.location.href ? fallback : "";
   }
 
-  function isMobileViewport() {
-    return window.matchMedia("(max-width: 760px), (pointer: coarse)").matches;
-  }
 })();
