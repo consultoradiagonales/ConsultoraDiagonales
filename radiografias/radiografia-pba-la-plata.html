@@ -854,11 +854,14 @@ footer strong{color:var(--C)}
 
 <script>
 function show(id,el){
+  const panel = document.getElementById(id);
+  if (!panel) return false;
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  panel.classList.add('active');
   document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
-  el.classList.add('active');
+  if (el) el.classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
+  return false;
 }
 </script>
     <script src="../assets/js/html-voice-widget.js?v=20260627-html-voice-all"></script>
