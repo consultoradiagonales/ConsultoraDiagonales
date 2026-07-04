@@ -169,11 +169,16 @@ body.pdf-viewer-open {
     display: block;
   }
 
-  .pdf-viewer iframe {
+  .pdf-viewer__pages {
     display: none;
   }
 
-  .pdf-viewer__pages {
+  .pdf-viewer.has-rendered-pages iframe {
+    display: none;
+  }
+
+  .pdf-viewer.has-rendered-pages .pdf-viewer__pages,
+  .pdf-viewer.is-mobile-rendering .pdf-viewer__pages {
     display: block;
   }
 }

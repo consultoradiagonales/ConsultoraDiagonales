@@ -1162,7 +1162,7 @@ function openPdfViewer(report) {
     voice.onclick = () => togglePdfSpeech(pdfUrl, title, voice);
   }
   viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
-  frame.src = isMobileViewport() ? "about:blank" : pdfUrl;
+  frame.src = pdfUrl;
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
   document.body.classList.add("pdf-viewer-open");
@@ -1223,8 +1223,8 @@ async function renderMobilePdf(viewer, pdfUrl) {
     }
   } catch (error) {
     pages.classList.remove("is-loading");
-    viewer.classList.remove("has-rendered-pages");
-    pages.innerHTML = `<div class="pdf-viewer__fallback"><p>No se pudo previsualizar el PDF en este navegador.</p><a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir PDF</a></div>`;
+    viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
+    pages.replaceChildren();
     console.warn("No se pudo renderizar el PDF movil", error);
   }
 }
