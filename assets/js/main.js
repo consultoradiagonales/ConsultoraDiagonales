@@ -1598,7 +1598,6 @@ function normalizeHtmlForViewer(html, sourceUrl) {
   const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
   const anchorBridge = buildHtmlViewerAnchorBridge();
   const bridge = buildHtmlViewerExternalLinkBridge();
-  const interactionPatch = buildHtmlViewerInteractionPatch();
   const voiceBridge = buildHtmlViewerVoiceBridge();
   const responsivePatch = buildHtmlViewerResponsivePatch();
   let output = sanitizeHtmlReportForViewer(String(html || ""), sourceUrl);
@@ -1608,9 +1607,9 @@ function normalizeHtmlForViewer(html, sourceUrl) {
     output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}${responsivePatch.style}</head><body>${output}</body></html>`;
   }
   if (/<\/body>/i.test(output)) {
-    output = output.replace(/<\/body>/i, `${responsivePatch.script}\n${interactionPatch}\n${anchorBridge}\n${bridge}\n${voiceBridge}\n</body>`);
+    output = output.replace(/<\/body>/i, `${responsivePatch.script}\n${anchorBridge}\n${bridge}\n${voiceBridge}\n</body>`);
   } else {
-    output += responsivePatch.script + interactionPatch + anchorBridge + bridge + voiceBridge;
+    output += responsivePatch.script + anchorBridge + bridge + voiceBridge;
   }
   return output;
 }
