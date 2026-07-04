@@ -17,6 +17,7 @@ const LEGACY_PRIVATE_MARKER = "[[CD_PRIVATE]]";
 const PDFJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
 const PDFJS_WORKER_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 let adminReports = [];
+const reportSpeechState = { chunks: [], index: 0, button: null, reading: false };
 
 initNavigation();
 initLogoFallbacks();
@@ -56,23 +57,29 @@ function initNavigation() {
 
   if (!toggle || !menu) return;
 
-  toggle.addEventListener("click", () => {
-    const open = !menu.classList.contains("is-open");
+  const setMenuOpen = (open) => {
     menu.classList.toggle("is-open", open);
     toggle.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", String(open));
     menu.setAttribute("aria-hidden", String(!open));
     document.body.style.overflow = open ? "hidden" : "";
+  };
+
+  toggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    setMenuOpen(!menu.classList.contains("is-open"));
   });
 
   menu.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      menu.classList.remove("is-open");
-      toggle.classList.remove("is-open");
-      toggle.setAttribute("aria-expanded", "false");
-      menu.setAttribute("aria-hidden", "true");
-      document.body.style.overflow = "";
-    });
+    link.addEventListener("click", () => setMenuOpen(false));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menu.classList.contains("is-open")) setMenuOpen(false);
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.matchMedia("(min-width: 901px)").matches) setMenuOpen(false);
   });
 }
 
@@ -883,7 +890,7 @@ function renderReports(reports, container, count) {
             ${privacyBadge}
           </div>
           <div class="report-actions">
-            ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">GrÃ¡ficos</a>` : ""}
+            ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">Gráficos</a>` : ""}
             <a class="request-link" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>
           </div>
         </article>
@@ -1110,11 +1117,13 @@ function openPdfViewer(report) {
               <h2 id="pdf-viewer-title" data-pdf-viewer-title>Documento</h2>
             </div>
             <div class="pdf-viewer__actions">
+              <button type="button" data-pdf-voice-toggle>Escuchar informe</button>
+              <a data-pdf-viewer-source target="_blank" rel="noopener noreferrer">Abrir archivo</a>
               <button type="button" data-pdf-viewer-close aria-label="Cerrar visor">Cerrar</button>
             </div>
           </div>
           <div class="pdf-viewer__mobile-note" data-pdf-viewer-note>
-            Cargando paginas del PDF dentro de la web.
+            Vista previa del PDF. Si tu navegador no la muestra usa Abrir archivo.
           </div>
           <div class="pdf-viewer__pages" data-pdf-viewer-pages aria-label="Paginas del PDF"></div>
           <iframe data-pdf-viewer-frame title="Visor de PDF" loading="lazy"></iframe>
@@ -1135,7 +1144,19 @@ function openPdfViewer(report) {
   const frame = viewer.querySelector("[data-pdf-viewer-frame]");
   const pdfUrl = buildReportAccessLink(report, "pdf");
   viewer.querySelector("[data-pdf-viewer-title]").textContent = title;
-  frame.src = isMobileViewport() ? "about:blank" : pdfUrl;
+  const source = viewer.querySelector("[data-pdf-viewer-source]");
+  if (source) source.href = pdfUrl;
+  const voice = viewer.querySelector("[data-pdf-voice-toggle]");
+  if (voice) {
+    resetSpeechButton(voice);
+    voice.onclick = () => togglePdfSpeech(pdfUrl, title, voice);
+  }
+  viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
+  if (isMobileViewport()) {
+    frame.src = "about:blank";
+  } else {
+    frame.src = pdfUrl;
+  }
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
   document.body.classList.add("pdf-viewer-open");
@@ -1149,6 +1170,8 @@ function closePdfViewer() {
 
   const frame = viewer.querySelector("[data-pdf-viewer-frame]");
   viewer.classList.remove("is-open");
+  viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
+  stopReportSpeech();
   viewer.setAttribute("aria-hidden", "true");
   document.body.classList.remove("pdf-viewer-open");
   if (frame) frame.src = "about:blank";
@@ -1164,14 +1187,17 @@ async function renderMobilePdf(viewer, pdfUrl) {
   if (!pages) return;
 
   pages.replaceChildren();
+  viewer.classList.add("is-mobile-rendering");
   pages.classList.add("is-loading");
-  pages.textContent = "Cargando PDF...";
+  pages.textContent = "Preparando vista optimizada...";
 
   try {
     const pdfjs = await loadPdfJs();
-    const pdf = await pdfjs.getDocument(pdfUrl).promise;
-    pages.replaceChildren();
-    pages.classList.remove("is-loading");
+    const pdfData = await fetchPdfArrayBuffer(pdfUrl);
+    const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
+      pages.replaceChildren();
+      pages.classList.remove("is-loading");
+      viewer.classList.add("has-rendered-pages");
 
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
       const page = await pdf.getPage(pageNumber);
@@ -1191,9 +1217,191 @@ async function renderMobilePdf(viewer, pdfUrl) {
     }
   } catch (error) {
     pages.classList.remove("is-loading");
-    pages.innerHTML = '<p>No se pudo previsualizar el PDF en este navegador. Tocá "Abrir PDF" para verlo.</p>';
+    viewer.classList.remove("has-rendered-pages");
+    pages.innerHTML = `<p>No se pudo previsualizar el PDF en este navegador. <a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir archivo</a></p>`;
     console.warn("No se pudo renderizar el PDF movil", error);
   }
+}
+
+async function togglePdfSpeech(pdfUrl, title, button) {
+  if (reportSpeechState.reading && reportSpeechState.button === button) {
+    stopReportSpeech();
+    return;
+  }
+  if (!supportsSpeech()) {
+    alert("Este navegador no permite lectura en voz desde la web.");
+    return;
+  }
+
+  beginPrimedReportSpeech(button);
+  try {
+    const text = await extractPdfText(pdfUrl);
+    replaceReportSpeechQueue(text || title || "Informe de Consultora Diagonales", button);
+  } catch (error) {
+    console.warn("No se pudo preparar la lectura del PDF", error);
+    replaceReportSpeechQueue(title || "Informe de Consultora Diagonales", button);
+  }
+}
+
+async function toggleHtmlSpeech(url, title, button, viewer) {
+  if (reportSpeechState.reading && reportSpeechState.button === button) {
+    stopReportSpeech();
+    return;
+  }
+  if (!supportsSpeech()) {
+    alert("Este navegador no permite lectura en voz desde la web.");
+    return;
+  }
+
+  beginPrimedReportSpeech(button);
+  try {
+    let text = viewer?.cdHtmlVoiceText || "";
+    if (!text) {
+      const result = await fetchHtmlForViewer(url);
+      text = extractReadableTextFromHtml(result.html);
+      if (viewer) viewer.cdHtmlVoiceText = text;
+    }
+    replaceReportSpeechQueue(text || title || "Informe de Consultora Diagonales", button);
+  } catch (error) {
+    console.warn("No se pudo preparar la lectura del HTML", error);
+    replaceReportSpeechQueue(title || "Informe de Consultora Diagonales", button);
+  }
+}
+
+async function extractPdfText(pdfUrl) {
+  const pdfjs = await loadPdfJs();
+  const pdfData = await fetchPdfArrayBuffer(pdfUrl);
+  const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
+  const chunks = [];
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item) => item.str || "")
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (pageText) chunks.push(pageText);
+  }
+  return chunks.join("\n\n").trim();
+}
+
+async function fetchPdfArrayBuffer(pdfUrl) {
+  const response = await fetch(pdfUrl, { credentials: "omit", cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.arrayBuffer();
+}
+
+function extractReadableTextFromHtml(html) {
+  const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+  doc.querySelectorAll("script,style,noscript,svg,canvas,iframe,audio,video,nav,header,footer,[data-cd-voice-widget]").forEach((node) => node.remove());
+  return (doc.body?.innerText || doc.body?.textContent || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function supportsSpeech() {
+  return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+}
+
+function resetSpeechButton(button) {
+  if (!button) return;
+  button.disabled = false;
+  button.classList.remove("is-reading");
+  button.textContent = "Escuchar informe";
+}
+
+function setSpeechButton(button, text) {
+  if (!button) return;
+  button.disabled = false;
+  button.textContent = text;
+}
+
+function beginPrimedReportSpeech(button) {
+  startReportSpeech("Preparando la lectura del informe.", button);
+  setSpeechButton(button, "Preparando...");
+}
+
+function replaceReportSpeechQueue(text, button) {
+  const chunks = chunkSpeechText(text);
+  if (!chunks.length) {
+    stopReportSpeech();
+    alert("No encontramos texto legible para escuchar en este informe.");
+    resetSpeechButton(button);
+    return;
+  }
+
+  if (!reportSpeechState.reading || reportSpeechState.button !== button) {
+    startReportSpeech(text, button);
+    return;
+  }
+
+  reportSpeechState.chunks = chunks;
+  reportSpeechState.index = 0;
+  setSpeechButton(button, "Detener audio");
+}
+
+function startReportSpeech(text, button) {
+  stopReportSpeech();
+  const chunks = chunkSpeechText(text);
+  if (!chunks.length) {
+    alert("No encontramos texto legible para escuchar en este informe.");
+    resetSpeechButton(button);
+    return;
+  }
+
+  reportSpeechState.chunks = chunks;
+  reportSpeechState.index = 0;
+  reportSpeechState.button = button;
+  reportSpeechState.reading = true;
+  button?.classList.add("is-reading");
+  setSpeechButton(button, "Detener audio");
+  speakNextReportChunk();
+}
+
+function speakNextReportChunk() {
+  if (!reportSpeechState.reading || reportSpeechState.index >= reportSpeechState.chunks.length) {
+    stopReportSpeech();
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(reportSpeechState.chunks[reportSpeechState.index]);
+  utterance.lang = "es-AR";
+  utterance.rate = 0.95;
+  utterance.pitch = 1;
+  utterance.onend = () => {
+    reportSpeechState.index += 1;
+    speakNextReportChunk();
+  };
+  utterance.onerror = () => stopReportSpeech();
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopReportSpeech() {
+  if (supportsSpeech()) window.speechSynthesis.cancel();
+  const button = reportSpeechState.button;
+  reportSpeechState.chunks = [];
+  reportSpeechState.index = 0;
+  reportSpeechState.button = null;
+  reportSpeechState.reading = false;
+  resetSpeechButton(button);
+}
+
+function chunkSpeechText(text) {
+  const sentences = String(text || "").match(/[^.!?]+[.!?]*/g) || [];
+  const chunks = [];
+  let current = "";
+  sentences.forEach((sentence) => {
+    const next = `${current} ${sentence}`.trim();
+    if (next.length > 900 && current) {
+      chunks.push(current);
+      current = sentence.trim();
+    } else {
+      current = next;
+    }
+  });
+  if (current) chunks.push(current);
+  return chunks.slice(0, 80);
 }
 
 async function loadPdfJs() {
@@ -1247,7 +1455,7 @@ function initHtmlReportViewer() {
 
     event.preventDefault();
     const accessUrl = report ? buildReportAccessLink(report, "html") : link.href;
-    openHtmlReportViewer(accessUrl, getHtmlViewerTitle(link));
+    openHtmlReportViewer(accessUrl, getHtmlViewerTitle(link), report?.html_url || link.href);
   });
 }
 
@@ -1259,7 +1467,7 @@ function getReportFromLink(link) {
   return Array.isArray(window.CD_REPORTS) ? window.CD_REPORTS[index] : null;
 }
 
-async function openHtmlReportViewer(url, title) {
+async function openHtmlReportViewer(url, title, sourceHint = "") {
   if (String(url || "").includes("/registro/")) {
     window.location.href = url;
     return;
@@ -1279,10 +1487,12 @@ async function openHtmlReportViewer(url, title) {
             <h2 id="html-viewer-title" data-html-viewer-title>Graficos</h2>
           </div>
           <div class="html-viewer__actions">
+            <button type="button" data-html-voice-toggle>Escuchar informe</button>
+            <a data-html-viewer-source target="_blank" rel="noopener noreferrer">Abrir archivo</a>
             <button type="button" data-html-viewer-close aria-label="Cerrar visor">Cerrar</button>
           </div>
         </div>
-        <iframe data-html-viewer-frame title="Visor de graficos" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-forms"></iframe>
+        <iframe data-html-viewer-frame title="Visor de graficos" loading="lazy" allow="autoplay; encrypted-media" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-forms"></iframe>
       </div>
     `;
     document.body.appendChild(viewer);
@@ -1297,6 +1507,14 @@ async function openHtmlReportViewer(url, title) {
   }
 
   viewer.querySelector("[data-html-viewer-title]").textContent = title;
+  const source = viewer.querySelector("[data-html-viewer-source]");
+  if (source) source.href = url;
+  viewer.cdHtmlVoiceText = "";
+  const voice = viewer.querySelector("[data-html-voice-toggle]");
+  if (voice) {
+    resetSpeechButton(voice);
+    voice.onclick = () => toggleHtmlSpeech(url, title, voice, viewer);
+  }
   const frame = viewer.querySelector("[data-html-viewer-frame]");
   frame.removeAttribute("src");
   frame.srcdoc = buildHtmlViewerLoading();
@@ -1305,8 +1523,9 @@ async function openHtmlReportViewer(url, title) {
   document.body.classList.add("html-viewer-open");
 
   try {
-    const html = await fetchHtmlForViewer(url);
-    frame.srcdoc = normalizeHtmlForViewer(html, url);
+      const result = await fetchHtmlForViewer(url, sourceHint);
+    viewer.cdHtmlVoiceText = extractReadableTextFromHtml(result.html);
+    frame.srcdoc = normalizeHtmlForViewer(result.html, result.sourceUrl);
   } catch (error) {
     if (isRegistrationRequiredError(error)) {
       redirectToRegistrationForAccessUrl(url);
@@ -1325,6 +1544,7 @@ function closeHtmlReportViewer() {
   viewer.classList.remove("is-open");
   viewer.setAttribute("aria-hidden", "true");
   document.body.classList.remove("html-viewer-open");
+  stopReportSpeech();
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   if (frame) {
     frame.removeAttribute("src");
@@ -1338,7 +1558,7 @@ function getHtmlViewerTitle(link) {
   return rowTitle || cardTitle || "Graficos";
 }
 
-async function fetchHtmlForViewer(url) {
+async function fetchHtmlForViewer(url, sourceHint = "") {
   const response = await fetch(url, { credentials: "omit" });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -1347,7 +1567,10 @@ async function fetchHtmlForViewer(url) {
     error.body = body;
     throw error;
   }
-  return await response.text();
+  return {
+    html: await response.text(),
+    sourceUrl: sourceHint || response.url || url,
+  };
 }
 
 function isRegistrationRequiredError(error) {
@@ -1379,7 +1602,9 @@ function redirectToRegistrationForAccessUrl(accessUrl) {
 
 function normalizeHtmlForViewer(html, sourceUrl) {
   const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
+  const anchorBridge = buildHtmlViewerAnchorBridge();
   const bridge = buildHtmlViewerExternalLinkBridge();
+  const interactionPatch = buildHtmlViewerInteractionPatch();
   const voiceBridge = buildHtmlViewerVoiceBridge();
   const responsivePatch = buildHtmlViewerResponsivePatch();
   let output = sanitizeHtmlReportForViewer(String(html || ""), sourceUrl);
@@ -1389,9 +1614,9 @@ function normalizeHtmlForViewer(html, sourceUrl) {
     output = `<!doctype html><html lang="es"><head><meta charset="UTF-8">${base}${responsivePatch.style}</head><body>${output}</body></html>`;
   }
   if (/<\/body>/i.test(output)) {
-    output = output.replace(/<\/body>/i, `${responsivePatch.script}\n${bridge}\n${voiceBridge}\n</body>`);
+    output = output.replace(/<\/body>/i, `${anchorBridge}\n${responsivePatch.script}\n${interactionPatch}\n${bridge}\n${voiceBridge}\n</body>`);
   } else {
-    output += responsivePatch.script + bridge + voiceBridge;
+    output += anchorBridge + responsivePatch.script + interactionPatch + bridge + voiceBridge;
   }
   return output;
 }
@@ -1428,7 +1653,8 @@ function buildHtmlViewerResponsivePatch() {
   const style = `<style id="cd-html-viewer-responsive-patch">
     html{width:100%;-webkit-text-size-adjust:100%}
     body{width:100%;max-width:100%;overflow-x:hidden}
-    img,video,canvas{max-width:100%;height:auto}
+    img,video,audio,canvas{max-width:100%;height:auto}
+    audio{display:block;width:100%;min-height:44px}
     svg{height:auto;max-width:100%}
     .chart-box,.chart-wrapper,.chart-container,.graph-box,.viz-card,.figure,.figura{
       max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
@@ -1459,6 +1685,18 @@ function buildHtmlViewerResponsivePatch() {
         wrap.appendChild(svg);
       }
       function tuneCharts(){
+        document.querySelectorAll("audio").forEach(function(audio){
+          audio.controls = true;
+          audio.preload = audio.getAttribute("preload") || "metadata";
+          audio.style.width = "100%";
+          audio.querySelectorAll("source[src]").forEach(function(source){
+            try { source.src = new URL(source.getAttribute("src"), document.baseURI).href; } catch (_) {}
+          });
+          if (audio.getAttribute("src")) {
+            try { audio.src = new URL(audio.getAttribute("src"), document.baseURI).href; } catch (_) {}
+          }
+          try { audio.load(); } catch (_) {}
+        });
         document.querySelectorAll("svg").forEach(wrapSvg);
         document.querySelectorAll("canvas").forEach(function(canvas){
           canvas.style.maxWidth = "100%";
@@ -1492,8 +1730,36 @@ function buildHtmlViewerResponsivePatch() {
       }
       window.addEventListener("resize", function(){ setTimeout(tuneCharts, 80); });
     })();
-  <\\/script>`;
+  </scr` + `ipt>`;
   return { style, script };
+}
+
+function buildHtmlViewerAnchorBridge() {
+  return `<script>
+    (function () {
+      function findTarget(id) {
+        if (!id) return null;
+        try { id = decodeURIComponent(id); } catch (_) {}
+        return document.getElementById(id) || document.querySelector('a[name="' + id.replace(/"/g, '\\\\"') + '"]');
+      }
+      document.addEventListener("click", function (event) {
+        var link = event.target && event.target.closest ? event.target.closest("a[href]") : null;
+        if (!link) return;
+        var href = link.getAttribute("href") || "";
+        var hashIndex = href.indexOf("#");
+        if (hashIndex === -1) return;
+        var beforeHash = href.slice(0, hashIndex);
+        if (beforeHash && beforeHash !== window.location.pathname) {
+          if (/^https?:/i.test(beforeHash) || beforeHash.indexOf("/") !== -1) return;
+        }
+        event.preventDefault();
+        var id = href.slice(hashIndex + 1);
+        var target = findTarget(id);
+        if (target && target.scrollIntoView) target.scrollIntoView({ behavior: "smooth", block: "start" });
+        else if (!id) window.scrollTo({ top: 0, behavior: "smooth" });
+      }, true);
+    })();
+  </scr` + `ipt>`;
 }
 
 function buildHtmlViewerExternalLinkBridge() {
@@ -1509,7 +1775,64 @@ function buildHtmlViewerExternalLinkBridge() {
         window.open(link.href, "_blank", "noopener");
       });
     })();
-  <\\/script>`;
+  </scr` + `ipt>`;
+}
+
+function buildHtmlViewerInteractionPatch() {
+  return `<script>
+    (function () {
+      function safeSelector(value) {
+        if (window.CSS && CSS.escape) return CSS.escape(value);
+        return String(value).replace(/[^a-zA-Z0-9_-]/g, "\\\\$&");
+      }
+      function activatePanel(id, trigger) {
+        if (!id) return false;
+        var panel = document.getElementById(id);
+        if (!panel) return false;
+        var panelSelector = ".panel, section.panel, [role='tabpanel'], .tab-panel";
+        document.querySelectorAll(panelSelector).forEach(function (item) {
+          item.classList.remove("active", "is-active", "open");
+          if (item.matches(".panel, section.panel, [role='tabpanel'], .tab-panel")) item.style.display = "none";
+        });
+        panel.classList.add("active", "is-active");
+        panel.style.display = "";
+        if (getComputedStyle(panel).display === "none") panel.style.display = "block";
+        document.querySelectorAll(".tab, nav a, [data-t], [data-tab]").forEach(function (item) {
+          item.classList.remove("active", "is-active");
+          item.removeAttribute("aria-current");
+          if (item.getAttribute("data-t") === id || item.getAttribute("data-tab") === id || item === trigger) {
+            item.classList.add("active", "is-active");
+            item.setAttribute("aria-current", "page");
+          }
+        });
+        try { panel.scrollIntoView({ block: "start" }); } catch (_) {}
+        return true;
+      }
+      function idFromShowCall(value) {
+        var match = String(value || "").match(/show\\((['"])(.*?)\\1/);
+        return match ? match[2] : "";
+      }
+      document.addEventListener("click", function (event) {
+        var trigger = event.target && event.target.closest ? event.target.closest("a[href], .tab[data-t], [data-tab]") : null;
+        if (!trigger) return;
+        var href = trigger.getAttribute("href") || "";
+        var id = trigger.getAttribute("data-t") || trigger.getAttribute("data-tab") || idFromShowCall(trigger.getAttribute("onclick"));
+        if (!id && href.charAt(0) === "#") id = href.slice(1);
+        if (href === "#" || href === "" || id) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (id) activatePanel(id, trigger);
+        }
+      }, true);
+      window.show = function (id, el) { activatePanel(id, el || null); return false; };
+      document.querySelectorAll(".tab[data-t], [data-tab]").forEach(function (tab) {
+        tab.addEventListener("click", function (event) {
+          event.preventDefault();
+          activatePanel(tab.getAttribute("data-t") || tab.getAttribute("data-tab"), tab);
+        });
+      });
+    })();
+  </scr` + `ipt>`;
 }
 
 function buildHtmlViewerVoiceBridge() {
@@ -1573,7 +1896,7 @@ function buildHtmlViewerVoiceBridge() {
       button && button.addEventListener("click", toggle);
       window.addEventListener("beforeunload", stop);
     })();
-  <\\/script>`;
+  </scr` + `ipt>`;
 }
 
 function buildHtmlViewerLoading() {
@@ -1738,7 +2061,7 @@ function initAdmin() {
 
     submit.disabled = true;
     if (hasUploadFile(htmlFile) && !isHtmlFile(htmlFile)) {
-      status.textContent = "El archivo HTML de grÃ¡ficos debe ser .html o .htm.";
+      status.textContent = "El archivo HTML de gráficos debe ser .html o .htm.";
       return;
     }
 
@@ -1868,10 +2191,10 @@ function fillAdminEditForm(report, mode = "full") {
   if (submit) submit.textContent = "Actualizar radiografía";
   if (status) status.textContent = "Editando radiografía: podés cambiar el título/datos o seleccionar otro PDF para reemplazar el archivo actual.";
   if (mode === "html") {
-    if (submit) submit.textContent = "Guardar HTML de grÃ¡ficos";
-    if (status) status.textContent = "CargÃ¡ el HTML de grÃ¡ficos para esta radiografÃ­a. El PDF existente se conserva.";
+    if (submit) submit.textContent = "Guardar HTML de gráficos";
+    if (status) status.textContent = "Cargá el HTML de gráficos para esta radiografía. El PDF existente se conserva.";
   } else if (status) {
-    status.textContent = "Editando radiografÃ­a: podÃ©s cambiar datos, reemplazar el PDF o agregar/reemplazar el HTML de grÃ¡ficos.";
+    status.textContent = "Editando radiografía: podés cambiar datos, reemplazar el PDF o agregar/reemplazar el HTML de gráficos.";
   }
   cancelEdit?.classList.remove("is-hidden");
   form.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1984,7 +2307,7 @@ function renderAdminReportItem(item) {
       <div class="admin-list-actions">
         ${item.html_url ? `<a class="admin-action-button" href="${escapeAttribute(item.html_url)}" target="_blank" rel="noopener">Abrir HTML</a>` : ""}
         ${item.pdf_url ? `<a class="admin-action-button" href="${escapeAttribute(item.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}
-        ${item.pdf_url ? `<button class="admin-action-button" type="button" data-admin-add-html="${escapeAttribute(item.id || "")}">${item.html_url ? "Reemplazar HTML de grÃ¡ficos" : "Agregar HTML de grÃ¡ficos"}</button>` : ""}
+        ${item.pdf_url ? `<button class="admin-action-button" type="button" data-admin-add-html="${escapeAttribute(item.id || "")}">${item.html_url ? "Reemplazar HTML de gráficos" : "Agregar HTML de gráficos"}</button>` : ""}
         <button class="admin-action-button" type="button" data-admin-privacy="${escapeAttribute(item.id || "")}" data-private-next="${isPrivate ? "false" : "true"}">${privacyButtonLabel}</button>
         <button class="admin-action-button" type="button" data-admin-edit="${escapeAttribute(item.id || "")}">Modificar datos / reemplazar archivo</button>
         <button class="admin-action-button is-danger" type="button" data-admin-delete="${escapeAttribute(item.id || "")}">Borrar archivo</button>
@@ -2252,16 +2575,16 @@ function renderAdminHtmlPicker(reports) {
 
   const candidates = (reports || []).filter((item) => item.pdf_url || item.html_url);
   if (!candidates.length) {
-    select.innerHTML = '<option value="">TodavÃ­a no hay radiografÃ­as cargadas</option>';
+    select.innerHTML = '<option value="">Todavía no hay radiografías cargadas</option>';
     if (action) action.disabled = true;
     return;
   }
 
   select.innerHTML = [
-    '<option value="">Seleccionar radiografÃ­a</option>',
+    '<option value="">Seleccionar radiografía</option>',
     ...candidates.map((item) => {
       const status = item.html_url ? "HTML cargado" : "sin HTML";
-      const label = `${item.titulo || "RadiografÃ­a sin tÃ­tulo"} - ${item.fecha || "sin fecha"} - ${status}`;
+      const label = `${item.titulo || "Radiografía sin título"} - ${item.fecha || "sin fecha"} - ${status}`;
       return `<option value="${escapeAttribute(item.id || "")}">${escapeHtml(label)}</option>`;
     }),
   ].join("");

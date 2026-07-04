@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
+    <meta name="referrer" content="no-referrer" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260615-seo-proof" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260704-mobile-audio-files" />
+    <link rel="stylesheet" href="../assets/css/admin-audience.css?v=20260625" />
+    <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" referrerpolicy="no-referrer"></script>
   </head>
   <body class="bg-[#080d14] text-white antialiased" data-page="admin">
     <header class="site-header is-solid" data-header>
@@ -58,6 +60,21 @@
           <p class="form-status" data-admin-login-status role="status"></p>
         </form>
 
+        <section class="admin-form is-hidden" data-admin-html-picker>
+          <div>
+            <p class="eyebrow">Gr&aacute;ficos</p>
+            <h2 class="admin-helper-title">Agregar HTML a una radiograf&iacute;a cargada</h2>
+            <p class="admin-helper-copy">Eleg&iacute; la radiograf&iacute;a PDF existente y despu&eacute;s carg&aacute; el archivo HTML de gr&aacute;ficos.</p>
+          </div>
+          <label>
+            <span>Radiograf&iacute;a existente</span>
+            <select name="radiografia_html_target" data-admin-html-select>
+              <option value="">Cargando radiograf&iacute;as...</option>
+            </select>
+          </label>
+          <button class="secondary-link justify-center" type="button" data-admin-html-select-action>Agregar HTML a esta radiograf&iacute;a</button>
+        </section>
+
         <form class="admin-form is-hidden" data-admin-form>
           <input name="id" type="hidden" />
           <label>
@@ -80,9 +97,19 @@
               <input name="fecha" type="date" required />
             </label>
           </div>
-          <label>
-            <span>Archivo PDF o HTML</span>
-            <input name="archivo" type="file" accept=".pdf,.html,.htm,application/pdf,text/html" />
+          <div class="grid gap-5 md:grid-cols-2">
+            <label>
+              <span>PDF principal</span>
+              <input name="pdf_archivo" type="file" accept=".pdf,application/pdf" />
+            </label>
+            <label>
+              <span>HTML de gr&aacute;ficos</span>
+              <input name="html_archivo" type="file" accept=".html,.htm,text/html" />
+            </label>
+          </div>
+          <label class="admin-checkbox-line">
+            <input name="is_private" type="checkbox" value="true" />
+            <span>Privado: pedir registro de datos antes de abrir el PDF o HTML</span>
           </label>
           <div class="admin-form-actions">
             <button class="primary-link justify-center" type="submit" data-submit>Guardar archivo</button>
@@ -95,20 +122,23 @@
           <div class="admin-dashboard-header">
             <div>
               <p class="eyebrow">Gestión</p>
-              <h2>Radiografías/PDF cargados.</h2>
-              <p class="admin-dashboard-status" data-admin-dashboard-status>Listo para cargar, modificar o borrar radiografías.</p>
+              <h2>Audiencia y consumo de radiografías.</h2>
+              <p class="admin-dashboard-status" data-admin-dashboard-status>Personas, visitas, contenidos consultados y origen aproximado.</p>
             </div>
             <div class="admin-dashboard-actions">
               <a class="secondary-link" href="gestion.html">Gestor simple</a>
+              <button class="secondary-link" type="button" data-admin-export-excel>Exportar Excel</button>
               <button class="secondary-link" type="button" data-admin-refresh>Actualizar</button>
             </div>
           </div>
 
           <div class="admin-metrics">
             <article><span data-admin-total="reports">0</span><small>Radiografías</small></article>
-            <article><span data-admin-total="downloads">0</span><small>Descargas recientes</small></article>
-            <article><span data-admin-total="contacts">0</span><small>Audiencia</small></article>
-            <article><span data-admin-total="events">0</span><small>Eventos</small></article>
+            <article><span data-admin-total="downloads">0</span><small>Consumos PDF</small></article>
+            <article><span data-admin-total="contacts">0</span><small>Personas identificadas</small></article>
+            <article><span data-admin-total="events">0</span><small>Visitas registradas</small></article>
+            <article><span data-admin-total="pages">0</span><small>Paginas recorridas</small></article>
+            <article><span data-admin-total="locations">0</span><small>Zonas detectadas</small></article>
           </div>
 
           <div class="admin-data-grid">
@@ -116,16 +146,61 @@
               <h3>Radiografías/PDF cargados</h3>
               <div class="admin-list" data-admin-reports></div>
             </article>
-            <article>
-              <h3>Consumos PDF</h3>
-              <div class="admin-list" data-admin-downloads></div>
+            <article class="admin-consumption-panel">
+              <h3>Paginas mas recorridas</h3>
+              <div class="admin-list" data-admin-pages></div>
             </article>
-            <article>
-              <h3>Base de contactos e intereses</h3>
+            <article class="admin-consumption-panel">
+              <h3>Contenidos mas consumidos</h3>
+              <div class="admin-list" data-admin-content></div>
+            </article>
+            <article class="admin-consumption-panel">
+              <h3>Origen por ciudad o zona</h3>
+              <div class="admin-list" data-admin-locations></div>
+            </article>
+            <article class="admin-consumption-panel">
+              <h3>Preguntas para producto</h3>
+              <div class="admin-list">
+                <div class="admin-list-item">
+                  <strong>Que informe retiene mas lectura</strong>
+                  <span>Priorizar actualizaciones, anexos y ofertas sobre los contenidos con mas recorridos y descargas.</span>
+                </div>
+                <div class="admin-list-item">
+                  <strong>Desde que ciudades llegan</strong>
+                  <span>Ajustar productos, territorios y pauta segun zonas con demanda real, no solo por intuicion.</span>
+                </div>
+              </div>
+            </article>
+            <article class="admin-audience-panel">
+              <div class="admin-audience-heading">
+                <h3>Personas y radiografías consultadas</h3>
+                <label class="admin-ip-filter">
+                  <span>Filtrar por IP</span>
+                  <select data-admin-ip-filter>
+                    <option value="all">Todos</option>
+                    <option value="with-ip">Con IP</option>
+                    <option value="without-ip">Sin IP</option>
+                  </select>
+                </label>
+              </div>
               <div class="admin-list" data-admin-contacts></div>
             </article>
             <article>
-              <h3>Actividad reciente</h3>
+              <h3>Aperturas y descargas de PDF</h3>
+              <div class="admin-list" data-admin-downloads></div>
+            </article>
+            <article class="admin-events-panel">
+              <div class="admin-audience-heading">
+                <h3>Actividad reciente, IP y zona</h3>
+                <label class="admin-ip-filter">
+                  <span>Filtrar por IP</span>
+                  <select data-admin-events-ip-filter>
+                    <option value="all">Todos</option>
+                    <option value="with-ip">Con IP</option>
+                    <option value="without-ip">Sin IP</option>
+                  </select>
+                </label>
+              </div>
               <div class="admin-list" data-admin-events></div>
             </article>
           </div>
@@ -134,6 +209,7 @@
     </main>
 
     <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
-    <script src="../assets/js/main.js?v=20260615-electoral-empresarial"></script>
+    <script src="../assets/js/main.js?v=20260704-viewer-anchor-menu-voice-fix"></script>
+    <script src="../assets/js/admin-audience.js?v=20260625-security-excel"></script>
   </body>
 </html>
