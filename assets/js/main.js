@@ -1091,6 +1091,10 @@ function bindPdfDownloadLinks(container, reports) {
       }
 
       await logPdfDownload(report);
+      if (isMobileViewport()) {
+        window.location.href = buildReportAccessLink(report, "pdf");
+        return;
+      }
       openPdfViewer(report);
     });
   });
@@ -1143,6 +1147,10 @@ function openPdfViewer(report) {
   const title = report.titulo || "Radiografia";
   const frame = viewer.querySelector("[data-pdf-viewer-frame]");
   const pdfUrl = buildReportAccessLink(report, "pdf");
+  if (isMobileViewport()) {
+    window.location.href = pdfUrl;
+    return;
+  }
   viewer.querySelector("[data-pdf-viewer-title]").textContent = title;
   const source = viewer.querySelector("[data-pdf-viewer-source]");
   if (source) source.href = pdfUrl;
@@ -1855,10 +1863,10 @@ function buildHtmlViewerVoiceBridge() {
       var button = document.querySelector("[data-cd-voice-toggle]");
       var status = document.querySelector("[data-cd-voice-status]");
       function speechHost(){
-        if ("speechSynthesis" in window && "SpeechSynthesisUtterance" in window) return window;
         try {
           if (window.parent && "speechSynthesis" in window.parent && "SpeechSynthesisUtterance" in window.parent) return window.parent;
         } catch (_) {}
+        if ("speechSynthesis" in window && "SpeechSynthesisUtterance" in window) return window;
         return null;
       }
       function supported(){ return !!speechHost(); }

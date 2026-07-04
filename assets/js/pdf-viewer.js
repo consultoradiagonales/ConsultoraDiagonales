@@ -14,6 +14,7 @@
 
       const url = new URL(link.href, window.location.href);
       if (url.pathname.includes(REGISTRATION_PATH)) return;
+      if (isMobileViewport()) return;
 
       event.preventDefault();
       event.stopImmediatePropagation();
