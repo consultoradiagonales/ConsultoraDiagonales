@@ -44,6 +44,11 @@
       return;
     }
 
+    if (requestContext && !phone) {
+      if (status) status.textContent = "Dejanos un celular para habilitar la lectura.";
+      return;
+    }
+
     if (submit) {
       submit.disabled = true;
       submit.textContent = "Enviando solicitud...";
@@ -70,14 +75,25 @@
       ),
     };
 
+    try {
+      await saveContact(contact);
+    } catch (error) {
+      console.warn("No se pudo guardar el contacto remoto", error);
+      if (status) status.textContent = "No pudimos guardar el registro. Revisa el celular e intenta de nuevo.";
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = "Abrir radiografia";
+      }
+      return;
+    }
+
     localStorage.setItem(CONTACT_STORAGE_KEY, JSON.stringify({ ...getStoredContact(), ...contact }));
     if (phone) localStorage.setItem(PHONE_VERIFIED_KEY, phone);
 
     try {
-      await saveContact(contact);
       await saveVisitorEvent(contact, requestContext, channels);
     } catch (error) {
-      console.warn("No se pudo guardar el contacto remoto", error);
+      console.warn("No se pudo guardar el evento de registro", error);
     }
 
     const channelNames = (channels.length ? channels : [phone ? "whatsapp" : "", email ? "email" : ""].filter(Boolean))
@@ -108,12 +124,12 @@
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`,
         "content-type": "application/json",
-        Prefer: "resolution=merge-duplicates,return=minimal",
+        Prefer: "return=minimal",
       },
       body: JSON.stringify(contact),
     });
 
-    if (!response.ok) throw new Error(`contactos ${response.status}`);
+    if (!response.ok && response.status !== 409) throw new Error(`contactos ${response.status}`);
   }
 
   async function saveVisitorEvent(contact, requestContext, channels = []) {

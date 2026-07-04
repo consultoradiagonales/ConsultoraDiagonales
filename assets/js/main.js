@@ -999,9 +999,7 @@ function hasPdfAccess() {
 
 function getReportResourceHref(report, target = "pdf", url = "") {
   if (!url) return "#";
-  // Las radiografias privadas NUNCA exponen un enlace de acceso directo:
-  // siempre se solicita acceso mediante registro (base de datos de solicitudes).
-  if (isPrivateReport(report)) return buildRegistrationLink(report, target);
+  if (isPrivateReport(report) && !hasPdfAccess()) return buildRegistrationLink(report, target);
   return buildReportAccessLink(report, target);
 }
 
@@ -1064,13 +1062,7 @@ function openPendingPrivateReport(reports) {
   if (!pendingId) return;
   const report = reports.find((item) => item.id === pendingId);
   if (!report) return;
-  if (isPrivateReport(report)) {
-    // Las privadas no se autoabren tras el registro: quedan como solicitud pendiente.
-    sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_KEY);
-    sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY);
-    return;
-  }
-  const pendingTarget = sessionStorage.getItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY) || params.get("private_target") || params.get("target") || "pdf";
+  const pendingTarget = params.get("private_target") || params.get("target") || sessionStorage.getItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY) || "pdf";
   sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_KEY);
   sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY);
 
@@ -1101,7 +1093,7 @@ function bindPdfDownloadLinks(container, reports) {
         return;
       }
 
-      if (isPrivateReport(report)) {
+      if (isPrivateReport(report) && !hasPdfAccess()) {
         await requestPrivateReportAccess(report, "pdf");
         return;
       }
@@ -1114,7 +1106,7 @@ function bindPdfDownloadLinks(container, reports) {
 
 function openPdfViewer(report) {
   if (!report?.pdf_url) return;
-  if (isPrivateReport(report)) {
+  if (isPrivateReport(report) && !hasPdfAccess()) {
     requestPrivateReportAccess(report, "pdf");
     return;
   }
@@ -1248,7 +1240,7 @@ function initHtmlReportViewer() {
 
     const report = getReportFromLink(link);
     const linkLooksPrivate = link.dataset.privateReport === "true";
-    if ((report && isPrivateReport(report)) || (!report && linkLooksPrivate)) {
+    if ((report && isPrivateReport(report) && !hasPdfAccess()) || (!report && linkLooksPrivate)) {
       event.preventDefault();
       event.stopImmediatePropagation();
       await requestPrivateReportAccess(
@@ -1328,6 +1320,10 @@ async function openHtmlReportViewer(url, title) {
     const html = await fetchHtmlForViewer(url);
     frame.srcdoc = normalizeHtmlForViewer(html, url);
   } catch (error) {
+    if (isRegistrationRequiredError(error)) {
+      redirectToRegistrationForAccessUrl(url);
+      return;
+    }
     frame.srcdoc = buildHtmlViewerError(url);
     console.warn("No se pudo cargar el HTML en el visor interno", error);
   }
@@ -1356,8 +1352,41 @@ function getHtmlViewerTitle(link) {
 
 async function fetchHtmlForViewer(url) {
   const response = await fetch(url, { credentials: "omit" });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const error = new Error(body?.error || `HTTP ${response.status}`);
+    error.status = response.status;
+    error.body = body;
+    throw error;
+  }
   return await response.text();
+}
+
+function isRegistrationRequiredError(error) {
+  return error?.status === 403 && error?.body?.error === "registration_required";
+}
+
+function redirectToRegistrationForAccessUrl(accessUrl) {
+  localStorage.removeItem(PHONE_VERIFIED_KEY);
+  localStorage.removeItem(GMAIL_VERIFIED_KEY);
+
+  const nextUrl = new URL("/repositorio/index.html", window.location.origin);
+  try {
+    const access = new URL(accessUrl, window.location.href);
+    const reportId = access.searchParams.get("report");
+    const target = access.searchParams.get("target") || "html";
+    if (reportId) nextUrl.searchParams.set("report", reportId);
+    nextUrl.searchParams.set("private_target", target);
+  } catch (_) {
+    nextUrl.searchParams.set("private_target", "html");
+  }
+
+  const registration = new URL("/registro/", window.location.origin);
+  registration.searchParams.set("next", nextUrl.href);
+  registration.searchParams.set("target", nextUrl.searchParams.get("private_target") || "html");
+  const reportId = nextUrl.searchParams.get("report");
+  if (reportId) registration.searchParams.set("report", reportId);
+  window.location.href = registration.href;
 }
 
 function normalizeHtmlForViewer(html, sourceUrl) {
