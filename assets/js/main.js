@@ -1748,22 +1748,32 @@ function buildHtmlViewerAnchorBridge() {
 function buildHtmlViewerInteractionPatch() {
   return `<script>
     (function () {
+      var panelSelector = ".panel, section.panel, [role='tabpanel'], .tab-panel";
       function activatePanel(id, trigger) {
         if (!id) return false;
+        try { id = decodeURIComponent(id); } catch (_) {}
         var panel = document.getElementById(id);
         if (!panel) return false;
-        var panelSelector = ".panel, section.panel, [role='tabpanel'], .tab-panel";
-        document.querySelectorAll(panelSelector).forEach(function (item) {
+        var group = [];
+        if (panel.parentElement) {
+          group = Array.prototype.filter.call(panel.parentElement.children, function (item) {
+            return item.matches && item.matches(panelSelector) && item.id;
+          });
+        }
+        if (group.length < 2) group = [panel];
+        group.forEach(function (item) {
           item.classList.remove("active", "is-active", "open");
-          if (item.matches(".panel, section.panel, [role='tabpanel'], .tab-panel")) item.style.display = "none";
+          if (item !== panel) item.style.display = "none";
         });
         panel.classList.add("active", "is-active");
         panel.style.display = "";
         if (getComputedStyle(panel).display === "none") panel.style.display = "block";
-        document.querySelectorAll(".tab, nav a, [data-t], [data-tab]").forEach(function (item) {
+        var tabScope = trigger && trigger.closest ? trigger.closest(".tabs, nav, [role='tablist']") : null;
+        (tabScope || document).querySelectorAll(".tab, nav a, [data-t], [data-tab]").forEach(function (item) {
           item.classList.remove("active", "is-active");
           item.removeAttribute("aria-current");
-          if (item.getAttribute("data-t") === id || item.getAttribute("data-tab") === id || item === trigger) {
+          var itemHref = item.getAttribute("href") || "";
+          if (item.getAttribute("data-t") === id || item.getAttribute("data-tab") === id || itemHref === "#" + id || item === trigger) {
             item.classList.add("active", "is-active");
             item.setAttribute("aria-current", "page");
           }
@@ -1781,17 +1791,15 @@ function buildHtmlViewerInteractionPatch() {
         var href = trigger.getAttribute("href") || "";
         var id = trigger.getAttribute("data-t") || trigger.getAttribute("data-tab") || idFromShowCall(trigger.getAttribute("onclick"));
         if (!id && href.charAt(0) === "#") id = href.slice(1);
-        if (href === "#" || href === "" || id) {
+        if (id && activatePanel(id, trigger)) {
           event.preventDefault();
           event.stopPropagation();
-          if (id) activatePanel(id, trigger);
         }
       }, true);
-      window.show = function (id, el) { activatePanel(id, el || null); return false; };
+      window.show = function (id, el) { return !activatePanel(id, el || null); };
       document.querySelectorAll(".tab[data-t], [data-tab]").forEach(function (tab) {
         tab.addEventListener("click", function (event) {
-          event.preventDefault();
-          activatePanel(tab.getAttribute("data-t") || tab.getAttribute("data-tab"), tab);
+          if (activatePanel(tab.getAttribute("data-t") || tab.getAttribute("data-tab"), tab)) event.preventDefault();
         });
       });
     })();
