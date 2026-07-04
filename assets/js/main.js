@@ -65,6 +65,8 @@ function initNavigation() {
     document.body.style.overflow = open ? "hidden" : "";
   };
 
+  setMenuOpen(false);
+
   toggle.addEventListener("click", (event) => {
     event.preventDefault();
     setMenuOpen(!menu.classList.contains("is-open"));
