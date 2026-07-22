@@ -88,7 +88,7 @@
       .join("");
   }
 
-  window.renderAdminPageConsumptionItem = function (item) {
+  window.renderAdminPageConsumptionItemEnhanced = function (item) {
     const title = item.title || item.path || "Pagina no identificada";
     const views = Number(item.page_views || 0);
     const visitors = Number(item.unique_visitors || 0);
@@ -104,7 +104,7 @@
     `;
   };
 
-  window.renderAdminContentConsumptionItem = function (item) {
+  window.renderAdminContentConsumptionItemEnhanced = function (item) {
     const total = Number(item.total_consumption || 0);
     const visitors = Number(item.unique_visitors || 0);
     return `
@@ -117,7 +117,7 @@
     `;
   };
 
-  window.renderAdminLocationConsumptionItem = function (item) {
+  window.renderAdminLocationConsumptionItemEnhanced = function (item) {
     const label = item.label || [item.city, item.region, item.country].filter(Boolean).join(", ") || "IP sin ciudad detectada";
     return `
       <div class="admin-list-item" data-dashboard-filterable data-filter-location="${escapeAttribute(label)}">
@@ -193,7 +193,7 @@
     `;
   };
 
-  window.renderAdminDownloadItem = function (item) {
+  window.renderAdminDownloadItemEnhanced = function (item) {
     const person = item.full_name || item.email || item.phone || "Visitante sin nombre registrado";
     const report = item.radiografia_title || "Radiografía no identificada";
     const formattedPhone = phone(item.phone);
@@ -207,7 +207,7 @@
     `;
   };
 
-  window.renderAdminAudienceItem = function (item) {
+  window.renderAdminAudienceItemEnhanced = function (item) {
     const reports = (item.interested_reports || []).map((report) => report.title).filter(Boolean);
     const name = item.full_name || "Visitante sin nombre registrado";
     const formattedPhone = phone(item.phone) || "No informado";
@@ -251,7 +251,7 @@
     `;
   };
 
-  window.renderAdminEventItem = function (item) {
+  window.renderAdminEventItemEnhanced = function (item) {
     const contact = item.metadata?.contact || {};
     const person = contact.full_name || contact.phone || contact.email || "Visitante sin nombre registrado";
     const report = item.radiografia_title ? ` · ${item.radiografia_title}` : "";

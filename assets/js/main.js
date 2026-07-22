@@ -2544,9 +2544,9 @@ async function loadAdminDashboard() {
     setAdminTotal("actions", data.totals?.content_actions ?? 0);
     setAdminTotal("bots", data.totals?.bot_sessions ?? 0);
     renderAdminList(containers.reports, data.reports || [], "Todavía no hay radiografías cargadas.", renderAdminReportItem);
-    renderAdminList(containers.pages, data.page_consumption || [], "Todavia no hay recorridos de paginas.", window.renderAdminPageConsumptionItem || renderAdminPageConsumptionItem);
-    renderAdminList(containers.content, data.content_consumption || [], "Todavia no hay consumos de contenidos.", window.renderAdminContentConsumptionItem || renderAdminContentConsumptionItem);
-    renderAdminList(containers.locations, data.location_consumption || [], "Todavia no hay origen geografico.", window.renderAdminLocationConsumptionItem || renderAdminLocationConsumptionItem);
+    renderAdminList(containers.pages, data.page_consumption || [], "Todavia no hay recorridos de paginas.", window.renderAdminPageConsumptionItemEnhanced || renderAdminPageConsumptionItem);
+    renderAdminList(containers.content, data.content_consumption || [], "Todavia no hay consumos de contenidos.", window.renderAdminContentConsumptionItemEnhanced || renderAdminContentConsumptionItem);
+    renderAdminList(containers.locations, data.location_consumption || [], "Todavia no hay origen geografico.", window.renderAdminLocationConsumptionItemEnhanced || renderAdminLocationConsumptionItem);
     renderAdminList(containers.acquisition, data.acquisition_consumption || [], "Todavia no hay fuentes de trafico.", window.renderAdminAcquisitionItem || renderGenericAdminItem);
     renderAdminList(containers.devices, data.device_consumption || [], "Todavia no hay dispositivos detectados.", window.renderAdminDeviceItem || renderGenericAdminItem);
     renderAdminList(containers.territoryContent, data.territory_content_consumption || [], "Todavia no hay cruces entre territorio y contenido.", window.renderAdminTerritoryContentItem || renderGenericAdminItem);
@@ -2554,9 +2554,9 @@ async function loadAdminDashboard() {
     renderAdminList(containers.sessions, data.sessions || [], "Todavia no hay sesiones registradas.", window.renderAdminSessionItem || renderGenericAdminItem);
     const coverageNote = data.coverage?.events_truncated ? " Limite de seguridad alcanzado: exporta para revisar la cobertura." : "";
     setAdminDashboardStatus(`${adminReports.length} radiografía${adminReports.length === 1 ? "" : "s"}/PDF cargado${adminReports.length === 1 ? "" : "s"}. ${data.totals?.sessions || 0} sesiones, ${data.totals?.unique_visitors || 0} visitantes y ${data.location_consumption?.length || 0} zonas en el periodo.${coverageNote}`);
-    renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", window.renderAdminDownloadItem || renderAdminDownloadItem);
-    renderAdminList(containers.contacts, data.audience || data.contacts || [], "Todavía no hay contactos o intereses registrados.", window.renderAdminAudienceItem || renderAdminAudienceItem);
-    renderAdminList(containers.events, data.events || [], "Todavía no hay eventos.", window.renderAdminEventItem || renderAdminEventItem);
+    renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", window.renderAdminDownloadItemEnhanced || renderAdminDownloadItem);
+    renderAdminList(containers.contacts, data.audience || data.contacts || [], "Todavía no hay contactos o intereses registrados.", window.renderAdminAudienceItemEnhanced || renderAdminAudienceItem);
+    renderAdminList(containers.events, data.events || [], "Todavía no hay eventos.", window.renderAdminEventItemEnhanced || renderAdminEventItem);
     window.configureAdminDashboardFilters?.(data);
   } catch (error) {
     setAdminDashboardStatus(`No se pudo cargar el listado: ${error.message}`);
