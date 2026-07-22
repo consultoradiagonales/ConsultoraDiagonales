@@ -2,6 +2,87 @@
   grid-column: 1 / -1;
 }
 
+.admin-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.admin-range-filter {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 170px;
+  color: rgba(226, 240, 248, 0.78);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.admin-range-filter select {
+  min-height: 42px;
+  border: 1px solid rgba(139, 207, 241, 0.34);
+  border-radius: 8px;
+  padding: 0 2rem 0 0.75rem;
+  color: #fff;
+  background: #062b40;
+}
+
+.admin-segment-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr)) auto;
+  gap: 0.75rem;
+  align-items: end;
+  border: 1px solid rgba(139, 207, 241, 0.2);
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: rgba(3, 27, 45, 0.48);
+}
+
+.admin-segment-filters label {
+  display: grid;
+  gap: 0.28rem;
+  color: rgba(226, 240, 248, 0.78);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.admin-segment-filters select {
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid rgba(139, 207, 241, 0.3);
+  border-radius: 8px;
+  padding: 0 2rem 0 0.7rem;
+  color: #fff;
+  background: #062b40;
+}
+
+.admin-territory-panel .admin-list {
+  max-height: 760px;
+}
+
+.admin-data-row {
+  gap: 0.36rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(110, 213, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(3, 31, 49, 0.48);
+}
+
+.is-segment-hidden {
+  display: none !important;
+}
+
+.admin-territory-row {
+  grid-template-columns: minmax(190px, 1.2fr) minmax(180px, 1fr);
+  column-gap: 1rem;
+}
+
+.admin-territory-row strong,
+.admin-territory-row small {
+  grid-column: 1 / -1;
+}
+
 .admin-audience-panel .admin-list {
   max-height: 680px;
 }
@@ -110,11 +191,34 @@
     width: 100%;
   }
 
+  .admin-range-filter,
+  .admin-range-filter select {
+    width: 100%;
+  }
+
+  .admin-segment-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-segment-filters .secondary-link {
+    width: 100%;
+    justify-content: center;
+  }
+
   .admin-person-grid {
     grid-template-columns: 1fr;
   }
 
   .admin-person-field.is-wide {
+    grid-column: auto;
+  }
+
+  .admin-territory-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-territory-row strong,
+  .admin-territory-row small {
     grid-column: auto;
   }
 }

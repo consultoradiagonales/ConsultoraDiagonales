@@ -62,13 +62,13 @@
       <span>${row.querySelector("span")?.innerHTML || escapeAttribute(title)}</span>
       ${graphsLink}
       ${pdfLink}
-      <a class="${SHARE_CLASS} ${SHARE_CLASS}--list" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>
+      <a class="radiografia-share-link radiografia-share-link--list" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>
     `;
     row.replaceWith(replacement);
   }
 
   function buildShareAnchor(title, modifierClass) {
-    return `<a class="${SHARE_CLASS} ${modifierClass}" href="${escapeAttribute(repositoryUrl())}" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>`;
+    return `<a class="radiografia-share-link radiografia-share-link--card" href="${escapeAttribute(repositoryUrl())}" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>`;
   }
 
   function handleShareActivation(event) {
@@ -114,7 +114,7 @@
 
     panel.dataset.shareTitle = title;
     if (titleTarget) titleTarget.textContent = title;
-    if (linkTarget) linkTarget.value = repositoryUrl();
+    if (linkTarget) linkTarget.value = repositoryUrl("copied_link", title);
     if (whatsapp) whatsapp.href = buildWhatsappHref(title);
     if (form) form.elements.interest.value = `Compartio o pidio seguimiento: ${title}`;
     if (status) status.textContent = "";
@@ -247,13 +247,18 @@
       SLOGAN,
       "",
       title,
-      repositoryUrl(),
+      repositoryUrl("whatsapp", title),
     ].join("\n");
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 
-  function repositoryUrl() {
-    return new URL("/repositorio/index.html", window.location.origin).href;
+  function repositoryUrl(source = "website_share", title = "") {
+    const url = new URL("/repositorio/index.html", window.location.origin);
+    url.searchParams.set("utm_source", source);
+    url.searchParams.set("utm_medium", "referral");
+    url.searchParams.set("utm_campaign", "radiografias_compartidas");
+    if (title) url.searchParams.set("utm_content", title.slice(0, 120));
+    return url.href;
   }
 
   function shareIcon() {

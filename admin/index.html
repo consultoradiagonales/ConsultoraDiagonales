@@ -4,11 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
+    <meta name="referrer" content="no-referrer" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260627-html-voice" />
-    <link rel="stylesheet" href="../assets/css/admin-audience.css?v=20260627-ip-filter" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260704-compact-header-pdf-frame" />
+    <link rel="stylesheet" href="../assets/css/admin-audience.css?v=20260722-audience-intelligence" />
+    <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" referrerpolicy="no-referrer"></script>
   </head>
   <body class="bg-[#080d14] text-white antialiased" data-page="admin">
     <header class="site-header is-solid" data-header>
@@ -121,16 +122,42 @@
               <p class="admin-dashboard-status" data-admin-dashboard-status>Listo para cargar, modificar o borrar radiografías.</p>
             </div>
             <div class="admin-dashboard-actions">
+              <label class="admin-range-filter">
+                <span>Periodo</span>
+                <select data-admin-range>
+                  <option value="7d">Ultimos 7 dias</option>
+                  <option value="30d" selected>Ultimos 30 dias</option>
+                  <option value="90d">Ultimos 90 dias</option>
+                  <option value="365d">Ultimo año</option>
+                  <option value="all">Todo el historial</option>
+                </select>
+              </label>
               <a class="secondary-link" href="gestion.html">Gestor simple</a>
+              <button class="secondary-link" type="button" data-admin-export-excel>Exportar Excel</button>
               <button class="secondary-link" type="button" data-admin-refresh>Actualizar</button>
             </div>
           </div>
 
+          <div class="admin-segment-filters" data-admin-segment-filters>
+            <label><span>Fuente</span><select data-admin-filter-source><option value="">Todas</option></select></label>
+            <label><span>Dispositivo</span><select data-admin-filter-device><option value="">Todos</option></select></label>
+            <label><span>Zona</span><select data-admin-filter-location><option value="">Todas</option></select></label>
+            <label><span>Radiografia</span><select data-admin-filter-report><option value="">Todas</option></select></label>
+            <button class="secondary-link" type="button" data-admin-filter-reset>Limpiar segmentacion</button>
+          </div>
+
           <div class="admin-metrics">
             <article><span data-admin-total="reports">0</span><small>Radiografías</small></article>
-            <article><span data-admin-total="downloads">0</span><small>Descargas recientes</small></article>
-            <article><span data-admin-total="contacts">0</span><small>Audiencia</small></article>
-            <article><span data-admin-total="events">0</span><small>Eventos</small></article>
+            <article><span data-admin-total="downloads">0</span><small>Consumos PDF</small></article>
+            <article><span data-admin-total="contacts">0</span><small>Personas identificadas</small></article>
+            <article><span data-admin-total="events">0</span><small>Visitas registradas</small></article>
+            <article><span data-admin-total="pages">0</span><small>Paginas recorridas</small></article>
+            <article><span data-admin-total="locations">0</span><small>Zonas detectadas</small></article>
+            <article><span data-admin-total="sessions">0</span><small>Sesiones</small></article>
+            <article><span data-admin-total="visitors">0</span><small>Visitantes unicos</small></article>
+            <article><span data-admin-total="returning">0</span><small>Sesiones recurrentes</small></article>
+            <article><span data-admin-total="actions">0</span><small>Interacciones con contenido</small></article>
+            <article><span data-admin-total="bots">0</span><small>Sesiones automatizadas</small></article>
           </div>
 
           <div class="admin-data-grid">
@@ -145,8 +172,53 @@
               <h3>Radiografías/PDF cargados</h3>
               <div class="admin-list" data-admin-reports></div>
             </article>
+            <article class="admin-consumption-panel">
+              <h3>Paginas mas recorridas</h3>
+              <div class="admin-list" data-admin-pages></div>
+            </article>
+            <article class="admin-consumption-panel">
+              <h3>Contenidos mas consumidos</h3>
+              <div class="admin-list" data-admin-content></div>
+            </article>
+            <article class="admin-consumption-panel">
+              <h3>Origen por ciudad o zona</h3>
+              <div class="admin-list" data-admin-locations></div>
+            </article>
+            <article class="admin-consumption-panel">
+              <h3>Canales de adquisicion</h3>
+              <div class="admin-list" data-admin-acquisition></div>
+            </article>
+            <article class="admin-consumption-panel">
+              <h3>Dispositivos, navegadores y sistemas</h3>
+              <div class="admin-list" data-admin-devices></div>
+            </article>
+            <article class="admin-audience-panel admin-territory-panel">
+              <h3>Interes por radiografia y zona</h3>
+              <div class="admin-list" data-admin-territory-content></div>
+            </article>
+            <article class="admin-consumption-panel">
+              <h3>Campañas, anuncios y terminos UTM</h3>
+              <div class="admin-list" data-admin-campaigns></div>
+            </article>
+            <article class="admin-consumption-panel">
+              <h3>Sesiones recientes</h3>
+              <div class="admin-list" data-admin-sessions></div>
+            </article>
+            <article class="admin-consumption-panel">
+              <h3>Preguntas para producto</h3>
+              <div class="admin-list">
+                <div class="admin-list-item">
+                  <strong>Que informe retiene mas lectura</strong>
+                  <span>Priorizar actualizaciones, anexos y ofertas sobre los contenidos con mas recorridos y descargas.</span>
+                </div>
+                <div class="admin-list-item">
+                  <strong>Desde que ciudades llegan</strong>
+                  <span>Ajustar productos, territorios y pauta segun zonas con demanda real, no solo por intuicion.</span>
+                </div>
+              </div>
+            </article>
             <article>
-              <h3>Consumos PDF</h3>
+              <h3>Aperturas y descargas de PDF</h3>
               <div class="admin-list" data-admin-downloads></div>
             </article>
             <article class="admin-audience-panel">
@@ -183,7 +255,7 @@
     </main>
 
     <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
-    <script src="../assets/js/main.js?v=20260704-request-alerts"></script>
-    <script src="../assets/js/admin-audience.js?v=20260704-request-alerts"></script>
+    <script src="../assets/js/admin-audience.js?v=20260722-audience-intelligence"></script>
+    <script src="../assets/js/main.js?v=20260722-audience-intelligence"></script>
   </body>
 </html>
