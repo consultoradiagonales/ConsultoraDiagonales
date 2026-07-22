@@ -44,13 +44,13 @@
     if (row.classList.contains(SHARE_CLASS)) return;
     if (row.dataset.shareEnhanced === "true") return;
 
-    const title = row.querySelector("span")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
+    const title = getRowTitle(row);
     const graphsUrl = row.dataset.graphsUrl || "";
     const pdfHref = row.getAttribute("href") || "";
-    const pdfLabel = row.querySelector("strong")?.innerHTML || "Abrir PDF";
     const graphsLink = graphsUrl
       ? `<a class="latest-report-row__graphs" href="${escapeAttribute(graphsUrl)}" data-html-viewer-open data-report-open data-report-index="${escapeAttribute(row.dataset.reportIndex || "")}" data-track="open_graph">Gr&aacute;ficos</a>`
       : "";
+    const pdfLabel = row.querySelector("strong")?.innerHTML || "Abrir PDF";
     const pdfLink = pdfHref && pdfHref !== "#"
       ? `<a class="latest-report-row__pdf" href="${escapeAttribute(row.href)}" ${copyDataAttributes(row)}>${pdfLabel}</a>`
       : `<span class="latest-report-row__pdf latest-report-row__pdf--disabled" aria-disabled="true">${pdfLabel || "PDF no disponible"}</span>`;
@@ -62,13 +62,19 @@
       <span>${row.querySelector("span")?.innerHTML || escapeAttribute(title)}</span>
       ${graphsLink}
       ${pdfLink}
-      <a class="${SHARE_CLASS} ${SHARE_CLASS}--list" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>
+      <a class="radiografia-share-link radiografia-share-link--list" href="${escapeAttribute(buildWhatsappHref(title))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>
     `;
     row.replaceWith(replacement);
   }
 
+  function getRowTitle(row) {
+    const titleNode = row.querySelector("span")?.cloneNode(true);
+    titleNode?.querySelectorAll(".report-privacy-badge").forEach((badge) => badge.remove());
+    return titleNode?.textContent?.trim() || "Radiografia de Consultora Diagonales";
+  }
+
   function buildShareAnchor(title, modifierClass) {
-    return `<a class="${SHARE_CLASS} ${modifierClass}" href="${escapeAttribute(repositoryUrl())}" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>`;
+    return `<a class="radiografia-share-link ${modifierClass}" href="${escapeAttribute(repositoryUrl())}" aria-label="${escapeAttribute(`${SHARE_LABEL}: ${title}`)}" data-share-title="${escapeAttribute(title)}">${shareIcon()}</a>`;
   }
 
   function handleShareActivation(event) {
@@ -114,7 +120,7 @@
 
     panel.dataset.shareTitle = title;
     if (titleTarget) titleTarget.textContent = title;
-    if (linkTarget) linkTarget.value = repositoryUrl();
+    if (linkTarget) linkTarget.value = repositoryUrl("copied_link", title);
     if (whatsapp) whatsapp.href = buildWhatsappHref(title);
     if (form) form.elements.interest.value = `Compartio o pidio seguimiento: ${title}`;
     if (status) status.textContent = "";
@@ -247,13 +253,18 @@
       SLOGAN,
       "",
       title,
-      repositoryUrl(),
+      repositoryUrl("whatsapp", title),
     ].join("\n");
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 
-  function repositoryUrl() {
-    return new URL("/repositorio/index.html", window.location.origin).href;
+  function repositoryUrl(source = "website_share", title = "") {
+    const url = new URL("/repositorio/index.html", window.location.origin);
+    url.searchParams.set("utm_source", source);
+    url.searchParams.set("utm_medium", "referral");
+    url.searchParams.set("utm_campaign", "radiografias_compartidas");
+    if (title) url.searchParams.set("utm_content", title.slice(0, 120));
+    return url.href;
   }
 
   function shareIcon() {

@@ -11,6 +11,15 @@ const GMAIL_VERIFIED_KEY = "cd:gmail_verified";
 const ADMIN_SESSION_KEY = "cd:admin_unlocked";
 const ADMIN_UPLOAD_KEY = "cd:admin_upload_key";
 const TRACKING_SESSION_KEY = "cd:tracking_session";
+const TRACKING_SESSION_STARTED_KEY = "cd:tracking_session_started";
+const TRACKING_SESSION_LAST_ACTIVITY_KEY = "cd:tracking_session_last_activity";
+const TRACKING_SESSION_ACQUISITION_KEY = "cd:tracking_session_acquisition";
+const TRACKING_FIRST_ACQUISITION_KEY = "cd:tracking_first_acquisition";
+const TRACKING_FIRST_SEEN_KEY = "cd:tracking_first_seen";
+const TRACKING_FIRST_SESSION_KEY = "cd:tracking_first_session";
+const TRACKING_LAST_SEEN_KEY = "cd:tracking_last_seen";
+const TRACKING_SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+const TRACKING_ENGAGEMENT_PING_MS = 30 * 1000;
 const PRIVATE_REPORT_REGISTRATION_KEY = "cd:private_report_after_registration";
 const PRIVATE_REPORT_REGISTRATION_TARGET_KEY = "cd:private_report_after_registration_target";
 const LEGACY_PRIVATE_MARKER = "[[CD_PRIVATE]]";
@@ -310,13 +319,18 @@ function getVisitorId() {
 }
 
 function getTrackingSessionId() {
+  const now = Date.now();
   let sessionId = sessionStorage.getItem(TRACKING_SESSION_KEY);
-  if (!sessionId) {
+  const lastActivity = Number(sessionStorage.getItem(TRACKING_SESSION_LAST_ACTIVITY_KEY) || 0);
+  if (!sessionId || !lastActivity || now - lastActivity > TRACKING_SESSION_TIMEOUT_MS) {
     sessionId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
       ? crypto.randomUUID()
       : `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     sessionStorage.setItem(TRACKING_SESSION_KEY, sessionId);
+    sessionStorage.removeItem(TRACKING_SESSION_ACQUISITION_KEY);
+    sessionStorage.removeItem(TRACKING_SESSION_STARTED_KEY);
   }
+  sessionStorage.setItem(TRACKING_SESSION_LAST_ACTIVITY_KEY, String(now));
   return sessionId;
 }
 
@@ -325,16 +339,166 @@ function getCurrentPageTitle() {
   return heading || document.title || document.body.dataset.page || location.pathname;
 }
 
+function safeUrl(value) {
+  try {
+    return value ? new URL(value, location.href) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function cleanTrackingValue(value, maxLength = 300) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function safeTrackingSearch() {
+  const params = new URLSearchParams(location.search);
+  ["code", "access_token", "refresh_token", "token", "id_token", "error_description"].forEach((key) => params.delete(key));
+  const value = params.toString();
+  return value ? `?${value}` : "";
+}
+
+function safeTrackingUrl(value) {
+  const url = safeUrl(value);
+  if (!url) return "";
+  url.hash = "";
+  ["code", "access_token", "refresh_token", "token", "id_token", "error_description"].forEach((key) => url.searchParams.delete(key));
+  return url.href;
+}
+
+function classifyReferrer(hostname) {
+  const host = String(hostname || "").toLowerCase().replace(/^www\./, "");
+  if (!host) return { source: "direct", medium: "none" };
+  if (host === location.hostname.toLowerCase().replace(/^www\./, "")) return { source: "direct", medium: "none" };
+  if (/(^|\.)google\./.test(host)) return { source: "google", medium: "organic" };
+  if (/(^|\.)(bing\.com|search\.yahoo\.com|duckduckgo\.com)$/.test(host)) {
+    return { source: host.split(".")[0], medium: "organic" };
+  }
+  if (/(^|\.)(facebook\.com|fb\.com|instagram\.com|threads\.net)$/.test(host)) {
+    return { source: host.includes("instagram") ? "instagram" : host.includes("threads") ? "threads" : "facebook", medium: "social" };
+  }
+  if (/(^|\.)(x\.com|twitter\.com|t\.co)$/.test(host)) return { source: "x", medium: "social" };
+  if (/(^|\.)(linkedin\.com|lnkd\.in)$/.test(host)) return { source: "linkedin", medium: "social" };
+  if (/(^|\.)(whatsapp\.com|wa\.me)$/.test(host)) return { source: "whatsapp", medium: "messaging" };
+  if (/(^|\.)(youtube\.com|youtu\.be)$/.test(host)) return { source: "youtube", medium: "video" };
+  return { source: host, medium: "referral" };
+}
+
+function buildAcquisitionContext() {
+  const sessionId = getTrackingSessionId();
+  const stored = sessionStorage.getItem(TRACKING_SESSION_ACQUISITION_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (_) {
+      sessionStorage.removeItem(TRACKING_SESSION_ACQUISITION_KEY);
+    }
+  }
+
+  const params = new URLSearchParams(location.search);
+  const referrerUrl = safeUrl(document.referrer);
+  const referrerHost = referrerUrl?.hostname?.toLowerCase().replace(/^www\./, "") || "";
+  const inferred = classifyReferrer(referrerHost);
+  const campaignSource = cleanTrackingValue(params.get("utm_source")) || inferred.source;
+  const campaignMedium = cleanTrackingValue(params.get("utm_medium")) || inferred.medium;
+  const clickIds = {
+    gclid: cleanTrackingValue(params.get("gclid"), 500) || null,
+    fbclid: cleanTrackingValue(params.get("fbclid"), 500) || null,
+    msclkid: cleanTrackingValue(params.get("msclkid"), 500) || null,
+    ttclid: cleanTrackingValue(params.get("ttclid"), 500) || null,
+  };
+  const clickIdType = Object.keys(clickIds).find((key) => clickIds[key]) || null;
+  const acquisition = {
+    session_id: sessionId,
+    landing_page: `${location.pathname}${safeTrackingSearch()}`,
+    referrer: cleanTrackingValue(safeTrackingUrl(document.referrer), 1000),
+    referrer_host: cleanTrackingValue(referrerHost, 255),
+    traffic_source: campaignSource || "direct",
+    traffic_medium: campaignMedium || "none",
+    traffic_campaign: cleanTrackingValue(params.get("utm_campaign")) || null,
+    traffic_campaign_id: cleanTrackingValue(params.get("utm_id")) || null,
+    traffic_content: cleanTrackingValue(params.get("utm_content")) || null,
+    traffic_term: cleanTrackingValue(params.get("utm_term")) || null,
+    click_id_type: clickIdType,
+    click_id: clickIdType ? clickIds[clickIdType] : null,
+    ...clickIds,
+  };
+
+  sessionStorage.setItem(TRACKING_SESSION_ACQUISITION_KEY, JSON.stringify(acquisition));
+  if (!localStorage.getItem(TRACKING_FIRST_ACQUISITION_KEY)) {
+    localStorage.setItem(TRACKING_FIRST_ACQUISITION_KEY, JSON.stringify(acquisition));
+  }
+  return acquisition;
+}
+
+function buildDeviceContext() {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+  const timezone = (() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    } catch (_) {
+      return "";
+    }
+  })();
+  return {
+    language: cleanTrackingValue(navigator.language, 40),
+    languages: Array.from(navigator.languages || []).slice(0, 8).map((value) => cleanTrackingValue(value, 40)),
+    client_timezone: cleanTrackingValue(timezone, 120),
+    timezone_offset_minutes: new Date().getTimezoneOffset(),
+    platform: cleanTrackingValue(navigator.userAgentData?.platform || navigator.platform, 120),
+    viewport_width: Math.max(0, Math.round(window.innerWidth || 0)),
+    viewport_height: Math.max(0, Math.round(window.innerHeight || 0)),
+    screen_width: Math.max(0, Math.round(window.screen?.width || 0)),
+    screen_height: Math.max(0, Math.round(window.screen?.height || 0)),
+    pixel_ratio: Number(window.devicePixelRatio || 1),
+    touch_points: Number(navigator.maxTouchPoints || 0),
+    hardware_concurrency: Number(navigator.hardwareConcurrency || 0),
+    device_memory_gb: Number(navigator.deviceMemory || 0),
+    cookies_enabled: Boolean(navigator.cookieEnabled),
+    do_not_track: cleanTrackingValue(navigator.doNotTrack, 20) || null,
+    color_scheme: window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light",
+    connection_type: cleanTrackingValue(connection.effectiveType || connection.type, 40) || null,
+    connection_downlink: Number.isFinite(Number(connection.downlink)) ? Number(connection.downlink) : null,
+    connection_rtt: Number.isFinite(Number(connection.rtt)) ? Number(connection.rtt) : null,
+    save_data: Boolean(connection.saveData),
+  };
+}
+
+function getVisitorLifecycle() {
+  const now = new Date().toISOString();
+  const firstSeen = localStorage.getItem(TRACKING_FIRST_SEEN_KEY);
+  const sessionId = getTrackingSessionId();
+  const firstSessionId = localStorage.getItem(TRACKING_FIRST_SESSION_KEY);
+  if (!firstSeen) localStorage.setItem(TRACKING_FIRST_SEEN_KEY, now);
+  if (!firstSessionId) localStorage.setItem(TRACKING_FIRST_SESSION_KEY, sessionId);
+  localStorage.setItem(TRACKING_LAST_SEEN_KEY, now);
+  let firstAcquisition = {};
+  try {
+    firstAcquisition = JSON.parse(localStorage.getItem(TRACKING_FIRST_ACQUISITION_KEY) || "{}");
+  } catch (_) {
+    firstAcquisition = {};
+  }
+  return {
+    first_seen_at: firstSeen || now,
+    is_returning: Boolean(firstSessionId && firstSessionId !== sessionId),
+    first_traffic_source: firstAcquisition.traffic_source || null,
+    first_traffic_medium: firstAcquisition.traffic_medium || null,
+    first_traffic_campaign: firstAcquisition.traffic_campaign || null,
+  };
+}
+
 function buildPageTrackingContext() {
   return {
-    session_id: getTrackingSessionId(),
+    ...buildAcquisitionContext(),
+    ...buildDeviceContext(),
+    ...getVisitorLifecycle(),
     page_key: page || "sin_pagina",
     page_title: getCurrentPageTitle(),
     document_title: document.title,
     path: location.pathname,
-    search: location.search || "",
-    url: location.href,
-    referrer: document.referrer || "",
+    search: safeTrackingSearch(),
+    url: `${location.origin}${location.pathname}${safeTrackingSearch()}`,
+    referrer: safeTrackingUrl(document.referrer),
   };
 }
 
@@ -356,10 +520,20 @@ function getEventContext(element) {
 }
 
 function initTracking() {
+  if (page === "admin") return;
   const startedAt = Date.now();
   const visitorId = getVisitorId();
+  const sessionId = getTrackingSessionId();
   let maxScroll = 0;
+  let activeStartedAt = document.visibilityState === "visible" ? Date.now() : 0;
+  let activeMilliseconds = 0;
+  let lastPingSeconds = 0;
+  let finalized = false;
 
+  if (sessionStorage.getItem(TRACKING_SESSION_STARTED_KEY) !== sessionId) {
+    sessionStorage.setItem(TRACKING_SESSION_STARTED_KEY, sessionId);
+    trackEvent("session_start", { title: getCurrentPageTitle() });
+  }
   trackEvent("page_view", { title: getCurrentPageTitle() });
 
   window.addEventListener(
@@ -375,16 +549,78 @@ function initTracking() {
     item.addEventListener("click", () => trackEvent(item.dataset.track, getEventContext(item)));
   });
 
-  window.addEventListener("beforeunload", () => {
-    const payload = {
-      visitor_id: visitorId,
-      page,
-      path: location.pathname,
-      seconds: Math.round((Date.now() - startedAt) / 1000),
-      scroll_depth: maxScroll,
-    };
+  document.addEventListener("click", (event) => {
+    const target = event.target.closest?.("a, button, [role='button']");
+    if (!target || target.dataset.track) return;
+    const href = target.closest("a")?.href || "";
+    const destination = safeUrl(href);
+    const clickType = destination && destination.origin !== location.origin
+      ? "outbound"
+      : /\.pdf(?:$|[?#])/i.test(destination?.pathname || "")
+        ? "document"
+        : "internal";
+    trackEvent("ui_click", {
+      click_type: clickType,
+      element: target.tagName?.toLowerCase() || "",
+      label: cleanTrackingValue(target.innerText || target.textContent, 180),
+      href: cleanTrackingValue(href, 1000),
+      element_id: cleanTrackingValue(target.id, 120) || null,
+    });
+  }, true);
+
+  const accumulateActiveTime = () => {
+    if (!activeStartedAt) return;
+    activeMilliseconds += Math.max(0, Date.now() - activeStartedAt);
+    activeStartedAt = 0;
+  };
+
+  const activeSeconds = () => Math.round((activeMilliseconds + (activeStartedAt ? Date.now() - activeStartedAt : 0)) / 1000);
+
+  const engagementPayload = (reason) => ({
+    visitor_id: visitorId,
+    session_id: sessionId,
+    page,
+    path: location.pathname,
+    seconds: Math.round((Date.now() - startedAt) / 1000),
+    active_seconds: activeSeconds(),
+    scroll_depth: maxScroll,
+    reason,
+  });
+
+  const sendFinalSession = (reason) => {
+    if (finalized) return;
+    finalized = true;
+    accumulateActiveTime();
+    const payload = engagementPayload(reason);
     localStorage.setItem("cd:last_tracking", JSON.stringify(payload));
     trackEvent("read_session", payload, true);
+  };
+
+  const engagementTimer = window.setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    const seconds = activeSeconds();
+    if (seconds - lastPingSeconds < TRACKING_ENGAGEMENT_PING_MS / 1000) return;
+    lastPingSeconds = seconds;
+    trackEvent("engagement_ping", engagementPayload("interval"));
+  }, TRACKING_ENGAGEMENT_PING_MS);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      accumulateActiveTime();
+      trackEvent("engagement_ping", engagementPayload("hidden"), true);
+    } else if (!activeStartedAt) {
+      activeStartedAt = Date.now();
+    }
+  });
+
+  window.addEventListener("pagehide", () => {
+    window.clearInterval(engagementTimer);
+    sendFinalSession("pagehide");
+  });
+
+  window.addEventListener("beforeunload", () => {
+    window.clearInterval(engagementTimer);
+    sendFinalSession("beforeunload");
   });
 }
 
@@ -406,6 +642,9 @@ async function trackEvent(eventType, metadata = {}, useBeacon = false) {
 function buildVisitorEvent(eventType, metadata = {}) {
   const contact = getStoredContactSummary();
   return {
+    client_event_id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : null,
     visitor_id: getVisitorId(),
     event_type: eventType,
     page,
@@ -427,6 +666,13 @@ function getStoredContactSummary() {
     phone: contact.phone || null,
     full_name: contact.full_name || null,
     organization: contact.organization || null,
+    auth_user_id: contact.auth_user_id || null,
+    social_provider: contact.social_provider || null,
+    identity_method: contact.auth_user_id
+      ? "google"
+      : contact.phone
+        ? "phone_or_form"
+        : "anonymous",
     phone_validation_status: contact.phone_validation_status || null,
   };
 }
@@ -999,9 +1245,7 @@ function hasPdfAccess() {
 
 function getReportResourceHref(report, target = "pdf", url = "") {
   if (!url) return "#";
-  // Las radiografias privadas NUNCA exponen un enlace de acceso directo:
-  // siempre se solicita acceso mediante registro (base de datos de solicitudes).
-  if (isPrivateReport(report)) return buildRegistrationLink(report, target);
+  if (isPrivateReport(report) && !hasPdfAccess()) return buildRegistrationLink(report, target);
   return buildReportAccessLink(report, target);
 }
 
@@ -1064,13 +1308,7 @@ function openPendingPrivateReport(reports) {
   if (!pendingId) return;
   const report = reports.find((item) => item.id === pendingId);
   if (!report) return;
-  if (isPrivateReport(report)) {
-    // Las privadas no se autoabren tras el registro: quedan como solicitud pendiente.
-    sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_KEY);
-    sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY);
-    return;
-  }
-  const pendingTarget = sessionStorage.getItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY) || params.get("private_target") || params.get("target") || "pdf";
+  const pendingTarget = params.get("private_target") || params.get("target") || sessionStorage.getItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY) || "pdf";
   sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_KEY);
   sessionStorage.removeItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY);
 
@@ -1101,7 +1339,7 @@ function bindPdfDownloadLinks(container, reports) {
         return;
       }
 
-      if (isPrivateReport(report)) {
+      if (isPrivateReport(report) && !hasPdfAccess()) {
         await requestPrivateReportAccess(report, "pdf");
         return;
       }
@@ -1114,7 +1352,7 @@ function bindPdfDownloadLinks(container, reports) {
 
 function openPdfViewer(report) {
   if (!report?.pdf_url) return;
-  if (isPrivateReport(report)) {
+  if (isPrivateReport(report) && !hasPdfAccess()) {
     requestPrivateReportAccess(report, "pdf");
     return;
   }
@@ -1445,7 +1683,7 @@ function initHtmlReportViewer() {
 
     const report = getReportFromLink(link);
     const linkLooksPrivate = link.dataset.privateReport === "true";
-    if ((report && isPrivateReport(report)) || (!report && linkLooksPrivate)) {
+    if ((report && isPrivateReport(report) && !hasPdfAccess()) || (!report && linkLooksPrivate)) {
       event.preventDefault();
       event.stopImmediatePropagation();
       await requestPrivateReportAccess(
@@ -1553,6 +1791,10 @@ async function openHtmlReportViewer(url, title) {
     viewer.cdHtmlVoiceText = extractReadableTextFromHtml(result.html);
     frame.srcdoc = normalizeHtmlForViewer(result.html, result.sourceUrl);
   } catch (error) {
+    if (isRegistrationRequiredError(error)) {
+      redirectToRegistrationForAccessUrl(url);
+      return;
+    }
     frame.srcdoc = buildHtmlViewerError(url);
     console.warn("No se pudo cargar el HTML en el visor interno", error);
   }
@@ -1582,11 +1824,44 @@ function getHtmlViewerTitle(link) {
 
 async function fetchHtmlForViewer(url) {
   const response = await fetch(url, { credentials: "omit" });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const error = new Error(body?.error || `HTTP ${response.status}`);
+    error.status = response.status;
+    error.body = body;
+    throw error;
+  }
   return {
     html: await response.text(),
     sourceUrl: response.url || url,
   };
+}
+
+function isRegistrationRequiredError(error) {
+  return error?.status === 403 && error?.body?.error === "registration_required";
+}
+
+function redirectToRegistrationForAccessUrl(accessUrl) {
+  localStorage.removeItem(PHONE_VERIFIED_KEY);
+  localStorage.removeItem(GMAIL_VERIFIED_KEY);
+
+  const nextUrl = new URL("/repositorio/index.html", window.location.origin);
+  try {
+    const access = new URL(accessUrl, window.location.href);
+    const reportId = access.searchParams.get("report");
+    const target = access.searchParams.get("target") || "html";
+    if (reportId) nextUrl.searchParams.set("report", reportId);
+    nextUrl.searchParams.set("private_target", target);
+  } catch (_) {
+    nextUrl.searchParams.set("private_target", "html");
+  }
+
+  const registration = new URL("/registro/", window.location.origin);
+  registration.searchParams.set("next", nextUrl.href);
+  registration.searchParams.set("target", nextUrl.searchParams.get("private_target") || "html");
+  const reportId = nextUrl.searchParams.get("report");
+  if (reportId) registration.searchParams.set("report", reportId);
+  window.location.href = registration.href;
 }
 
 function normalizeHtmlForViewer(html, sourceUrl) {
@@ -1976,6 +2251,7 @@ function initAdmin() {
   const submit = document.querySelector("[data-submit]");
   const dashboard = document.querySelector("[data-admin-dashboard]");
   const refresh = document.querySelector("[data-admin-refresh]");
+  const range = document.querySelector("[data-admin-range]");
   const cancelEdit = document.querySelector("[data-admin-cancel-edit]");
   const htmlPicker = document.querySelector("[data-admin-html-picker]");
   const htmlSelect = document.querySelector("[data-admin-html-select]");
@@ -2101,6 +2377,7 @@ function initAdmin() {
   });
 
   refresh?.addEventListener("click", loadAdminDashboard);
+  range?.addEventListener("change", loadAdminDashboard);
   cancelEdit?.addEventListener("click", resetAdminForm);
   htmlSelectAction?.addEventListener("click", () => {
     const report = adminReports.find((item) => item.id === htmlSelect?.value);
@@ -2222,9 +2499,15 @@ async function loadAdminDashboard() {
     pages: document.querySelector("[data-admin-pages]"),
     content: document.querySelector("[data-admin-content]"),
     locations: document.querySelector("[data-admin-locations]"),
+    acquisition: document.querySelector("[data-admin-acquisition]"),
+    devices: document.querySelector("[data-admin-devices]"),
+    territoryContent: document.querySelector("[data-admin-territory-content]"),
+    campaigns: document.querySelector("[data-admin-campaigns]"),
+    sessions: document.querySelector("[data-admin-sessions]"),
     downloads: document.querySelector("[data-admin-downloads]"),
     contacts: document.querySelector("[data-admin-contacts]"),
     events: document.querySelector("[data-admin-events]"),
+    alerts: document.querySelector("[data-admin-alerts]"),
   };
 
   setAdminDashboardStatus("Cargando radiografías/PDF.");
@@ -2239,11 +2522,13 @@ async function loadAdminDashboard() {
     renderAdminList(containers.downloads, JSON.parse(localStorage.getItem("cd:pdf_downloads") || "[]").slice(-8).reverse(), "Sin consumos locales.");
     renderAdminList(containers.contacts, [JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}")].filter((item) => item.phone || item.email), "Sin contactos locales.");
     renderAdminList(containers.events, JSON.parse(localStorage.getItem("cd:events") || "[]").slice(-12).reverse(), "Sin eventos locales.");
+    renderAdminList(containers.alerts, [], "Sin alertas locales.");
     return;
   }
 
   try {
-    const data = await fetchAdminDashboard();
+    const selectedRange = document.querySelector("[data-admin-range]")?.value || "30d";
+    const data = await fetchAdminDashboard(undefined, selectedRange);
     adminReports = data.reports || [];
     renderAdminHtmlPicker(adminReports);
     setAdminTotal("reports", data.totals?.reports ?? adminReports.length);
@@ -2252,14 +2537,27 @@ async function loadAdminDashboard() {
     setAdminTotal("events", data.totals?.visits ?? data.totals?.events ?? data.events?.length ?? 0);
     setAdminTotal("pages", data.totals?.pages ?? data.page_consumption?.length ?? 0);
     setAdminTotal("locations", data.totals?.locations ?? data.location_consumption?.length ?? 0);
+    setAdminTotal("sessions", data.totals?.sessions ?? data.sessions?.length ?? 0);
+    setAdminTotal("visitors", data.totals?.unique_visitors ?? 0);
+    setAdminTotal("returning", data.totals?.returning_sessions ?? 0);
+    setAdminTotal("actions", data.totals?.content_actions ?? 0);
+    setAdminTotal("bots", data.totals?.bot_sessions ?? 0);
     renderAdminList(containers.reports, data.reports || [], "Todavía no hay radiografías cargadas.", renderAdminReportItem);
-    renderAdminList(containers.pages, data.page_consumption || [], "Todavia no hay recorridos de paginas.", renderAdminPageConsumptionItem);
-    renderAdminList(containers.content, data.content_consumption || [], "Todavia no hay consumos de contenidos.", renderAdminContentConsumptionItem);
-    renderAdminList(containers.locations, data.location_consumption || [], "Todavia no hay origen geografico.", renderAdminLocationConsumptionItem);
-    setAdminDashboardStatus(`${adminReports.length} radiografía${adminReports.length === 1 ? "" : "s"}/PDF cargado${adminReports.length === 1 ? "" : "s"}. ${data.page_consumption?.length || 0} recorridos y ${data.location_consumption?.length || 0} zonas detectadas.`);
-    renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", renderAdminDownloadItem);
-    renderAdminList(containers.contacts, data.audience || data.contacts || [], "Todavía no hay contactos o intereses registrados.", renderAdminAudienceItem);
-    renderAdminList(containers.events, data.events || [], "Todavía no hay eventos.", renderAdminEventItem);
+    renderAdminList(containers.pages, data.page_consumption || [], "Todavia no hay recorridos de paginas.", window.renderAdminPageConsumptionItemEnhanced || renderAdminPageConsumptionItem);
+    renderAdminList(containers.content, data.content_consumption || [], "Todavia no hay consumos de contenidos.", window.renderAdminContentConsumptionItemEnhanced || renderAdminContentConsumptionItem);
+    renderAdminList(containers.locations, data.location_consumption || [], "Todavia no hay origen geografico.", window.renderAdminLocationConsumptionItemEnhanced || renderAdminLocationConsumptionItem);
+    renderAdminList(containers.acquisition, data.acquisition_consumption || [], "Todavia no hay fuentes de trafico.", window.renderAdminAcquisitionItem || renderGenericAdminItem);
+    renderAdminList(containers.devices, data.device_consumption || [], "Todavia no hay dispositivos detectados.", window.renderAdminDeviceItem || renderGenericAdminItem);
+    renderAdminList(containers.territoryContent, data.territory_content_consumption || [], "Todavia no hay cruces entre territorio y contenido.", window.renderAdminTerritoryContentItem || renderGenericAdminItem);
+    renderAdminList(containers.campaigns, data.campaign_consumption || [], "Todavia no hay campañas o terminos UTM.", window.renderAdminCampaignItem || renderGenericAdminItem);
+    renderAdminList(containers.sessions, data.sessions || [], "Todavia no hay sesiones registradas.", window.renderAdminSessionItem || renderGenericAdminItem);
+    const coverageNote = data.coverage?.events_truncated ? " Limite de seguridad alcanzado: exporta para revisar la cobertura." : "";
+    setAdminDashboardStatus(`${adminReports.length} radiografía${adminReports.length === 1 ? "" : "s"}/PDF cargado${adminReports.length === 1 ? "" : "s"}. ${data.totals?.sessions || 0} sesiones, ${data.totals?.unique_visitors || 0} visitantes y ${data.location_consumption?.length || 0} zonas en el periodo.${coverageNote}`);
+    renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", window.renderAdminDownloadItemEnhanced || renderAdminDownloadItem);
+    renderAdminList(containers.contacts, data.audience || data.contacts || [], "Todavía no hay contactos o intereses registrados.", window.renderAdminAudienceItemEnhanced || renderAdminAudienceItem);
+    renderAdminList(containers.events, data.events || [], "Todavía no hay eventos.", window.renderAdminEventItemEnhanced || renderAdminEventItem);
+    renderAdminList(containers.alerts, getAdminRequestAlerts(data.events || []), "No hay solicitudes privadas pendientes.", renderAdminRequestAlertItem);
+    window.configureAdminDashboardFilters?.(data);
   } catch (error) {
     setAdminDashboardStatus(`No se pudo cargar el listado: ${error.message}`);
     Object.values(containers).forEach((container) => renderAdminList(container, [], `No se pudo cargar: ${error.message}`));
@@ -2271,8 +2569,10 @@ function setAdminDashboardStatus(message) {
   if (target) target.textContent = message;
 }
 
-async function fetchAdminDashboard(adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "") {
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-dashboard`, {
+async function fetchAdminDashboard(adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "", range = document.querySelector("[data-admin-range]")?.value || "30d") {
+  const endpoint = new URL(`${SUPABASE_URL}/functions/v1/admin-dashboard`);
+  endpoint.searchParams.set("range", range);
+  const response = await fetch(endpoint, {
     headers: {
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       apikey: SUPABASE_ANON_KEY,
@@ -2497,6 +2797,53 @@ function renderAdminEventItem(item) {
       <small>${escapeHtml(formatAdminDateTime(item.created_at))}</small>
     </div>
   `;
+}
+
+function getAdminRequestAlerts(events = []) {
+  return events
+    .filter((item) => ["private_report_access_requested", "private_report_registration_submitted", "report_access_requested"].includes(String(item.event_type || "")))
+    .slice(0, 12);
+}
+
+function renderAdminRequestAlertItem(item) {
+  const metadata = item.metadata || {};
+  const contact = metadata.contact || {};
+  const title = item.radiografia_title || metadata.title || metadata.radiografia_title || metadata.report_title || "Radiografía privada";
+  const channels = metadata.delivery_channels || [];
+  const person = contact.full_name || contact.phone || contact.email || "Visitante sin nombre";
+  const phone = contact.phone || "";
+  const email = contact.email || "";
+  const message = buildAdminReplyMessage({ title, person, phone, email, event: item });
+  const whatsappHref = phone ? `https://wa.me/${normalizeWhatsappPhone(phone)}?text=${encodeURIComponent(message)}` : "";
+  const emailHref = email ? `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(`Radiografía solicitada: ${title}`)}&body=${encodeURIComponent(message)}` : "";
+  return `
+    <div class="admin-list-item" data-event-has-ip="${item.ip_address ? "true" : "false"}">
+      <strong>Alerta: solicitud privada</strong>
+      <span>${escapeHtml(title)}</span>
+      <span>${escapeHtml(person)}${channels.length ? ` · Canal pedido: ${escapeHtml(channels.map((c) => c === "email" ? "Email" : "WhatsApp").join(" y "))}` : ""}</span>
+      <small>${escapeHtml(formatAdminDateTime(item.created_at))}</small>
+      <div class="admin-list-actions">
+        ${whatsappHref ? `<a class="admin-action-button" href="${escapeAttribute(whatsappHref)}" target="_blank" rel="noopener">Responder WhatsApp</a>` : ""}
+        ${emailHref ? `<a class="admin-action-button" href="${escapeAttribute(emailHref)}">Responder Email</a>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function buildAdminReplyMessage({ title, person }) {
+  return [
+    `Hola ${person || ""}`.trim() + ".",
+    `Gracias por solicitar la radiografía "${title}".`,
+    "Te respondemos desde Consultora Diagonales para coordinar el envío.",
+  ].join("\n");
+}
+
+function normalizeWhatsappPhone(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("549")) return digits;
+  if (digits.startsWith("54")) return `549${digits.slice(2)}`;
+  return digits;
 }
 
 function formatAdminDateTime(value) {
