@@ -56,11 +56,7 @@ if (strlen($nombre) < 3) {
 }
 
 $listaBlanca = [
-    'fernando@consultoradiagonales.com.ar',
-    'admin@consultoradiagonales.com.ar',
-    'fernandogenazzini@gmail.com',
     'info.consultoradiagonales@gmail.com',
-    // Agregar más emails aquí según necesites
 ];
 
 $emailAutorizado = in_array(strtolower($email), array_map('strtolower', $listaBlanca), true);
