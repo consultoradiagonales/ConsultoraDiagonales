@@ -3,17 +3,16 @@
  * SOLICITAR-RADIOGRAFIA.PHP
  * Sistema de gating para radiografías PRIVADAS
  * Consultora Diagonales | Validación Backend
- * 
+ *
  * Endpoint: POST /api/solicitar-radiografia
  * Content-Type: application/json
  */
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// CORS preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -25,60 +24,48 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Recibir datos
 $data = json_decode(file_get_contents('php://input'), true);
+if (!is_array($data)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'JSON inválido.']);
+    exit;
+}
 
-// Validar datos recibidos
 if (empty($data['nombre']) || empty($data['email'])) {
     http_response_code(400);
     echo json_encode(['error' => 'Nombre y email son requeridos']);
     exit;
 }
 
-// Extraer datos
-$radiografiaId = trim($data['radiografiaId'] ?? '');
-$nombre = trim($data['nombre'] ?? '');
-$email = trim($data['email'] ?? '');
-$telefono = trim($data['telefono'] ?? '');
-$organizacion = trim($data['organizacion'] ?? '');
+$radiografiaId = trim((string)($data['radiografiaId'] ?? ''));
+$nombre = trim((string)($data['nombre'] ?? ''));
+$email = trim((string)($data['email'] ?? ''));
+$telefono = trim((string)($data['telefono'] ?? ''));
+$organizacion = trim((string)($data['organizacion'] ?? ''));
 
-$listaBlanca = [
-    'info.consultoradiagonales@gmail.com.ar,
-    // Agregar más emails aquí
-];
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
     echo json_encode(['error' => 'Email inválido']);
     exit;
 }
 
-// Validar nombre (mínimo 3 caracteres)
 if (strlen($nombre) < 3) {
     http_response_code(400);
     echo json_encode(['error' => 'El nombre debe tener al menos 3 caracteres']);
     exit;
 }
 
-// ============================================================
-// LISTA BLANCA DE EMAILS AUTORIZADOS
-// EDITA ESTO para agregar emails que tienen acceso automático
-// ============================================================
 $listaBlanca = [
     'fernando@consultoradiagonales.com.ar',
     'admin@consultoradiagonales.com.ar',
     'fernandogenazzini@gmail.com',
+    'info.consultoradiagonales@gmail.com',
     // Agregar más emails aquí según necesites
 ];
 
-// ============================================================
-// VALIDAR CONTRA LISTA BLANCA
-// ============================================================
-$emailAutorizado = in_array(strtolower($email), array_map('strtolower', $listaBlanca));
+$emailAutorizado = in_array(strtolower($email), array_map('strtolower', $listaBlanca), true);
 
 if (!$emailAutorizado) {
-    // Email NO está en lista blanca
-    // Registrar solicitud para que admin la procese después
-    
     $solicitud = [
         'radiografia_id' => $radiografiaId,
         'nombre' => $nombre,
@@ -87,28 +74,25 @@ if (!$emailAutorizado) {
         'organizacion' => $organizacion,
         'timestamp' => date('Y-m-d H:i:s'),
         'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-        'estado' => 'pendiente'
+        'estado' => 'pendiente',
     ];
-    
-    // Guardar solicitud en JSON
+
     $solicitudesFile = __DIR__ . '/solicitudes.json';
     $solicitudes = [];
-    
+
     if (file_exists($solicitudesFile)) {
         $contenido = file_get_contents($solicitudesFile);
         $solicitudes = json_decode($contenido, true) ?? [];
     }
-    
+
     $solicitudes[] = $solicitud;
-    
-    // Guardar
+
     if (!file_put_contents($solicitudesFile, json_encode($solicitudes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
         http_response_code(500);
         echo json_encode(['error' => 'Error al registrar solicitud']);
         exit;
     }
-    
-    // Enviar email a admin (opcional)
+
     $to = 'admin@consultoradiagonales.com.ar';
     $subject = "Nueva solicitud de acceso: Radiografía {$radiografiaId}";
     $message = "Solicitud de acceso a radiografía:\n\n"
@@ -117,16 +101,15 @@ if (!$emailAutorizado) {
         . "Teléfono: {$telefono}\n"
         . "Organización: {$organizacion}\n"
         . "Radiografía: {$radiografiaId}\n"
-        . "IP: {$_SERVER['REMOTE_ADDR']}\n"
+        . "IP: {$_SERVER['REMOTE_ADDR'] ?? 'unknown'}\n"
         . "Fecha: " . date('Y-m-d H:i:s') . "\n\n"
         . "Revisar en: /api/solicitudes.json";
-    
+
     $headers = "Content-Type: text/plain; charset=UTF-8\r\n"
         . "From: sistema@consultoradiagonales.com.ar\r\n";
-    
+
     @mail($to, $subject, $message, $headers);
-    
-    // Responder al cliente
+
     http_response_code(403);
     echo json_encode([
         'success' => false,
@@ -136,31 +119,23 @@ if (!$emailAutorizado) {
     exit;
 }
 
-// ============================================================
-// EMAIL AUTORIZADO - GENERAR TOKEN
-// ============================================================
-
-// Generar token seguro
 $token = bin2hex(random_bytes(32));
 
-// Crear objeto de token
 $tokenData = [
     'token' => $token,
     'radiografiaId' => $radiografiaId,
     'email' => $email,
     'nombre' => $nombre,
     'createdAt' => time(),
-    'expiresAt' => time() + (30 * 24 * 60 * 60) // 30 días
+    'expiresAt' => time() + (30 * 24 * 60 * 60),
 ];
 
-// Guardar token en sesión (opcional - si usas sesiones PHP)
 if (session_status() === PHP_SESSION_NONE) {
     @session_start();
 }
 
 $_SESSION['radiografia_token_' . $radiografiaId] = $tokenData;
 
-// Guardar token en JSON (más confiable)
 $tokensFile = __DIR__ . '/tokens.json';
 $tokens = [];
 
@@ -170,10 +145,8 @@ if (file_exists($tokensFile)) {
 }
 
 $tokens[$token] = $tokenData;
-
 file_put_contents($tokensFile, json_encode($tokens, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-// Enviar email de confirmación (opcional)
 $to = $email;
 $subject = "✅ Acceso aprobado: Radiografía Consultora Diagonales";
 $message = "Hola {$nombre},\n\n"
@@ -189,17 +162,11 @@ $headers = "Content-Type: text/plain; charset=UTF-8\r\n"
 
 @mail($to, $subject, $message, $headers);
 
-// ============================================================
-// RESPONDER CON ÉXITO
-// ============================================================
-
 http_response_code(200);
 echo json_encode([
     'success' => true,
     'token' => $token,
     'message' => 'Acceso aprobado. Abriendo radiografía...',
     'expiresAt' => date('d/m/Y H:i', $tokenData['expiresAt']),
-    'radiografiaId' => $radiografiaId
+    'radiografiaId' => $radiografiaId,
 ]);
-
-?>
