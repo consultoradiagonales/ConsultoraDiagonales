@@ -137,14 +137,16 @@
 
   function renderFeatured(item, container) {
     if (!item) {
-      container.innerHTML = '<div class="featured-news-card__empty">La próxima radiografía se anunciará aquí.</div>';
+      container.hidden = true;
+      container.innerHTML = "";
       return;
     }
+    container.hidden = false;
     container.innerHTML = `
       <article class="featured-news-card__inner">
         <a class="featured-news-card__link" href="${escapeAttribute(articleUrl(item.slug))}" aria-label="Leer ${escapeAttribute(item.titulo)}">
           <div class="featured-news-card__copy">
-            <span>Última radiografía</span>
+            <span>Última noticia</span>
             <h2>${escapeHtml(item.titulo)}</h2>
             <p>${escapeHtml(item.subtitulo)}</p>
             <strong>Leer nota <i aria-hidden="true">→</i></strong>
@@ -209,7 +211,7 @@
       if (archive) renderArchive(await archivedNews(), archive);
       if (article) renderArticle(await articleBySlug(new URLSearchParams(window.location.search).get("slug")), article);
     } catch (_) {
-      if (featured) featured.innerHTML = '<div class="featured-news-card__empty">No se pudo cargar la última publicación.</div>';
+      if (featured) { featured.hidden = true; featured.innerHTML = ""; }
       if (archive) archive.innerHTML = '<div class="empty-state">No se pudieron cargar las noticias.</div>';
       if (article) article.innerHTML = '<div class="empty-state">No se pudo cargar esta nota.</div>';
     }
