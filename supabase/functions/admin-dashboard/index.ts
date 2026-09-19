@@ -49,7 +49,7 @@ function reportsQuery(supabase: any, columns: string) {
 }
 
 async function fetchReports(supabase: any) {
-  const baseColumns = "id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type, created_at, updated_at";
+  const baseColumns = "id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type, publication_state, created_at, updated_at";
   const withPrivacy = `${baseColumns}, is_private`;
   let result = await reportsQuery(supabase, withPrivacy);
   if (isMissingColumnError(result.error, "is_private")) {

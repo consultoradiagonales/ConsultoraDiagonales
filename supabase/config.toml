@@ -407,6 +407,15 @@ verify_jwt = true
 [functions.report-access]
 verify_jwt = false
 
+[functions.admin-manage-news]
+verify_jwt = true
+
+[functions.admin-upload-news-pdf]
+verify_jwt = true
+
+[functions.news-access]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

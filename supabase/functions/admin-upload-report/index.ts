@@ -72,7 +72,7 @@ async function hasPrivateColumn(supabase: Awaited<ReturnType<typeof getSupabaseC
 }
 
 function reportSelect(includePrivacy: boolean) {
-  const columns = "id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type";
+  const columns = "id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type, publication_state";
   return includePrivacy ? `${columns}, is_private` : columns;
 }
 
@@ -336,6 +336,7 @@ Deno.serve(async (req) => {
         file_name: reportFile.name,
         file_size: reportFile.size,
         mime_type: uploaded.contentType,
+        publication_state: "draft",
       };
       if (privateColumnExists) insertPayload.is_private = isPrivate;
 

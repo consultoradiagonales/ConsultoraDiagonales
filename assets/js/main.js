@@ -94,7 +94,7 @@ function initLogoFallbacks() {
 }
 
 function initActiveNavigation() {
-  const key = page === "repo" ? "radiografias" : page === "home" ? "inicio" : page === "solicitudes" ? "servicios" : page;
+  const key = ["repo", "report-detail"].includes(page) ? "radiografias" : page === "home" ? "inicio" : page === "solicitudes" ? "servicios" : page;
   document.querySelectorAll(`[data-nav="${key}"]`).forEach((link) => link.classList.add("is-active"));
 }
 
@@ -1062,11 +1062,11 @@ async function loadReports() {
     if (supabaseClient) {
       let { data, error } = await supabaseClient
         .from("radiografias")
-        .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, is_private, created_at")
+        .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, is_private, publication_state, created_at")
         .order("fecha", { ascending: false })
         .order("created_at", { ascending: false });
 
-      if (isMissingColumnError(error, "is_private")) {
+      if (isMissingColumnError(error, "is_private") || isMissingColumnError(error, "publication_state")) {
         ({ data, error } = await supabaseClient
           .from("radiografias")
           .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, created_at")
@@ -1075,7 +1075,7 @@ async function loadReports() {
       }
 
       if (error) throw error;
-      reports = (data || []).map(normalizeReportRecord);
+      reports = (data || []).map(normalizeReportRecord).filter(isPubliclyListedReport);
     }
 
     renderReports(reports, container, count);
@@ -1085,7 +1085,7 @@ async function loadReports() {
 }
 
 function renderReports(reports, container, count) {
-  if (count) count.textContent = `Total cargadas: ${reports.length}`;
+  if (count) count.textContent = `Total publicadas: ${reports.length}`;
   window.CD_REPORTS = reports;
 
   if (!reports.length) {
@@ -1235,6 +1235,11 @@ function isPrivateReport(report) {
   return report?.is_private === true || String(report?.is_private || "").toLowerCase() === "true";
 }
 
+function isPubliclyListedReport(report) {
+  const state = String(report?.publication_state || "").toLowerCase();
+  return !state || state === "public";
+}
+
 function hasPdfAccess() {
   const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
   const gmailValidated = Boolean(contact.visitor_id) && localStorage.getItem(GMAIL_VERIFIED_KEY) === contact.visitor_id;
@@ -1324,7 +1329,7 @@ function openPendingPrivateReport(reports) {
   }
 
   if (!report.pdf_url) return;
-  logPdfDownload(report).catch(() => {}).finally(() => openPdfViewer(report));
+  logPdfDownload(report).catch(() => {}).finally(() => { window.location.href = buildReportAccessLink(report, "pdf"); });
 }
 
 function bindPdfDownloadLinks(container, reports) {
@@ -1345,7 +1350,7 @@ function bindPdfDownloadLinks(container, reports) {
       }
 
       await logPdfDownload(report);
-      openPdfViewer(report);
+      window.location.href = buildReportAccessLink(report, "pdf");
     });
   });
 }
@@ -2352,7 +2357,7 @@ function initAdmin() {
     }
 
     submit.textContent = id ? "Actualizando..." : "Guardando...";
-    status.textContent = id ? "Actualizando radiografía." : "Subiendo archivo y publicando metadata.";
+    status.textContent = id ? "Actualizando radiografía." : "Subiendo archivos y guardando el borrador.";
 
     try {
       const data = await saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate });
@@ -2366,13 +2371,13 @@ function initAdmin() {
       resetAdminForm();
       status.innerHTML = id
         ? `Radiografía actualizada. ${publicUrl ? `<a href="${escapeAttribute(publicUrl)}" target="_blank" rel="noopener">Abrir ${fileLabel}</a>` : ""}`
-        : `Archivo publicado. <a href="${escapeAttribute(publicUrl)}" target="_blank" rel="noopener">Abrir ${fileLabel}</a>`;
+        : `Borrador guardado. <a href="${escapeAttribute(publicUrl)}" target="_blank" rel="noopener">Abrir ${fileLabel}</a>`;
       loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
       submit.disabled = false;
-      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar archivo";
+      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar borrador";
     }
   });
 

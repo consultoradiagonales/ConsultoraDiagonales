@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex" />
     <meta name="referrer" content="no-referrer" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260704-compact-header-pdf-frame" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260919-news-flow" />
     <link rel="stylesheet" href="../assets/css/admin-audience.css?v=20260722-audience-intelligence" />
     <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" referrerpolicy="no-referrer"></script>
@@ -21,7 +21,8 @@
       <nav class="desktop-nav" aria-label="Navegacion principal">
         <a href="../index.html">Inicio</a>
         <a href="../servicios/index.html">Servicios</a>
-        <a href="../repositorio/index.html">Radiografías</a>
+        <a href="../repositorio/index.html" data-nav="radiografias">Radiografías</a>
+        <a href="../noticias/index.html" data-nav="noticias">Noticias</a>
         <a href="../contacto/index.html">Contacto</a>
         <a href="index.html" data-nav="admin">Admin</a>
       </nav>
@@ -36,6 +37,7 @@
       <a href="../index.html">Inicio</a>
       <a href="../servicios/index.html">Servicios</a>
       <a href="../repositorio/index.html">Radiografías</a>
+      <a href="../noticias/index.html">Noticias</a>
       <a href="../contacto/index.html">Contacto</a>
       <a href="index.html">Admin</a>
     </div>
@@ -44,10 +46,10 @@
       <section class="mx-auto grid min-h-screen max-w-7xl gap-10 px-6 pb-24 pt-36 md:px-10 lg:grid-cols-[.85fr_1.15fr] lg:px-12">
         <div>
           <p class="eyebrow">Panel admin</p>
-          <h1 class="page-title">Carga de radiografías PDF.</h1>
+          <h1 class="page-title">Radiografías y publicaciones.</h1>
           <p class="mt-6 max-w-xl text-base leading-8 text-slate-300">
-            Subí el PDF corregido, completá la metadata y publicá el informe. El archivo queda guardado en el bucket público
-            <span class="font-semibold text-white">radiografías</span> y aparece en el repositorio.
+            Primero cargá el PDF y el HTML. Quedan en borrador hasta que publiques una nota; la nota anterior y su radiografía
+            pasan entonces al archivo público.
           </p>
         </div>
 
@@ -107,11 +109,40 @@
               <input name="html_archivo" type="file" accept=".html,.htm,text/html" />
             </label>
           </div>
+          <label class="admin-checkbox-line">
+            <input name="is_private" type="checkbox" value="true" />
+            <span>Privado: pedir registro de datos antes de abrir el PDF o HTML</span>
+          </label>
           <div class="admin-form-actions">
-            <button class="primary-link justify-center" type="submit" data-submit>Guardar archivo</button>
+            <button class="primary-link justify-center" type="submit" data-submit>Guardar borrador</button>
             <button class="secondary-link justify-center is-hidden" type="button" data-admin-cancel-edit>Cancelar edición</button>
           </div>
           <p class="form-status" data-form-status role="status"></p>
+        </form>
+
+        <form class="admin-form admin-news-editor is-hidden lg:col-span-2" data-admin-news data-admin-news-form>
+          <input name="id" type="hidden" />
+          <div>
+            <p class="eyebrow">Publicación</p>
+            <h2>Nota de la nueva radiografía</h2>
+            <p>Subí el PDF de la nota periodística. Al publicarla, aparece en la portada; la anterior pasa a Noticias y su informe queda visible en Radiografías.</p>
+          </div>
+          <div class="grid gap-5 md:grid-cols-2">
+            <label><span>Título de la nota</span><input name="titulo" type="text" maxlength="220" required /></label>
+            <label><span>Sección</span><input name="seccion" type="text" value="Política" maxlength="80" required /></label>
+          </div>
+          <label><span>Bajada</span><textarea name="subtitulo" maxlength="420" rows="3" required></textarea></label>
+          <div class="grid gap-5 md:grid-cols-2">
+            <label><span>PDF de nota periodística</span><input name="pdf_nota" type="file" accept=".pdf,application/pdf" /></label>
+            <label><span>Radiografía vinculada</span><select name="radiografia_id" data-news-report-select required><option value="">Cargando radiografías...</option></select></label>
+          </div>
+          <label><span>Fecha</span><input name="fecha" type="date" required /></label>
+          <div class="admin-form-actions">
+            <button class="primary-link justify-center" type="submit" data-news-save>Guardar borrador</button>
+            <button class="secondary-link justify-center is-hidden" type="button" data-news-cancel>Cancelar edición</button>
+          </div>
+          <p class="form-status" data-news-status role="status"></p>
+          <div class="admin-news-list" data-admin-news-list></div>
         </form>
 
         <section class="admin-dashboard is-hidden lg:col-span-2" data-admin-dashboard>
@@ -256,6 +287,7 @@
 
     <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
     <script src="../assets/js/admin-audience.js?v=20260722-audience-intelligence"></script>
-    <script src="../assets/js/main.js?v=20260722-audience-intelligence"></script>
+    <script src="../assets/js/main.js?v=20260919-news-flow"></script>
+    <script src="../assets/js/news-admin.js?v=20260919-news-flow"></script>
   </body>
 </html>

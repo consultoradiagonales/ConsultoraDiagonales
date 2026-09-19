@@ -102,12 +102,16 @@ Deno.serve(async (req) => {
 
     const { data: report, error: reportError } = await supabase
       .from("radiografias")
-      .select("id, titulo, is_private, pdf_url, html_url, storage_path")
+      .select("id, titulo, is_private, publication_state, pdf_url, html_url, storage_path")
       .eq("id", reportId)
       .maybeSingle();
 
     if (reportError) throw reportError;
     if (!report) return Response.json({ error: "radiografia no encontrada" }, { status: 404, headers: corsHeaders });
+
+    if (String(report.publication_state || "").toLowerCase() === "draft") {
+      return Response.json({ error: "radiografia no disponible" }, { status: 404, headers: corsHeaders });
+    }
 
     if (isPrivateReport(report) && !(await hasRegisteredAccess(supabase, visitorId))) {
       return Response.json({ error: "registration_required" }, { status: 403, headers: corsHeaders });
