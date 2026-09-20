@@ -160,7 +160,7 @@
     const { data, error } = await supabase
       .from("noticias")
       .select(fields)
-      .eq("estado", "archived")
+      .in("estado", ["featured", "archived"])
       .order("published_at", { ascending: false })
       .order("fecha", { ascending: false });
     if (error) throw error;
