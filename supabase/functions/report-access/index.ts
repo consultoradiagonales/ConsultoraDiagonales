@@ -122,12 +122,34 @@ Deno.serve(async (req) => {
       return Response.json({ error: "archivo no disponible" }, { status: 404, headers: corsHeaders });
     }
 
+    // Storage entrega los .html como text/plain con nosniff: el navegador mostraria
+    // el codigo fuente. Por eso los servimos desde aca con el tipo correcto.
+    if (target === "html") {
+      const { data: file, error: downloadError } = await supabase.storage
+        .from("radiografias")
+        .download(storagePath);
+      if (downloadError || !file) throw downloadError || new Error("informe no disponible");
+      return new Response(await file.arrayBuffer(), {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/html; charset=utf-8",
+          "Content-Disposition": "inline",
+          "Cache-Control": "private, max-age=60",
+        },
+      });
+    }
+
     const { data: signed, error: signedError } = await supabase.storage
       .from("radiografias")
-      .createSignedUrl(storagePath, 90);
+      .createSignedUrl(storagePath, 600);
 
     if (signedError) throw signedError;
-    return Response.redirect(signed.signedUrl, 302);
+    // Response.redirect() no deja adjuntar cabeceras CORS y rompe los fetch del sitio.
+    return new Response(null, {
+      status: 302,
+      headers: { ...corsHeaders, Location: signed.signedUrl },
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500, headers: corsHeaders });
   }

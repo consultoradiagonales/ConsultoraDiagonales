@@ -63,10 +63,11 @@
           frame.hidden = false;
           state.remove();
         } catch (error) {
-          state.textContent =
+          const directo = window.CDReportHtml.accessUrl(report, "html");
+          state.innerHTML =
             error && error.status === 403
               ? "Este informe es privado. Registrate para acceder."
-              : "No se pudo abrir el informe. Recargá esta página para volver a intentarlo.";
+              : `No se pudo mostrar el informe acá dentro. <a href="${directo}" target="_blank" rel="noopener noreferrer" style="color:#8de9f6;text-decoration:underline">Abrirlo en una pestaña nueva</a>.`;
         }
       })();
     </script>
