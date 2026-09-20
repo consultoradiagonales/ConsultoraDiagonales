@@ -8,7 +8,13 @@
       .replace(/'/g, "&#039;");
   }
 
+  function estatico(report) {
+    return typeof window.informeEstatico === "function" ? window.informeEstatico(report) : null;
+  }
+
   function accessUrl(report, target) {
+    const fijo = estatico(report);
+    if (fijo?.[target]) return new URL(fijo[target], window.location.origin).href;
     const config = window.CD_SUPABASE || {};
     if (!config.url || !report) return "#";
     const url = new URL("/functions/v1/report-access", config.url);
@@ -29,7 +35,7 @@
     if (!container) return;
     const params = new URLSearchParams(window.location.search);
     const report = params.get("report");
-    const title = params.get("title") || "Informe completo";
+    const title = estatico(report)?.titulo || params.get("title") || "Informe completo";
     if (!report) {
       container.innerHTML = '<div class="empty-state">No encontramos el informe solicitado.</div>';
       return;
@@ -41,7 +47,7 @@
         <p>El informe se abre en una página completa para facilitar su lectura.</p>
         <div class="report-detail-card__actions">
           <a class="primary-link" href="${escapeHtml(accessUrl(report, "pdf"))}" target="_blank" rel="noopener noreferrer">Abrir PDF completo</a>
-          <a class="secondary-link" href="${escapeHtml(viewerUrl(report, title))}" target="_blank" rel="noopener noreferrer">Ver análisis y gráficos</a>
+          <a class="secondary-link" href="${escapeHtml(estatico(report)?.html ? accessUrl(report, "html") : viewerUrl(report, title))}" target="_blank" rel="noopener noreferrer">Ver análisis y gráficos</a>
         </div>
       </article>`;
     document.title = `${title} | Consultora Diagonales`;

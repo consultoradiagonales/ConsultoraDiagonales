@@ -36,8 +36,14 @@
       <iframe class="report-view__frame" data-report-frame hidden title="Informe completo"></iframe>
     </div>
     <script src="../assets/js/supabase-config.js?v=20260527"></script>
+    <script src="../assets/js/informes-estaticos.js?v=20260920-nota3"></script>
     <script src="../assets/js/report-html-view.js?v=20260920-nota3"></script>
     <script>
+      function fijoPdf(report) {
+        const fijo = typeof window.informeEstatico === "function" ? window.informeEstatico(report) : null;
+        return fijo?.pdf || "";
+      }
+
       (async function () {
         const params = new URLSearchParams(window.location.search);
         const report = params.get("report");
@@ -53,10 +59,17 @@
           state.textContent = "No encontramos el informe solicitado.";
           return;
         }
-        const pdfHref = window.CDReportHtml.accessUrl(report, "pdf");
+        const pdfHref = fijoPdf(report) || window.CDReportHtml.accessUrl(report, "pdf");
         if (pdfHref) {
           pdfLink.href = pdfHref;
           pdfLink.hidden = false;
+        }
+        const fijo = typeof window.informeEstatico === "function" ? window.informeEstatico(report) : null;
+        if (fijo?.html) {
+          frame.src = fijo.html;
+          frame.hidden = false;
+          state.remove();
+          return;
         }
         try {
           frame.src = await window.CDReportHtml.reportHtmlBlobUrl(report);
