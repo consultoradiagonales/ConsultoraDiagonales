@@ -17,6 +17,13 @@
     return url.href;
   }
 
+  function viewerUrl(report, title) {
+    const url = new URL("ver.html", window.location.href);
+    url.searchParams.set("report", report);
+    if (title) url.searchParams.set("title", title);
+    return url.href;
+  }
+
   function boot() {
     const container = document.querySelector("[data-report-detail]");
     if (!container) return;
@@ -34,7 +41,7 @@
         <p>El informe se abre en una página completa para facilitar su lectura.</p>
         <div class="report-detail-card__actions">
           <a class="primary-link" href="${escapeHtml(accessUrl(report, "pdf"))}" target="_blank" rel="noopener noreferrer">Abrir PDF completo</a>
-          <a class="secondary-link" href="${escapeHtml(accessUrl(report, "html"))}" target="_blank" rel="noopener noreferrer">Ver análisis y gráficos</a>
+          <a class="secondary-link" href="${escapeHtml(viewerUrl(report, title))}" target="_blank" rel="noopener noreferrer">Ver análisis y gráficos</a>
         </div>
       </article>`;
     document.title = `${title} | Consultora Diagonales`;

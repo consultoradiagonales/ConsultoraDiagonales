@@ -1187,10 +1187,29 @@ function openUrlViewer(url, title, label = "Contenido") {
 
   viewer.querySelector("[data-url-viewer-label]").textContent = label;
   viewer.querySelector("[data-url-viewer-title]").textContent = title;
-  viewer.querySelector("[data-url-viewer-frame]").src = url;
+  setUrlViewerSource(viewer.querySelector("[data-url-viewer-frame]"), url);
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
   document.body.classList.add("html-viewer-open");
+}
+
+// Storage devuelve los HTML como text/plain: sin esto el visor muestra el codigo.
+async function setUrlViewerSource(frame, url) {
+  if (!frame) return;
+  const needsBlob = /\/functions\/v1\/report-access/.test(String(url || "")) && /target=html/.test(String(url || ""));
+  if (!needsBlob) {
+    frame.src = url;
+    return;
+  }
+  frame.src = "about:blank";
+  try {
+    const response = await fetch(url, { credentials: "omit", redirect: "follow" });
+    if (!response.ok) throw new Error(String(response.status));
+    const markup = await response.text();
+    frame.src = URL.createObjectURL(new Blob([markup], { type: "text/html; charset=utf-8" }));
+  } catch (_) {
+    frame.src = url;
+  }
 }
 
 function closeUrlViewer() {

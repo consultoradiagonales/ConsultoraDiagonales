@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Radiografía | Consultora Diagonales</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260920-nota3" />
+    <style>
+      html, body { height: 100%; }
+      body { margin: 0; background: #080d14; }
+      .report-view { display: flex; flex-direction: column; height: 100vh; }
+      .report-view__bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.85rem 1.1rem; border-bottom: 1px solid rgba(132, 231, 246, 0.28); background: #061a2a; }
+      .report-view__bar div { min-width: 0; }
+      .report-view__bar span { display: block; color: #8de9f6; font-size: 0.66rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; }
+      .report-view__bar h1 { display: -webkit-box; margin: 0.25rem 0 0; overflow: hidden; color: #fff; font-size: 1rem; font-weight: 800; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+      .report-view__actions { display: flex; flex: none; gap: 0.5rem; }
+      .report-view__actions a { display: inline-flex; align-items: center; min-height: 38px; padding: 0 0.85rem; border: 1px solid rgba(181, 243, 250, 0.5); border-radius: 8px; color: #e8fcff; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.06em; text-decoration: none; text-transform: uppercase; }
+      .report-view__frame { flex: 1 1 auto; width: 100%; border: 0; background: #fff; }
+      .report-view__state { display: grid; flex: 1 1 auto; place-items: center; padding: 2rem; color: #cfe9f3; text-align: center; }
+    </style>
+  </head>
+  <body data-page="report-view">
+    <div class="report-view">
+      <div class="report-view__bar">
+        <div>
+          <span>Radiografía Diagonales</span>
+          <h1 data-report-title>Informe completo</h1>
+        </div>
+        <div class="report-view__actions">
+          <a href="../index.html">Inicio</a>
+          <a data-report-pdf hidden href="#" target="_blank" rel="noopener noreferrer">PDF</a>
+        </div>
+      </div>
+      <div class="report-view__state" data-report-state>Cargando el informe completo.</div>
+      <iframe class="report-view__frame" data-report-frame hidden title="Informe completo"></iframe>
+    </div>
+    <script src="../assets/js/supabase-config.js?v=20260527"></script>
+    <script src="../assets/js/report-html-view.js?v=20260920-nota3"></script>
+    <script>
+      (async function () {
+        const params = new URLSearchParams(window.location.search);
+        const report = params.get("report");
+        const title = params.get("title");
+        const state = document.querySelector("[data-report-state]");
+        const frame = document.querySelector("[data-report-frame]");
+        const pdfLink = document.querySelector("[data-report-pdf]");
+        if (title) {
+          document.querySelector("[data-report-title]").textContent = title;
+          document.title = `${title} | Consultora Diagonales`;
+        }
+        if (!report) {
+          state.textContent = "No encontramos el informe solicitado.";
+          return;
+        }
+        const pdfHref = window.CDReportHtml.accessUrl(report, "pdf");
+        if (pdfHref) {
+          pdfLink.href = pdfHref;
+          pdfLink.hidden = false;
+        }
+        try {
+          frame.src = await window.CDReportHtml.reportHtmlBlobUrl(report);
+          frame.hidden = false;
+          state.remove();
+        } catch (error) {
+          state.textContent =
+            error && error.status === 403
+              ? "Este informe es privado. Registrate para acceder."
+              : "No se pudo abrir el informe. Recargá esta página para volver a intentarlo.";
+        }
+      })();
+    </script>
+  </body>
+</html>

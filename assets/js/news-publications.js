@@ -31,8 +31,25 @@
   }
 
   function articleUrl(slug) {
-    const url = new URL("/noticias/nota.html", window.location.origin);
-    url.searchParams.set("slug", slug);
+    if (!slug) return new URL("/noticias/index.html", window.location.origin).href;
+    return new URL(`/noticias/${encodeURIComponent(slug)}.html`, window.location.origin).href;
+  }
+
+  function currentSlug(container) {
+    return (
+      container?.dataset?.slug ||
+      document.querySelector("[data-news-slug]")?.dataset.newsSlug ||
+      new URLSearchParams(window.location.search).get("slug") ||
+      ""
+    );
+  }
+
+  function absoluteImageUrl(item) {
+    const raw = String(item?.imagen_url || "");
+    if (!raw) return "";
+    const url = new URL(raw, window.location.origin);
+    // WhatsApp y Facebook no leen AVIF: usamos el JPG hermano cuando existe.
+    if (/\.avif$/i.test(url.pathname)) url.pathname = url.pathname.replace(/\.avif$/i, "-og.jpg");
     return url.href;
   }
 
@@ -74,6 +91,13 @@
     setMeta('meta[property="og:url"]', "content", canonicalUrl);
     setMeta('meta[name="twitter:title"]', "content", title);
     setMeta('meta[name="twitter:description"]', "content", description);
+    const image = absoluteImageUrl(item);
+    if (image) {
+      setMeta('meta[property="og:image"]', "content", image);
+      setMeta('meta[property="og:image:secure_url"]', "content", image);
+      setMeta('meta[name="twitter:image"]', "content", image);
+      setMeta('meta[name="twitter:card"]', "content", "summary_large_image");
+    }
     const canonical = document.head.querySelector('link[rel="canonical"]') || document.head.appendChild(document.createElement("link"));
     canonical.setAttribute("rel", "canonical");
     canonical.setAttribute("href", canonicalUrl);
@@ -241,7 +265,7 @@
       : "";
     const shareUrl = articleUrl(item.slug);
     const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${item.titulo}\n\n${shareUrl}`)}`;
-    const share = `<aside class="news-share-tools" aria-label="Compartir esta nota"><div><span>Difundí esta nota</span><a href="${escapeAttribute(shareUrl)}">${escapeHtml(shareUrl)}</a></div><div><button type="button" data-copy-news-link="${escapeAttribute(shareUrl)}">Copiar enlace</button><a href="${escapeAttribute(whatsapp)}" target="_blank" rel="noopener noreferrer">Compartir por WhatsApp</a></div></aside>`;
+    const share = `<aside class="news-share-tools" aria-label="Compartir esta nota"><div class="news-share-tools__copy"><span>Difundí esta nota</span><p>${escapeHtml(item.titulo)}</p></div><div class="news-share-tools__actions"><button type="button" data-copy-news-link="${escapeAttribute(shareUrl)}">Copiar enlace</button><a href="${escapeAttribute(whatsapp)}" target="_blank" rel="noopener noreferrer">Compartir por WhatsApp</a></div></aside>`;
     container.innerHTML = `
       <article class="news-article">
         <header class="news-article__header">
@@ -274,7 +298,7 @@
     try {
       if (featured) renderFeatured(await featuredNews(), featured);
       if (archive) renderArchive(await archivedNews(), archive);
-      if (article) renderArticle(await articleBySlug(new URLSearchParams(window.location.search).get("slug")), article);
+      if (article) renderArticle(await articleBySlug(currentSlug(article)), article);
     } catch (_) {
       if (featured) { featured.hidden = true; featured.innerHTML = ""; }
       if (archive) archive.innerHTML = '<div class="empty-state">No se pudieron cargar las noticias.</div>';
