@@ -2377,7 +2377,7 @@ function initAdmin() {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
       submit.disabled = false;
-      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar borrador";
+      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar radiografía en borrador";
     }
   });
 
@@ -2460,7 +2460,7 @@ function resetAdminForm() {
   form.elements.id.value = "";
   form.querySelector('[name="pdf_archivo"]')?.removeAttribute("required");
   form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
-  if (submit) submit.textContent = "Guardar PDF";
+  if (submit) submit.textContent = "Guardar radiografía en borrador";
   const status = document.querySelector("[data-form-status]");
   if (status) status.textContent = "";
   cancelEdit?.classList.add("is-hidden");

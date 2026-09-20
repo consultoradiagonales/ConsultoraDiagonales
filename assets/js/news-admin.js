@@ -53,6 +53,13 @@
     target.dataset.tone = tone;
   }
 
+  function updateSeoCounters(form) {
+    form.querySelectorAll("[data-seo-field]").forEach((field) => {
+      const counter = form.querySelector(`[data-seo-count="${field.dataset.seoField}"]`);
+      if (counter) counter.textContent = String(field.value.length);
+    });
+  }
+
   function reportOptions(selected = "") {
     const completeReports = reports.filter((report) => report.pdf_url && report.html_url);
     if (!completeReports.length) return '<option value="">Cargá primero el PDF y el HTML de la radiografía.</option>';
@@ -122,6 +129,7 @@
     form.querySelector("[data-news-save]").textContent = "Guardar borrador";
     form.querySelector("[data-news-cancel]").classList.add("is-hidden");
     form.querySelector("[data-news-report-select]").innerHTML = reportOptions();
+    updateSeoCounters(form);
     status("");
   }
 
@@ -136,6 +144,7 @@
       fecha: item.fecha,
     }).forEach(([key, value]) => { if (form.elements[key]) form.elements[key].value = value || ""; });
     form.querySelector("[data-news-report-select]").innerHTML = reportOptions(item.radiografia_id);
+    updateSeoCounters(form);
     form.querySelector("[data-news-save]").textContent = "Actualizar borrador";
     form.querySelector("[data-news-cancel]").classList.remove("is-hidden");
     form.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -160,6 +169,7 @@
     const list = document.querySelector("[data-admin-news-list]");
     if (!form || !list) return;
     resetForm();
+    form.addEventListener("input", () => updateSeoCounters(form));
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();

@@ -45,14 +45,18 @@ async function uniqueSlug(supabase: any, desired: string, ignoreId = "") {
 }
 
 function payloadFrom(body: Record<string, unknown>) {
-  const titulo = cleanText(body.titulo, 220);
-  const subtitulo = cleanText(body.subtitulo, 420);
+  const titulo = cleanText(body.titulo, 70);
+  const subtitulo = cleanText(body.subtitulo, 180);
   const seccion = cleanText(body.seccion, 80) || "Política";
   const fecha = cleanText(body.fecha, 16);
   const radiografiaId = cleanText(body.radiografia_id, 80);
 
   if (!titulo || !subtitulo || !radiografiaId) {
     throw new Error("Completá título, bajada y radiografía.");
+  }
+
+  if (titulo.length < 20 || subtitulo.length < 50) {
+    throw new Error("El titular y la bajada SEO necesitan más detalle.");
   }
 
   return {

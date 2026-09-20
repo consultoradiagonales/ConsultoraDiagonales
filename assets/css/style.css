@@ -3022,9 +3022,14 @@ body[data-page="admin"] .page-title { font-size: clamp(2.7rem, 4.4vw, 4.4rem); }
 .report-detail-card__actions { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 1.8rem; }
 
 .admin-news-editor { grid-column: span 2; }
+.admin-flow-heading { margin-bottom: 1.35rem; }
+.admin-flow-heading h2 { margin: 0.35rem 0 0; color: #f5fbff; font-size: 1.55rem; font-weight: 850; }
+.admin-flow-heading > p:last-child { margin: 0.6rem 0 0; color: #b8d6e0; line-height: 1.6; }
+.admin-flow-step { margin: 0; color: #72dcf5; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; }
+.admin-seo-help { display: block; margin-top: 0.5rem; color: #9bbdca; font-size: 0.75rem; font-weight: 600; line-height: 1.45; letter-spacing: 0; text-transform: none; }
 .admin-news-editor > div:first-child { margin-bottom: 1.35rem; }
 .admin-news-editor h2 { margin: 0.35rem 0 0; color: #f5fbff; font-size: 1.55rem; font-weight: 850; }
-.admin-news-editor > div:first-child > p:not(.eyebrow) { margin: 0.6rem 0 0; color: #b8d6e0; line-height: 1.6; }
+.admin-news-editor > div:first-child > p:last-child { margin: 0.6rem 0 0; color: #b8d6e0; line-height: 1.6; }
 .admin-news-editor textarea { width: 100%; min-height: 170px; resize: vertical; }
 .admin-news-editor .form-status[data-tone="success"] { color: #81f0d2; }
 .admin-news-editor .form-status[data-tone="error"] { color: #ffb8bd; }

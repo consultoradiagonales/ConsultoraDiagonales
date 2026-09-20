@@ -52,6 +52,50 @@
     return url.href;
   }
 
+  function setMeta(selector, attribute, value) {
+    let element = document.head.querySelector(selector);
+    if (!element) {
+      element = document.createElement("meta");
+      const match = selector.match(/\[(name|property)="([^"]+)"\]/);
+      if (match) element.setAttribute(match[1], match[2]);
+      document.head.appendChild(element);
+    }
+    element.setAttribute(attribute, value);
+  }
+
+  function updateArticleSeo(item) {
+    const title = `${item.titulo} | Consultora Diagonales`;
+    const description = String(item.subtitulo || "").slice(0, 180);
+    const canonicalUrl = articleUrl(item.slug);
+    document.title = title;
+    setMeta('meta[name="description"]', "content", description);
+    setMeta('meta[property="og:title"]', "content", title);
+    setMeta('meta[property="og:description"]', "content", description);
+    setMeta('meta[property="og:url"]', "content", canonicalUrl);
+    setMeta('meta[name="twitter:title"]', "content", title);
+    setMeta('meta[name="twitter:description"]', "content", description);
+    const canonical = document.head.querySelector('link[rel="canonical"]') || document.head.appendChild(document.createElement("link"));
+    canonical.setAttribute("rel", "canonical");
+    canonical.setAttribute("href", canonicalUrl);
+    let schema = document.getElementById("news-article-schema");
+    if (!schema) {
+      schema = document.createElement("script");
+      schema.id = "news-article-schema";
+      schema.type = "application/ld+json";
+      document.head.appendChild(schema);
+    }
+    schema.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      headline: item.titulo,
+      description,
+      datePublished: item.published_at || item.fecha,
+      dateModified: item.published_at || item.fecha,
+      mainEntityOfPage: canonicalUrl,
+      publisher: { "@type": "Organization", name: "Consultora Diagonales", url: "https://consultoradiagonales.com.ar/" },
+    });
+  }
+
   async function loadPdfJs() {
     if (!pdfJsPromise) {
       pdfJsPromise = import(PDFJS_URL).then((module) => {
@@ -199,7 +243,7 @@
         ${complete}
       </article>`;
     if (pdf) renderNewsPdf(container.querySelector("[data-news-pdf-document]"), pdf, container.querySelector(".news-article"));
-    document.title = `${item.titulo} | Consultora Diagonales`;
+    updateArticleSeo(item);
   }
 
   async function boot() {
