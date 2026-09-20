@@ -1,5 +1,5 @@
 (function () {
-  const fields = "id,slug,titulo,subtitulo,seccion,fecha,radiografia_id,estado,published_at,pdf_url,pdf_file_name,created_at";
+  const fields = "id,slug,titulo,subtitulo,seccion,fecha,radiografia_id,estado,published_at,pdf_url,pdf_file_name,imagen_url,created_at";
   const PDFJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
   const PDFJS_WORKER_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
   let pdfJsPromise;
@@ -93,6 +93,7 @@
       dateModified: item.published_at || item.fecha,
       mainEntityOfPage: canonicalUrl,
       publisher: { "@type": "Organization", name: "Consultora Diagonales", url: "https://consultoradiagonales.com.ar/" },
+      image: item.imagen_url || undefined,
     });
   }
 
@@ -135,7 +136,7 @@
       footer?.classList.remove("is-locked");
       footer?.setAttribute("aria-hidden", "false");
     } catch (_) {
-      target.innerHTML = '<div class="empty-state">No se pudo mostrar el PDF. Usá “Abrir PDF completo” y luego volvé a intentar.</div>';
+      target.innerHTML = '<div class="empty-state">No se pudo cargar la nota. Recargá esta página para volver a intentarlo.</div>';
     }
   }
 
@@ -186,6 +187,9 @@
       return;
     }
     container.hidden = false;
+    const image = item.imagen_url
+      ? `<img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.titulo)}" loading="eager" decoding="async" />`
+      : "";
     container.innerHTML = `
       <article class="featured-news-card__inner">
         <a class="featured-news-card__link" href="${escapeAttribute(articleUrl(item.slug))}" aria-label="Leer ${escapeAttribute(item.titulo)}">
@@ -195,7 +199,7 @@
             <p>${escapeHtml(item.subtitulo)}</p>
             <strong>Leer nota <i aria-hidden="true">→</i></strong>
           </div>
-          <div class="featured-news-card__image" aria-hidden="true"></div>
+          <div class="featured-news-card__image">${image}</div>
         </a>
       </article>`;
   }
@@ -207,8 +211,8 @@
     }
     container.innerHTML = items.map((item) => `
       <article class="news-archive-card">
-        <a class="news-archive-card__image is-empty" href="${escapeAttribute(articleUrl(item.slug))}">
-          <span>Diagonales</span>
+        <a class="news-archive-card__image${item.imagen_url ? "" : " is-empty"}" href="${escapeAttribute(articleUrl(item.slug))}">
+          ${item.imagen_url ? `<img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.titulo)}" loading="lazy" decoding="async" />` : "<span>Diagonales</span>"}
         </a>
         <div class="news-archive-card__copy">
           <div><span>${escapeHtml(item.seccion || "Actualidad")}</span><time>${escapeHtml(dateLabel(item.published_at || item.fecha))}</time></div>
@@ -226,12 +230,18 @@
     }
     const pdf = newsPdfUrl(item);
     const notePdf = pdf
-      ? `<section class="news-pdf-reader"><div><span>Nota periodística</span><a href="${escapeAttribute(pdf)}" target="_blank" rel="noopener noreferrer">Abrir PDF completo <i aria-hidden="true">↗</i></a></div><div class="news-pdf-document" data-news-pdf-document><div class="empty-state">Cargando todas las páginas de la nota.</div></div></section>`
+      ? `<section class="news-pdf-reader" aria-label="Nota periodística completa"><div class="news-pdf-document" data-news-pdf-document><div class="empty-state">Cargando la nota completa.</div></div></section>`
       : '<div class="empty-state">El PDF de esta nota no está disponible.</div>';
+    const cover = item.imagen_url
+      ? `<figure class="news-article__image"><img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.titulo)}" decoding="async" /></figure>`
+      : "";
     const report = reportUrl(item);
     const complete = report
-      ? `<footer class="news-complete-report is-locked" data-report-unlock aria-hidden="true"><p>Accedé al documento, sus datos y sus gráficos.</p><a href="${escapeAttribute(report)}">INFORME COMPLETO <i aria-hidden="true">→</i></a></footer>`
+      ? `<footer class="news-complete-report" data-report-unlock><p>Accedé a la radiografía, su PDF y todos sus gráficos.</p><a href="${escapeAttribute(report)}">INFORME COMPLETO <i aria-hidden="true">→</i></a></footer>`
       : "";
+    const shareUrl = articleUrl(item.slug);
+    const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${item.titulo}\n\n${shareUrl}`)}`;
+    const share = `<aside class="news-share-tools" aria-label="Compartir esta nota"><div><span>Difundí esta nota</span><a href="${escapeAttribute(shareUrl)}">${escapeHtml(shareUrl)}</a></div><div><button type="button" data-copy-news-link="${escapeAttribute(shareUrl)}">Copiar enlace</button><a href="${escapeAttribute(whatsapp)}" target="_blank" rel="noopener noreferrer">Compartir por WhatsApp</a></div></aside>`;
     container.innerHTML = `
       <article class="news-article">
         <header class="news-article__header">
@@ -239,10 +249,21 @@
           <h1>${escapeHtml(item.titulo)}</h1>
           <p>${escapeHtml(item.subtitulo)}</p>
         </header>
+        ${cover}
         ${notePdf}
+        ${share}
         ${complete}
       </article>`;
     if (pdf) renderNewsPdf(container.querySelector("[data-news-pdf-document]"), pdf, container.querySelector(".news-article"));
+    container.querySelector("[data-copy-news-link]")?.addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      try {
+        await navigator.clipboard.writeText(button.dataset.copyNewsLink || shareUrl);
+        button.textContent = "Enlace copiado";
+      } catch (_) {
+        window.prompt("Copiá este enlace", shareUrl);
+      }
+    });
     updateArticleSeo(item);
   }
 

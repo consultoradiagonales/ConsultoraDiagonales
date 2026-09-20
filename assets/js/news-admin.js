@@ -53,6 +53,16 @@
     target.dataset.tone = tone;
   }
 
+  async function uploadNewsImage(id, file) {
+    const formData = new FormData();
+    formData.append("id", id);
+    formData.append("foto_nota", file);
+    const response = await fetch(apiUrl("admin-upload-news-image"), { method: "POST", headers: adminHeaders(false), body: formData });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    return data;
+  }
+
   function updateSeoCounters(form) {
     form.querySelectorAll("[data-seo-field]").forEach((field) => {
       const counter = form.querySelector(`[data-seo-count="${field.dataset.seoField}"]`);
@@ -126,7 +136,7 @@
     form.reset();
     form.elements.id.value = "";
     form.elements.fecha.value = new Date().toISOString().slice(0, 10);
-    form.querySelector("[data-news-save]").textContent = "Guardar borrador";
+    form.querySelector("[data-news-save]").textContent = "Publicar nota en el inicio";
     form.querySelector("[data-news-cancel]").classList.add("is-hidden");
     form.querySelector("[data-news-report-select]").innerHTML = reportOptions();
     updateSeoCounters(form);
@@ -145,7 +155,7 @@
     }).forEach(([key, value]) => { if (form.elements[key]) form.elements[key].value = value || ""; });
     form.querySelector("[data-news-report-select]").innerHTML = reportOptions(item.radiografia_id);
     updateSeoCounters(form);
-    form.querySelector("[data-news-save]").textContent = "Actualizar borrador";
+    form.querySelector("[data-news-save]").textContent = "Actualizar y publicar";
     form.querySelector("[data-news-cancel]").classList.remove("is-hidden");
     form.scrollIntoView({ behavior: "smooth", block: "start" });
     status("Editando borrador.");
@@ -177,19 +187,27 @@
       const formData = new FormData(form);
       const existingId = String(formData.get("id") || "").trim();
       const pdfFile = formData.get("pdf_nota");
+      const imageFile = formData.get("foto_nota");
       const hasPdf = pdfFile instanceof File && pdfFile.size > 0;
+      const hasImage = imageFile instanceof File && imageFile.size > 0;
       if (!existingId && !hasPdf) {
-        status("Cargá el PDF periodístico antes de guardar el borrador.", "error");
+        status("Cargá el PDF periodístico antes de publicar.", "error");
+        return;
+      }
+      if (!existingId && !hasImage) {
+        status("Cargá la foto de portada antes de publicar.", "error");
         return;
       }
       button.disabled = true;
-      status("Guardando borrador.");
+      status("Publicando la nota en el inicio.");
       try {
         const saved = await request("admin-manage-news", { method: "POST", body: JSON.stringify(formPayload(form)) });
         if (hasPdf) await uploadNewsPdf(saved.news.id, pdfFile);
+        if (hasImage) await uploadNewsImage(saved.news.id, imageFile);
+        await request("admin-manage-news", { method: "POST", body: JSON.stringify({ action: "publish", id: saved.news.id }) });
         await Promise.all([loadNews(), loadReports()]);
         resetForm();
-        status("Borrador guardado. Publicalo cuando quieras reemplazar la nota de portada.", "success");
+        status("Nota publicada. Su radiografía quedó fuera del repositorio y se abre al final de la nota.", "success");
       } catch (error) {
         status(error.message || "No se pudo guardar la nota.", "error");
       } finally {

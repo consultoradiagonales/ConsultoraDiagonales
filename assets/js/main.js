@@ -1076,6 +1076,15 @@ async function loadReports() {
 
       if (error) throw error;
       reports = (data || []).map(normalizeReportRecord).filter(isPubliclyListedReport);
+      const { data: featuredNews } = await supabaseClient
+        .from("noticias")
+        .select("radiografia_id")
+        .eq("estado", "featured")
+        .limit(1)
+        .maybeSingle();
+      if (featuredNews?.radiografia_id) {
+        reports = reports.filter((report) => report.id !== featuredNews.radiografia_id);
+      }
     }
 
     renderReports(reports, container, count);

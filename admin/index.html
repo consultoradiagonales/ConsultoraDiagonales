@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex" />
     <meta name="referrer" content="no-referrer" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260919-news-seo" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260920-portal1" />
     <link rel="stylesheet" href="../assets/css/admin-audience.css?v=20260722-audience-intelligence" />
     <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" referrerpolicy="no-referrer"></script>
@@ -135,11 +135,14 @@
           <label><span>Bajada SEO</span><textarea name="subtitulo" minlength="50" maxlength="180" rows="3" placeholder="Resumen informativo con las palabras clave principales" data-seo-field="description" required></textarea><small class="admin-seo-help"><span data-seo-count="description">0</span>/180 · Esta descripción acompaña el resultado en Google.</small></label>
           <div class="grid gap-5 md:grid-cols-2">
             <label><span>PDF de nota periodística</span><input name="pdf_nota" type="file" accept=".pdf,application/pdf" /></label>
+            <label><span>Foto de portada</span><input name="foto_nota" type="file" accept="image/jpeg,image/png,image/webp,image/avif" /></label>
+          </div>
+          <div class="grid gap-5 md:grid-cols-2">
             <label><span>Radiografía vinculada</span><select name="radiografia_id" data-news-report-select required><option value="">Cargando radiografías...</option></select></label>
           </div>
           <label><span>Fecha</span><input name="fecha" type="date" required /></label>
           <div class="admin-form-actions">
-            <button class="primary-link justify-center" type="submit" data-news-save>Guardar borrador</button>
+            <button class="primary-link justify-center" type="submit" data-news-save>Publicar nota en el inicio</button>
             <button class="secondary-link justify-center is-hidden" type="button" data-news-cancel>Cancelar edición</button>
           </div>
           <p class="form-status" data-news-status role="status"></p>
@@ -288,7 +291,7 @@
 
     <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
     <script src="../assets/js/admin-audience.js?v=20260722-audience-intelligence"></script>
-    <script src="../assets/js/main.js?v=20260919-news-seo"></script>
-    <script src="../assets/js/news-admin.js?v=20260919-news-seo"></script>
+    <script src="../assets/js/main.js?v=20260920-portal1"></script>
+    <script src="../assets/js/news-admin.js?v=20260920-portal1"></script>
   </body>
 </html>

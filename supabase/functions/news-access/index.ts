@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     );
     const { data: news, error } = await supabase
       .from("noticias")
-      .select("id, estado, pdf_url, pdf_storage_path")
+      .select("id, estado, pdf_url, pdf_storage_path, pdf_file_name")
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;
@@ -47,9 +47,17 @@ Deno.serve(async (req) => {
     }
     const storagePath = news.pdf_storage_path || storagePathFromUrl(news.pdf_url);
     if (!storagePath) return Response.json({ error: "PDF no disponible" }, { status: 404, headers });
-    const { data: signed, error: signedError } = await supabase.storage.from("noticias").createSignedUrl(storagePath, 90);
-    if (signedError) throw signedError;
-    return Response.redirect(signed.signedUrl, 302);
+    const { data: file, error: downloadError } = await supabase.storage.from("noticias").download(storagePath);
+    if (downloadError || !file) throw downloadError || new Error("PDF no disponible");
+    return new Response(await file.arrayBuffer(), {
+      status: 200,
+      headers: {
+        ...headers,
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="${String(news.pdf_file_name || "nota-periodistica.pdf").replace(/[\"\\\r\n]/g, "-")}"`,
+        "Cache-Control": "private, max-age=60",
+      },
+    });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500, headers });
   }

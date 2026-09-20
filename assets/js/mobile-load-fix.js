@@ -27,7 +27,7 @@
     if (!config.url || !config.anonKey) throw new Error("Falta configuraci&oacute;n de Supabase.");
 
     const url = new URL("/rest/v1/radiografias", config.url);
-    url.searchParams.set("select", "id,titulo,provincia,localidad,fecha,html_url,pdf_url,is_private,created_at");
+    url.searchParams.set("select", "id,titulo,provincia,localidad,fecha,html_url,pdf_url,is_private,publication_state,created_at");
     url.searchParams.append("order", "fecha.desc");
     url.searchParams.append("order", "created_at.desc");
 
@@ -38,7 +38,7 @@
       },
     });
     let data = await response.json().catch(() => []);
-    if (!response.ok && isMissingColumnError(data, "is_private")) {
+    if (!response.ok && (isMissingColumnError(data, "is_private") || isMissingColumnError(data, "publication_state"))) {
       url.searchParams.set("select", "id,titulo,provincia,localidad,fecha,html_url,pdf_url,created_at");
       response = await fetch(url.href, {
         headers: {
@@ -49,7 +49,21 @@
       data = await response.json().catch(() => []);
     }
     if (!response.ok) throw new Error(data.message || data.error || "Error de conexi&oacute;n.");
-    return Array.isArray(data) ? data.map(normalizeReportRecord) : [];
+    let reports = Array.isArray(data) ? data.map(normalizeReportRecord).filter((report) => {
+      const state = String(report.publication_state || "").toLowerCase();
+      return !state || state === "public";
+    }) : [];
+    const newsUrl = new URL("/rest/v1/noticias", config.url);
+    newsUrl.searchParams.set("select", "radiografia_id");
+    newsUrl.searchParams.set("estado", "eq.featured");
+    newsUrl.searchParams.set("limit", "1");
+    const newsResponse = await fetch(newsUrl.href, { headers: { apikey: config.anonKey, Authorization: `Bearer ${config.anonKey}` } });
+    if (newsResponse.ok) {
+      const featured = await newsResponse.json().catch(() => []);
+      const currentId = featured?.[0]?.radiografia_id;
+      if (currentId) reports = reports.filter((report) => report.id !== currentId);
+    }
+    return reports;
   }
 
   function renderReports(container, reports) {

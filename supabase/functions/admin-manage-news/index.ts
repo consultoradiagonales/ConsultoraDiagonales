@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     if (req.method === "GET") {
       const { data, error } = await supabase
         .from("noticias")
-        .select("id, slug, titulo, subtitulo, seccion, fecha, radiografia_id, estado, published_at, pdf_url, pdf_file_name, created_at, updated_at")
+        .select("id, slug, titulo, subtitulo, seccion, fecha, radiografia_id, estado, published_at, pdf_url, pdf_file_name, imagen_url, created_at, updated_at")
         .order("published_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false })
         .limit(250);
