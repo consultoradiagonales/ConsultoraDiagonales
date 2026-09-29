@@ -387,8 +387,8 @@
       const blockCount = Array.isArray(item.contenido) ? item.contenido.length : 0;
       const hasCover = item.imagen_url ? "Portada cargada" : "Sin portada";
       const actions = item.estado === "draft"
-        ? `<button class="secondary-link" type="button" data-news-edit="${escapeHtml(item.id)}">Editar</button><button class="primary-link" type="button" data-news-publish="${escapeHtml(item.id)}">Publicar</button><button class="admin-danger-link" type="button" data-news-delete="${escapeHtml(item.id)}">Eliminar</button>`
-        : `<a class="secondary-link" href="${escapeHtml(articleUrl(item.slug))}" target="_blank" rel="noopener noreferrer">Abrir</a><button class="secondary-link" type="button" data-news-duplicate="${escapeHtml(item.id)}">Crear actualización</button>`;
+        ? `<button class="secondary-link" type="button" data-news-edit="${escapeHtml(item.id)}">Modificar nota</button><button class="primary-link" type="button" data-news-publish="${escapeHtml(item.id)}">Publicar</button><button class="admin-danger-link" type="button" data-news-delete="${escapeHtml(item.id)}">Eliminar</button>`
+        : `<button class="secondary-link" type="button" data-news-edit="${escapeHtml(item.id)}">Modificar nota</button><a class="secondary-link" href="${escapeHtml(articleUrl(item.slug))}" target="_blank" rel="noopener noreferrer">Abrir</a><button class="secondary-link" type="button" data-news-duplicate="${escapeHtml(item.id)}">Crear actualización</button>`;
       return `<article class="admin-news-item">
         <div><span class="admin-news-state admin-news-state--${escapeHtml(item.estado)}">${stateLabel(item.estado)}</span><time>${dateLabel(item.published_at || item.fecha)}</time></div>
         <strong>${escapeHtml(item.titulo)}</strong>
@@ -596,6 +596,12 @@
     bind();
     try {
       await Promise.all([loadReports(), loadNews()]);
+      const editId = sessionStorage.getItem("cd:admin_edit_news");
+      if (editId) {
+        sessionStorage.removeItem("cd:admin_edit_news");
+        const item = storedItems().find((entry) => entry.id === editId);
+        if (item) { fillForm(item); return; }
+      }
       resetForm();
     } catch (error) {
       status(error.message || "No se pudo cargar la gestión editorial.", "error");

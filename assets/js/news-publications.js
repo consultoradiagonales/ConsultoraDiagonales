@@ -400,6 +400,26 @@
     });
   }
 
+  function createAdminBar(item, options) {
+    if (options.preview) return null;
+    const adminKey = sessionStorage.getItem("cd:admin_unlocked");
+    if (adminKey !== "true") return null;
+    const bar = document.createElement("div");
+    bar.className = "news-admin-bar";
+    const label = document.createElement("span");
+    label.textContent = "Panel admin";
+    const link = document.createElement("a");
+    link.href = `../admin/index.html`;
+    link.textContent = "✏ Modificar esta nota";
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      sessionStorage.setItem("cd:admin_edit_news", item.id);
+      window.location.href = link.href;
+    });
+    bar.append(label, link);
+    return bar;
+  }
+
   function renderArticle(item, container, options = {}) {
     if (!item) {
       container.innerHTML = '<div class="empty-state">Esta nota no está disponible.</div>';
@@ -408,6 +428,8 @@
     const article = document.createElement("article");
     article.className = "news-article";
     if (options.preview) article.classList.add("news-article--preview");
+    const adminBar = createAdminBar(item, options);
+    if (adminBar) article.append(adminBar);
     const header = document.createElement("header");
     header.className = "news-article__header";
     const meta = document.createElement("div");
