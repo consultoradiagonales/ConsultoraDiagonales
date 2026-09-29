@@ -356,6 +356,50 @@
     return aside;
   }
 
+  function mixRgb(from, to, amount) {
+    return from.map((value, index) => Math.round(value + (to[index] - value) * amount));
+  }
+
+  function rgbText(rgb) {
+    return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+  }
+
+  function paintHeadlineLines(headline) {
+    if (!headline) return;
+    const original = headline.dataset.titleText || headline.textContent || "";
+    headline.dataset.titleText = original;
+    const words = original.trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return;
+    headline.replaceChildren(...words.map((word, index) => {
+      const span = document.createElement("span");
+      span.className = "news-article__title-word";
+      span.textContent = `${word}${index < words.length - 1 ? " " : ""}`;
+      return span;
+    }));
+    window.requestAnimationFrame(() => {
+      const lineMap = new Map();
+      Array.from(headline.children).forEach((word) => {
+        const top = Math.round(word.offsetTop);
+        if (!lineMap.has(top)) lineMap.set(top, []);
+        lineMap.get(top).push(word);
+      });
+      const lines = Array.from(lineMap.keys()).sort((a, b) => a - b);
+      const dark = [3, 24, 39];
+      const deep = [5, 45, 70];
+      const light = [244, 253, 255];
+      const cyan = [140, 236, 255];
+      lines.forEach((top, index) => {
+        const amount = lines.length <= 1 ? 0 : index / (lines.length - 1);
+        const start = rgbText(mixRgb(dark, light, amount));
+        const end = rgbText(mixRgb(deep, cyan, amount));
+        lineMap.get(top).forEach((word) => {
+          word.style.setProperty("--line-start", start);
+          word.style.setProperty("--line-end", end);
+        });
+      });
+    });
+  }
+
   function renderArticle(item, container, options = {}) {
     if (!item) {
       container.innerHTML = '<div class="empty-state">Esta nota no está disponible.</div>';
@@ -380,6 +424,7 @@
       meta.append(detail);
     }
     const headline = document.createElement("h1");
+    headline.className = "news-article__title";
     headline.textContent = item.titulo;
     const deck = document.createElement("p");
     deck.textContent = item.subtitulo;
@@ -445,6 +490,7 @@
       article.append(complete);
     }
     container.replaceChildren(article);
+    paintHeadlineLines(headline);
     if (!options.preview) updateArticleSeo(item);
     return article;
   }
@@ -551,4 +597,10 @@
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+
+  let headlineResizeTimer;
+  window.addEventListener("resize", () => {
+    window.clearTimeout(headlineResizeTimer);
+    headlineResizeTimer = window.setTimeout(() => paintHeadlineLines(document.querySelector(".news-article__title")), 120);
+  }, { passive: true });
 })();
