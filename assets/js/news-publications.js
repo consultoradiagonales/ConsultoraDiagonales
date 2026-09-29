@@ -370,11 +370,11 @@
     headline.dataset.titleText = original;
     const words = original.trim().split(/\s+/).filter(Boolean);
     if (!words.length) return;
-    headline.replaceChildren(...words.map((word, index) => {
+    headline.replaceChildren(...words.flatMap((word, index) => {
       const span = document.createElement("span");
       span.className = "news-article__title-word";
-      span.textContent = `${word}${index < words.length - 1 ? " " : ""}`;
-      return span;
+      span.textContent = word;
+      return index < words.length - 1 ? [span, document.createTextNode(" ")] : [span];
     }));
     window.requestAnimationFrame(() => {
       const lineMap = new Map();
