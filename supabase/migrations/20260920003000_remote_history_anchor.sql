@@ -1,0 +1,3 @@
+-- Esta migración ya estaba aplicada en el proyecto remoto cuando se sincronizó
+-- este checkout. El ancla conserva la continuidad del historial para que las
+-- migraciones posteriores puedan desplegarse de forma reproducible.

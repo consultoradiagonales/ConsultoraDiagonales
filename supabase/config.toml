@@ -413,6 +413,9 @@ verify_jwt = true
 [functions.admin-upload-news-pdf]
 verify_jwt = true
 
+[functions.admin-upload-news-media]
+verify_jwt = true
+
 [functions.news-access]
 verify_jwt = false
 

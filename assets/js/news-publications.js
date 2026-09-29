@@ -1,8 +1,9 @@
 (function () {
-  const fields = "id,slug,titulo,subtitulo,seccion,fecha,radiografia_id,estado,published_at,pdf_url,pdf_file_name,imagen_url,created_at";
+  const fields = "id,slug,titulo,subtitulo,seccion,fecha,radiografia_id,estado,published_at,pdf_url,pdf_file_name,imagen_url,imagen_alt,imagen_epigrafe,contenido,cuerpo,seo_title,seo_description,seo_keywords,autor,lectura_minutos,created_at,updated_at";
   const PDFJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
   const PDFJS_WORKER_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
   let pdfJsPromise;
+  let twitterScriptPromise;
 
   function client() {
     const config = window.CD_SUPABASE || {};
@@ -23,6 +24,15 @@
     return escapeHtml(value).replace(/`/g, "&#096;");
   }
 
+  function safeHttpsUrl(value) {
+    try {
+      const url = new URL(String(value || ""), window.location.origin);
+      return ["https:", "http:"].includes(url.protocol) ? url.href : "";
+    } catch (_) {
+      return "";
+    }
+  }
+
   function dateLabel(value) {
     if (!value) return "";
     const date = new Date(`${String(value).slice(0, 10)}T12:00:00`);
@@ -31,8 +41,9 @@
   }
 
   function articleUrl(slug) {
-    if (!slug) return new URL("/noticias/index.html", window.location.origin).href;
-    return new URL(`/noticias/${encodeURIComponent(slug)}.html`, window.location.origin).href;
+    const url = new URL("/noticias/nota.html", window.location.origin);
+    if (slug) url.searchParams.set("slug", slug);
+    return url.href;
   }
 
   function currentSlug(container) {
@@ -45,12 +56,7 @@
   }
 
   function absoluteImageUrl(item) {
-    const raw = String(item?.imagen_url || "");
-    if (!raw) return "";
-    const url = new URL(raw, window.location.origin);
-    // WhatsApp y Facebook no leen AVIF: usamos el JPG hermano cuando existe.
-    if (/\.avif$/i.test(url.pathname)) url.pathname = url.pathname.replace(/\.avif$/i, "-og.jpg");
-    return url.href;
+    return safeHttpsUrl(item?.imagen_url);
   }
 
   function reportUrl(item) {
@@ -63,7 +69,7 @@
 
   function newsPdfUrl(item) {
     const config = window.CD_SUPABASE || {};
-    if (!config.url || !item?.id) return "";
+    if (!config.url || !item?.id || !item?.pdf_url) return "";
     const url = new URL("/functions/v1/news-access", config.url);
     url.searchParams.set("news", item.id);
     return url.href;
@@ -80,18 +86,34 @@
     element.setAttribute(attribute, value);
   }
 
+  function blockText(item) {
+    return Array.isArray(item?.contenido)
+      ? item.contenido
+        .filter((block) => ["paragraph", "heading", "quote"].includes(String(block?.type || "")))
+        .map((block) => String(block?.text || ""))
+        .join(" ")
+        .slice(0, 12_000)
+      : String(item?.cuerpo || "").slice(0, 12_000);
+  }
+
   function updateArticleSeo(item) {
-    const title = `${item.titulo} | Consultora Diagonales`;
-    const description = String(item.subtitulo || "").slice(0, 180);
+    const title = `${item.seo_title || item.titulo} | Consultora Diagonales`;
+    const description = String(item.seo_description || item.subtitulo || "").slice(0, 180);
     const canonicalUrl = articleUrl(item.slug);
+    const image = absoluteImageUrl(item);
     document.title = title;
     setMeta('meta[name="description"]', "content", description);
     setMeta('meta[property="og:title"]', "content", title);
     setMeta('meta[property="og:description"]', "content", description);
     setMeta('meta[property="og:url"]', "content", canonicalUrl);
+    setMeta('meta[property="og:type"]', "content", "article");
     setMeta('meta[name="twitter:title"]', "content", title);
     setMeta('meta[name="twitter:description"]', "content", description);
-    const image = absoluteImageUrl(item);
+    if (item.seccion) setMeta('meta[property="article:section"]', "content", item.seccion);
+    if (item.published_at || item.fecha) setMeta('meta[property="article:published_time"]', "content", item.published_at || item.fecha);
+    if (item.updated_at) setMeta('meta[property="article:modified_time"]', "content", item.updated_at);
+    const keywords = Array.isArray(item.seo_keywords) ? item.seo_keywords.filter(Boolean).join(", ") : "";
+    if (keywords) setMeta('meta[name="keywords"]', "content", keywords);
     if (image) {
       setMeta('meta[property="og:image"]', "content", image);
       setMeta('meta[property="og:image:secure_url"]', "content", image);
@@ -112,12 +134,136 @@
       "@context": "https://schema.org",
       "@type": "NewsArticle",
       headline: item.titulo,
+      alternativeHeadline: item.seo_title || undefined,
       description,
+      articleBody: blockText(item) || undefined,
       datePublished: item.published_at || item.fecha,
-      dateModified: item.published_at || item.fecha,
+      dateModified: item.updated_at || item.published_at || item.fecha,
+      articleSection: item.seccion || undefined,
+      keywords: keywords || undefined,
       mainEntityOfPage: canonicalUrl,
+      author: { "@type": "Organization", name: item.autor || "Consultora Diagonales" },
       publisher: { "@type": "Organization", name: "Consultora Diagonales", url: "https://consultoradiagonales.com.ar/" },
-      image: item.imagen_url || undefined,
+      image: image || undefined,
+    });
+  }
+
+  function appendLinkedText(target, text) {
+    const value = String(text || "");
+    const pattern = /\[([^\]\n]{1,220})\]\((https:\/\/[^\s)]+)\)/g;
+    let cursor = 0;
+    let match;
+    while ((match = pattern.exec(value))) {
+      target.append(document.createTextNode(value.slice(cursor, match.index)));
+      const href = safeHttpsUrl(match[2]);
+      if (href) {
+        const link = document.createElement("a");
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = match[1];
+        target.append(link);
+      } else {
+        target.append(document.createTextNode(match[0]));
+      }
+      cursor = pattern.lastIndex;
+    }
+    target.append(document.createTextNode(value.slice(cursor)));
+  }
+
+  function normalizedBlocks(item) {
+    if (Array.isArray(item?.contenido) && item.contenido.length) return item.contenido;
+    const fallback = String(item?.cuerpo || "").trim();
+    return fallback ? fallback.split(/\n{2,}/).map((text) => ({ type: "paragraph", text })) : [];
+  }
+
+  function loadTwitterWidgets(scope) {
+    if (window.twttr?.widgets?.load) {
+      window.twttr.widgets.load(scope);
+      return;
+    }
+    if (!twitterScriptPromise) {
+      twitterScriptPromise = new Promise((resolve) => {
+        const script = document.createElement("script");
+        script.id = "cd-twitter-widgets";
+        script.async = true;
+        script.src = "https://platform.twitter.com/widgets.js";
+        script.onload = () => resolve(window.twttr);
+        script.onerror = () => resolve(null);
+        document.head.append(script);
+      });
+    }
+    twitterScriptPromise.then(() => window.twttr?.widgets?.load?.(scope));
+  }
+
+  function renderEmbed(block) {
+    const wrap = document.createElement("section");
+    wrap.className = "news-social-embed";
+    const href = safeHttpsUrl(block.url);
+    if (!href) return wrap;
+    if (block.provider === "instagram") {
+      const iframe = document.createElement("iframe");
+      iframe.src = `${href.replace(/\/$/, "")}/embed/captioned/`;
+      iframe.title = "Publicación de Instagram";
+      iframe.loading = "lazy";
+      iframe.allow = "encrypted-media; clipboard-write";
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
+      wrap.append(iframe);
+      return wrap;
+    }
+    const quote = document.createElement("blockquote");
+    quote.className = "twitter-tweet";
+    const link = document.createElement("a");
+    link.href = href;
+    link.textContent = "Ver publicación en X";
+    quote.append(link);
+    wrap.append(quote);
+    loadTwitterWidgets(wrap);
+    return wrap;
+  }
+
+  function renderBlocks(item, target, options = {}) {
+    normalizedBlocks(item).forEach((block) => {
+      const type = String(block?.type || "");
+      if (type === "heading") {
+        const heading = document.createElement("h2");
+        heading.textContent = String(block.text || "");
+        target.append(heading);
+      } else if (type === "quote") {
+        const quote = document.createElement("blockquote");
+        quote.className = "news-article__quote";
+        quote.textContent = String(block.text || "");
+        if (block.cite) {
+          const cite = document.createElement("cite");
+          cite.textContent = String(block.cite);
+          quote.append(cite);
+        }
+        target.append(quote);
+      } else if (type === "image") {
+        const rawUrl = String(block.url || "");
+        const url = options.preview && rawUrl.startsWith("blob:") ? rawUrl : safeHttpsUrl(rawUrl);
+        if (!url) return;
+        const figure = document.createElement("figure");
+        figure.className = "news-inline-image";
+        const image = document.createElement("img");
+        image.src = url;
+        image.alt = String(block.alt || "");
+        image.loading = "lazy";
+        image.decoding = "async";
+        figure.append(image);
+        if (block.caption) {
+          const caption = document.createElement("figcaption");
+          caption.textContent = String(block.caption);
+          figure.append(caption);
+        }
+        target.append(figure);
+      } else if (type === "embed") {
+        target.append(renderEmbed(block));
+      } else if (type === "paragraph") {
+        const paragraph = document.createElement("p");
+        appendLinkedText(paragraph, block.text);
+        target.append(paragraph);
+      }
     });
   }
 
@@ -152,16 +298,155 @@
         canvas.setAttribute("aria-label", `Página ${pageNumber} de ${pdf.numPages}`);
         const pageShell = document.createElement("div");
         pageShell.className = "news-pdf-page";
-        pageShell.appendChild(canvas);
-        target.appendChild(pageShell);
+        pageShell.append(canvas);
+        target.append(pageShell);
         await page.render({ canvasContext: canvas.getContext("2d"), viewport: renderViewport }).promise;
       }
-      const footer = article.querySelector("[data-report-unlock]");
-      footer?.classList.remove("is-locked");
-      footer?.setAttribute("aria-hidden", "false");
+      article.querySelector("[data-report-unlock]")?.classList.remove("is-locked");
     } catch (_) {
-      target.innerHTML = '<div class="empty-state">No se pudo cargar la nota. Recargá esta página para volver a intentarlo.</div>';
+      target.innerHTML = '<div class="empty-state">No se pudo cargar la nota histórica. Recargá esta página para volver a intentarlo.</div>';
     }
+  }
+
+  function createShare(item, preview) {
+    const shareUrl = articleUrl(item.slug);
+    const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${item.titulo}\n\n${shareUrl}`)}`;
+    const twitter = `https://x.com/intent/post?text=${encodeURIComponent(`${item.titulo}\n\n${shareUrl}`)}`;
+    const aside = document.createElement("aside");
+    aside.className = "news-share-tools";
+    const copy = document.createElement("div");
+    copy.className = "news-share-tools__copy";
+    const label = document.createElement("span");
+    label.textContent = preview ? "Vista previa editorial" : "Difundí esta nota";
+    const title = document.createElement("p");
+    title.textContent = item.titulo;
+    copy.append(label, title);
+    const actions = document.createElement("div");
+    actions.className = "news-share-tools__actions";
+    if (preview) {
+      const note = document.createElement("span");
+      note.className = "news-preview-note";
+      note.textContent = "La URL final se habilita al publicar.";
+      actions.append(note);
+    } else {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Copiar enlace";
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          button.textContent = "Enlace copiado";
+        } catch (_) {
+          window.prompt("Copiá este enlace", shareUrl);
+        }
+      });
+      const whatsappLink = document.createElement("a");
+      whatsappLink.href = whatsapp;
+      whatsappLink.target = "_blank";
+      whatsappLink.rel = "noopener noreferrer";
+      whatsappLink.textContent = "WhatsApp";
+      const xLink = document.createElement("a");
+      xLink.href = twitter;
+      xLink.target = "_blank";
+      xLink.rel = "noopener noreferrer";
+      xLink.textContent = "Compartir en X";
+      actions.append(button, whatsappLink, xLink);
+    }
+    aside.append(copy, actions);
+    return aside;
+  }
+
+  function renderArticle(item, container, options = {}) {
+    if (!item) {
+      container.innerHTML = '<div class="empty-state">Esta nota no está disponible.</div>';
+      return null;
+    }
+    const article = document.createElement("article");
+    article.className = "news-article";
+    if (options.preview) article.classList.add("news-article--preview");
+    const header = document.createElement("header");
+    header.className = "news-article__header";
+    const meta = document.createElement("div");
+    meta.className = "news-article__meta";
+    const section = document.createElement("span");
+    section.textContent = item.seccion || "Actualidad";
+    const date = document.createElement("time");
+    date.textContent = dateLabel(item.published_at || item.fecha);
+    meta.append(section, date);
+    if (item.autor || item.lectura_minutos) {
+      const detail = document.createElement("span");
+      detail.className = "news-article__reading";
+      detail.textContent = [item.autor, item.lectura_minutos ? `${item.lectura_minutos} min de lectura` : ""].filter(Boolean).join(" · ");
+      meta.append(detail);
+    }
+    const headline = document.createElement("h1");
+    headline.textContent = item.titulo;
+    const deck = document.createElement("p");
+    deck.textContent = item.subtitulo;
+    header.append(meta, headline, deck);
+    article.append(header);
+
+    const rawCoverUrl = String(item.imagen_url || "");
+    const coverUrl = options.preview && rawCoverUrl.startsWith("blob:") ? rawCoverUrl : safeHttpsUrl(rawCoverUrl);
+    if (coverUrl) {
+      const cover = document.createElement("figure");
+      cover.className = "news-article__image";
+      const image = document.createElement("img");
+      image.src = coverUrl;
+      image.alt = item.imagen_alt || item.titulo || "";
+      image.decoding = "async";
+      cover.append(image);
+      if (item.imagen_epigrafe) {
+        const caption = document.createElement("figcaption");
+        caption.textContent = item.imagen_epigrafe;
+        cover.append(caption);
+      }
+      article.append(cover);
+    }
+
+    const blocks = normalizedBlocks(item);
+    if (blocks.length) {
+      const body = document.createElement("section");
+      body.className = "news-article__body";
+      renderBlocks(item, body, options);
+      article.append(body);
+    } else {
+      const pdf = newsPdfUrl(item);
+      if (pdf) {
+        const reader = document.createElement("section");
+        reader.className = "news-pdf-reader";
+        reader.setAttribute("aria-label", "Nota histórica en PDF");
+        const documentTarget = document.createElement("div");
+        documentTarget.className = "news-pdf-document";
+        documentTarget.innerHTML = '<div class="empty-state">Cargando la nota histórica.</div>';
+        reader.append(documentTarget);
+        article.append(reader);
+        window.setTimeout(() => renderNewsPdf(documentTarget, pdf, article), 0);
+      } else {
+        const empty = document.createElement("p");
+        empty.className = "news-article__empty";
+        empty.textContent = "Esta nota todavía no tiene contenido editorial publicado.";
+        article.append(empty);
+      }
+    }
+
+    article.append(createShare(item, Boolean(options.preview)));
+    const report = reportUrl(item);
+    if (report) {
+      const complete = document.createElement("footer");
+      complete.className = "news-complete-report";
+      complete.dataset.reportUnlock = "";
+      const text = document.createElement("p");
+      text.textContent = "Accedé a la radiografía, su PDF y todos sus gráficos.";
+      const link = document.createElement("a");
+      link.href = report;
+      link.textContent = "INFORME COMPLETO";
+      complete.append(text, link);
+      article.append(complete);
+    }
+    container.replaceChildren(article);
+    if (!options.preview) updateArticleSeo(item);
+    return article;
   }
 
   async function featuredNews() {
@@ -212,7 +497,7 @@
     }
     container.hidden = false;
     const image = item.imagen_url
-      ? `<img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.titulo)}" loading="eager" decoding="async" />`
+      ? `<img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.imagen_alt || item.titulo)}" loading="eager" decoding="async" />`
       : "";
     container.innerHTML = `
       <article class="featured-news-card__inner">
@@ -230,13 +515,13 @@
 
   function renderArchive(items, container) {
     if (!items.length) {
-      container.innerHTML = '<div class="empty-state">Las notas anteriores se publicarán aquí.</div>';
+      container.innerHTML = '<div class="empty-state">Las notas publicadas aparecerán aquí.</div>';
       return;
     }
     container.innerHTML = items.map((item) => `
       <article class="news-archive-card">
         <a class="news-archive-card__image${item.imagen_url ? "" : " is-empty"}" href="${escapeAttribute(articleUrl(item.slug))}">
-          ${item.imagen_url ? `<img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.titulo)}" loading="lazy" decoding="async" />` : "<span>Diagonales</span>"}
+          ${item.imagen_url ? `<img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.imagen_alt || item.titulo)}" loading="lazy" decoding="async" />` : "<span>Diagonales</span>"}
         </a>
         <div class="news-archive-card__copy">
           <div><span>${escapeHtml(item.seccion || "Actualidad")}</span><time>${escapeHtml(dateLabel(item.published_at || item.fecha))}</time></div>
@@ -247,49 +532,7 @@
       </article>`).join("");
   }
 
-  function renderArticle(item, container) {
-    if (!item) {
-      container.innerHTML = '<div class="empty-state">Esta nota no está disponible.</div>';
-      return;
-    }
-    const pdf = newsPdfUrl(item);
-    const notePdf = pdf
-      ? `<section class="news-pdf-reader" aria-label="Nota periodística completa"><div class="news-pdf-document" data-news-pdf-document><div class="empty-state">Cargando la nota completa.</div></div></section>`
-      : '<div class="empty-state">El PDF de esta nota no está disponible.</div>';
-    const cover = item.imagen_url
-      ? `<figure class="news-article__image"><img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.titulo)}" decoding="async" /></figure>`
-      : "";
-    const report = reportUrl(item);
-    const complete = report
-      ? `<footer class="news-complete-report" data-report-unlock><p>Accedé a la radiografía, su PDF y todos sus gráficos.</p><a href="${escapeAttribute(report)}">INFORME COMPLETO <i aria-hidden="true">→</i></a></footer>`
-      : "";
-    const shareUrl = articleUrl(item.slug);
-    const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${item.titulo}\n\n${shareUrl}`)}`;
-    const share = `<aside class="news-share-tools" aria-label="Compartir esta nota"><div class="news-share-tools__copy"><span>Difundí esta nota</span><p>${escapeHtml(item.titulo)}</p></div><div class="news-share-tools__actions"><button type="button" data-copy-news-link="${escapeAttribute(shareUrl)}">Copiar enlace</button><a href="${escapeAttribute(whatsapp)}" target="_blank" rel="noopener noreferrer">Compartir por WhatsApp</a></div></aside>`;
-    container.innerHTML = `
-      <article class="news-article">
-        <header class="news-article__header">
-          <div class="news-article__meta"><span>${escapeHtml(item.seccion || "Actualidad")}</span><time>${escapeHtml(dateLabel(item.published_at || item.fecha))}</time></div>
-          <h1>${escapeHtml(item.titulo)}</h1>
-          <p>${escapeHtml(item.subtitulo)}</p>
-        </header>
-        ${cover}
-        ${notePdf}
-        ${share}
-        ${complete}
-      </article>`;
-    if (pdf) renderNewsPdf(container.querySelector("[data-news-pdf-document]"), pdf, container.querySelector(".news-article"));
-    container.querySelector("[data-copy-news-link]")?.addEventListener("click", async (event) => {
-      const button = event.currentTarget;
-      try {
-        await navigator.clipboard.writeText(button.dataset.copyNewsLink || shareUrl);
-        button.textContent = "Enlace copiado";
-      } catch (_) {
-        window.prompt("Copiá este enlace", shareUrl);
-      }
-    });
-    updateArticleSeo(item);
-  }
+  window.CDNewsRenderer = { renderArticle, renderBlocks, articleUrl };
 
   async function boot() {
     const featured = document.querySelector("[data-featured-news]");

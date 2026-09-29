@@ -6,8 +6,9 @@
     <meta name="robots" content="noindex" />
     <meta name="referrer" content="no-referrer" />
     <title>Admin | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260920-nota3" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260929-news-crm" />
     <link rel="stylesheet" href="../assets/css/admin-audience.css?v=20260722-audience-intelligence" />
+    <link rel="stylesheet" href="../assets/css/news-editor.css?v=20260929-news-crm" />
     <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" referrerpolicy="no-referrer"></script>
   </head>
@@ -46,10 +47,9 @@
       <section class="mx-auto grid min-h-screen max-w-7xl gap-10 px-6 pb-24 pt-36 md:px-10 lg:grid-cols-[.85fr_1.15fr] lg:px-12">
         <div>
           <p class="eyebrow">Panel admin</p>
-          <h1 class="page-title">Radiografías y publicaciones.</h1>
+          <h1 class="page-title">Radiografías y noticias.</h1>
           <p class="mt-6 max-w-xl text-base leading-8 text-slate-300">
-            Primero cargá el PDF y el HTML. Quedan en borrador hasta que publiques una nota; la nota anterior y su radiografía
-            pasan entonces al archivo público.
+            Las radiografías mantienen su circuito propio. Las noticias se escriben y publican desde el editor, con imágenes y contenido listo para web.
           </p>
         </div>
 
@@ -123,30 +123,85 @@
 
         <form class="admin-form admin-news-editor is-hidden lg:col-span-2" data-admin-news data-admin-news-form>
           <input name="id" type="hidden" />
-          <div>
-            <p class="admin-flow-step">Paso 2 de 2 · Portada y Google</p>
-            <h2>Cargar nota periodística</h2>
-            <p>Esta nota se publica en el inicio. La radiografía vinculada queda invisible en el repositorio y solo se abre desde “Informe completo”, al final de la nota.</p>
+          <input name="imagen_url" type="hidden" />
+          <div class="admin-news-editor__heading">
+            <div>
+              <p class="admin-flow-step">Editor editorial</p>
+              <h2>Publicar una nota, no un PDF.</h2>
+              <p>Armá el texto, las imágenes y las publicaciones sociales. La vista previa usa la misma estructura que verá cada lector.</p>
+            </div>
+            <div class="admin-news-editor__state" data-news-editor-state>Borrador nuevo</div>
           </div>
-          <div class="grid gap-5 md:grid-cols-2">
-            <label><span>Titular SEO</span><input name="titulo" type="text" minlength="20" maxlength="70" placeholder="Título claro con tema, persona y territorio" data-seo-field="title" required /><small class="admin-seo-help"><span data-seo-count="title">0</span>/70 · Google suele mostrar los primeros 60 caracteres.</small></label>
-            <label><span>Sección</span><input name="seccion" type="text" value="Política" maxlength="80" required /></label>
+
+          <div class="news-editor-layout">
+            <div class="news-editor-workspace">
+              <section class="news-editor-section">
+                <div class="news-editor-section__heading"><span>01</span><div><h3>Nota</h3><p>El titular completo se publica como H1. El título SEO se administra por separado.</p></div></div>
+                <label><span>Titular editorial</span><input name="titulo" type="text" minlength="12" maxlength="150" placeholder="Titular claro, completo y con interés periodístico" required data-news-field="title" /></label>
+                <div class="grid gap-5 md:grid-cols-2">
+                  <label><span>Sección</span><input name="seccion" type="text" value="Política" maxlength="80" required /></label>
+                  <label><span>Fecha</span><input name="fecha" type="date" required /></label>
+                </div>
+                <div class="grid gap-5 md:grid-cols-2">
+                  <label><span>Autor</span><input name="autor" type="text" value="Consultora Diagonales" maxlength="120" /></label>
+                  <label><span>Slug de la URL</span><input name="slug" type="text" maxlength="100" placeholder="Se genera desde el titular" data-news-slug /></label>
+                </div>
+                <label><span>Bajada</span><textarea name="subtitulo" minlength="40" maxlength="320" rows="4" placeholder="Explicá el hecho, su impacto y las palabras clave principales." required data-news-field="deck"></textarea><small class="admin-seo-help"><span data-news-count="deck">0</span>/320 · Aparece debajo del titular y resume la nota.</small></label>
+              </section>
+
+              <section class="news-editor-section">
+                <div class="news-editor-section__heading"><span>02</span><div><h3>Foto de portada</h3><p>Usá una imagen horizontal. Cargá un texto alternativo descriptivo y un epígrafe si aporta contexto.</p></div></div>
+                <div class="news-cover-editor">
+                  <div class="news-cover-editor__preview" data-news-cover-preview><span>La portada se verá aquí</span></div>
+                  <div class="news-cover-editor__fields">
+                    <label><span>Archivo de portada</span><input name="foto_nota" type="file" accept="image/jpeg,image/png,image/webp,image/avif" data-news-cover-file /><small class="admin-seo-help">JPG, PNG, WebP o AVIF · hasta 10 MB.</small></label>
+                    <label><span>Texto alternativo</span><input name="imagen_alt" type="text" maxlength="300" placeholder="Qué muestra la imagen" /></label>
+                    <label><span>Epígrafe</span><textarea name="imagen_epigrafe" rows="3" maxlength="600" placeholder="Contexto, fuente o crédito de la imagen"></textarea></label>
+                  </div>
+                </div>
+              </section>
+
+              <section class="news-editor-section">
+                <div class="news-editor-section__heading"><span>03</span><div><h3>Cuerpo de la nota</h3><p>Combiná texto, subtítulos, citas, imágenes internas y publicaciones de X o Instagram.</p></div></div>
+                <div class="news-block-toolbar" aria-label="Agregar bloque editorial">
+                  <button type="button" class="secondary-link" data-news-add-block="paragraph">Agregar texto</button>
+                  <button type="button" class="secondary-link" data-news-add-block="heading">Agregar subtítulo</button>
+                  <button type="button" class="secondary-link" data-news-add-block="quote">Agregar cita</button>
+                  <button type="button" class="secondary-link" data-news-add-block="image">Agregar imagen</button>
+                  <button type="button" class="secondary-link" data-news-add-block="embed">Agregar X o Instagram</button>
+                </div>
+                <div class="news-block-list" data-news-block-list></div>
+                <p class="news-block-empty" data-news-block-empty>Empezá con un bloque de texto para redactar la nota.</p>
+              </section>
+
+              <section class="news-editor-section">
+                <div class="news-editor-section__heading"><span>04</span><div><h3>SEO y vínculo opcional</h3><p>Google toma estos campos; la radiografía solo se muestra al final si la seleccionás.</p></div></div>
+                <label><span>Título SEO</span><input name="seo_title" type="text" maxlength="70" placeholder="Se completa desde el titular" data-news-field="seo-title" /><small class="admin-seo-help"><span data-news-count="seo-title">0</span>/70 · Conviene mantenerlo debajo de 60 caracteres.</small></label>
+                <label><span>Descripción SEO</span><textarea name="seo_description" rows="3" maxlength="180" placeholder="Se completa desde la bajada" data-news-field="seo-description"></textarea><small class="admin-seo-help"><span data-news-count="seo-description">0</span>/180 · Resume el resultado en buscadores y redes.</small></label>
+                <div class="grid gap-5 md:grid-cols-2">
+                  <label><span>Palabras clave</span><input name="seo_keywords" type="text" maxlength="500" placeholder="ARBA, Tribunal Fiscal, economía bonaerense" /></label>
+                  <label><span>Radiografía vinculada</span><select name="radiografia_id" data-news-report-select><option value="">Sin radiografía vinculada</option></select></label>
+                </div>
+              </section>
+
+              <div class="admin-form-actions news-editor-actions">
+                <button class="secondary-link justify-center" type="submit" data-news-save>Guardar borrador</button>
+                <button class="primary-link justify-center" type="button" data-news-publish-current>Publicar en el inicio</button>
+                <button class="secondary-link justify-center is-hidden" type="button" data-news-cancel>Cancelar edición</button>
+              </div>
+              <p class="form-status" data-news-status role="status"></p>
+            </div>
+
+            <aside class="news-editor-preview" aria-label="Vista previa de la nota publicada">
+              <div class="news-editor-preview__heading"><div><span>Vista previa</span><strong>Así verá la nota el lector</strong></div><button type="button" data-news-refresh-preview>Actualizar</button></div>
+              <div class="news-editor-preview__canvas" data-news-preview><div class="empty-state">Completá la nota para ver la vista previa.</div></div>
+            </aside>
           </div>
-          <label><span>Bajada SEO</span><textarea name="subtitulo" minlength="50" maxlength="180" rows="3" placeholder="Resumen informativo con las palabras clave principales" data-seo-field="description" required></textarea><small class="admin-seo-help"><span data-seo-count="description">0</span>/180 · Esta descripción acompaña el resultado en Google.</small></label>
-          <div class="grid gap-5 md:grid-cols-2">
-            <label><span>PDF de nota periodística</span><input name="pdf_nota" type="file" accept=".pdf,application/pdf" /></label>
-            <label><span>Foto de portada</span><input name="foto_nota" type="file" accept="image/jpeg,image/png,image/webp,image/avif" /></label>
-          </div>
-          <div class="grid gap-5 md:grid-cols-2">
-            <label><span>Radiografía vinculada</span><select name="radiografia_id" data-news-report-select required><option value="">Cargando radiografías...</option></select></label>
-          </div>
-          <label><span>Fecha</span><input name="fecha" type="date" required /></label>
-          <div class="admin-form-actions">
-            <button class="primary-link justify-center" type="submit" data-news-save>Publicar nota en el inicio</button>
-            <button class="secondary-link justify-center is-hidden" type="button" data-news-cancel>Cancelar edición</button>
-          </div>
-          <p class="form-status" data-news-status role="status"></p>
-          <div class="admin-news-list" data-admin-news-list></div>
+
+          <section class="admin-news-library">
+            <div><p class="eyebrow">Biblioteca editorial</p><h3>Notas y borradores</h3></div>
+            <div class="admin-news-list" data-admin-news-list></div>
+          </section>
         </form>
 
         <section class="admin-dashboard is-hidden lg:col-span-2" data-admin-dashboard>
@@ -292,6 +347,7 @@
     <script src="../assets/js/supabase-config.js?v=20260528-admincrud8"></script>
     <script src="../assets/js/admin-audience.js?v=20260722-audience-intelligence"></script>
     <script src="../assets/js/main.js?v=20260920-nota3"></script>
-    <script src="../assets/js/news-admin.js?v=20260920-nota3"></script>
+    <script src="../assets/js/news-publications.js?v=20260929-news-crm"></script>
+    <script src="../assets/js/news-admin.js?v=20260929-news-crm"></script>
   </body>
 </html>
