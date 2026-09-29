@@ -388,13 +388,10 @@
       const deep = [5, 45, 70];
       const light = [244, 253, 255];
       const cyan = [140, 236, 255];
-      lines.forEach((top, index) => {
-        const amount = lines.length <= 1 ? 0 : index / (lines.length - 1);
-        const start = rgbText(mixRgb(dark, light, amount));
-        const end = rgbText(mixRgb(deep, cyan, amount));
+      lines.forEach((top) => {
         lineMap.get(top).forEach((word) => {
-          word.style.setProperty("--line-start", start);
-          word.style.setProperty("--line-end", end);
+          word.style.setProperty("--line-start", rgbText(dark));
+          word.style.setProperty("--line-end", rgbText(deep));
         });
       });
     });
