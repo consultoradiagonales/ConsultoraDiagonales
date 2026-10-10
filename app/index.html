@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="ConDi — Reportá lo que pasa en tu barrio. App gratuita de participación ciudadana municipal para Argentina." />
+    <title>ConDi App | Consultora Diagonales</title>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20261010-condi-app" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --condi-blue: #1a56db;
+        --condi-green: #16a34a;
+        --bg-dark: #080d14;
+        --bg-card: #0f1923;
+        --border: rgba(255,255,255,0.08);
+      }
+
+      .condi-logo {
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1;
+      }
+      .condi-logo .con { color: var(--condi-blue); }
+      .condi-logo .di  { color: var(--condi-green); }
+
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--condi-green);
+        color: white;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: background 0.2s, transform 0.1s;
+        box-shadow: 0 4px 24px rgba(22,163,74,0.35);
+      }
+      .download-btn:hover {
+        background: #15803d;
+        transform: translateY(-2px);
+      }
+      .download-btn svg { flex-shrink: 0; }
+
+      .feature-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+      }
+      .feature-icon {
+        font-size: 2rem;
+        margin-bottom: 12px;
+      }
+
+      .step-num {
+        width: 36px; height: 36px;
+        background: var(--condi-blue);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
+      .warning-box {
+        background: rgba(234,179,8,0.1);
+        border: 1px solid rgba(234,179,8,0.3);
+        border-radius: 10px;
+        padding: 16px 20px;
+      }
+      .warning-box strong { color: #fbbf24; }
+    </style>
+  </head>
+  <body class="bg-[#080d14] text-white antialiased">
+
+    <!-- Header minimal -->
+    <header class="site-header" style="border-bottom:1px solid rgba(255,255,255,0.07); padding: 16px 24px; display:flex; align-items:center; justify-content:space-between;">
+      <a href="../index.html" style="opacity:0.7; font-size:0.85rem; color:#94a3b8; text-decoration:none;">← Consultora Diagonales</a>
+      <a href="../index.html">
+        <img src="../assets/img/logo-completo.png" alt="Consultora Diagonales" style="height:32px;" />
+      </a>
+    </header>
+
+    <main style="max-width: 800px; margin: 0 auto; padding: 48px 24px 80px;">
+
+      <!-- Hero -->
+      <section style="text-align:center; margin-bottom: 56px;">
+        <div class="condi-logo" style="margin-bottom:16px;">
+          <span class="con">Con</span><span class="di">Di</span>
+        </div>
+        <p style="font-size:1.3rem; color:#94a3b8; margin-bottom:8px;">Reportá lo que pasa en tu barrio</p>
+        <p style="color:#64748b; font-size:0.9rem; margin-bottom:40px;">App gratuita de participación ciudadana municipal</p>
+
+        <!-- Botón de descarga -->
+        <a href="https://github.com/consultoradiagonales/ConsultoraDiagonales/releases/download/v1.0.0/ConDi.apk" class="download-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Descargar ConDi para Android
+        </a>
+        <p style="margin-top:12px; font-size:0.8rem; color:#475569;">v1.0 · Android 5.0+ · ~209 MB</p>
+      </section>
+
+      <!-- Aviso instalación -->
+      <div class="warning-box" style="margin-bottom:48px;">
+        <strong>⚠ Instalación desde fuentes externas</strong>
+        <p style="margin:8px 0 0; color:#e2e8f0; font-size:0.9rem;">
+          Al instalar desde fuera de Google Play, Android puede mostrar una advertencia de Play Protect.
+          Es normal — la app no está disponible aún en la tienda oficial.
+          Tocá <strong style="color:#fbbf24;">Instalar de todas formas</strong> para continuar.
+        </p>
+      </div>
+
+      <!-- Instrucciones paso a paso -->
+      <section style="margin-bottom:56px;">
+        <h2 style="font-size:1.25rem; font-weight:700; margin-bottom:24px; color:#e2e8f0;">Cómo instalar</h2>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+
+          <div style="display:flex; gap:16px; align-items:flex-start;">
+            <div class="step-num">1</div>
+            <div>
+              <strong>Descargá el archivo</strong>
+              <p style="color:#94a3b8; font-size:0.9rem; margin:4px 0 0;">Tocá el botón de arriba desde tu teléfono Android para descargar <code style="background:#1e293b; padding:2px 6px; border-radius:4px;">ConDi.apk</code>.</p>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:16px; align-items:flex-start;">
+            <div class="step-num">2</div>
+            <div>
+              <strong>Permitir fuentes desconocidas</strong>
+              <p style="color:#94a3b8; font-size:0.9rem; margin:4px 0 0;">Si es la primera vez, Android pedirá que habilites la instalación desde Chrome (o tu navegador). Tocá <em>Ajustes → Permitir</em>.</p>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:16px; align-items:flex-start;">
+            <div class="step-num">3</div>
+            <div>
+              <strong>Instalá y abrí la app</strong>
+              <p style="color:#94a3b8; font-size:0.9rem; margin:4px 0 0;">Tocá <em>Instalar</em> en el APK descargado. Buscá el ícono <strong style="color:#16a34a;">ConDi</strong> en tu pantalla de inicio.</p>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:16px; align-items:flex-start;">
+            <div class="step-num">4</div>
+            <div>
+              <strong>Creá tu cuenta o ingresá</strong>
+              <p style="color:#94a3b8; font-size:0.9rem; margin:4px 0 0;">Registrate con tu correo o con Google para empezar a reportar en tu municipio.</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Funcionalidades -->
+      <section style="margin-bottom:56px;">
+        <h2 style="font-size:1.25rem; font-weight:700; margin-bottom:24px; color:#e2e8f0;">¿Qué podés hacer con ConDi?</h2>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:16px;">
+
+          <div class="feature-card">
+            <div class="feature-icon">📍</div>
+            <strong style="color:#e2e8f0;">Reportar problemas</strong>
+            <p style="color:#64748b; font-size:0.875rem; margin:8px 0 0;">Baches, luminarias, basura, reclamos de servicios públicos con ubicación exacta.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">📸</div>
+            <strong style="color:#e2e8f0;">Foto como evidencia</strong>
+            <p style="color:#64748b; font-size:0.875rem; margin:8px 0 0;">Adjuntá fotos a cada reporte para documentar el problema.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🗺️</div>
+            <strong style="color:#e2e8f0;">Mapa en tiempo real</strong>
+            <p style="color:#64748b; font-size:0.875rem; margin:8px 0 0;">Visualizá todos los reportes activos de tu barrio en el mapa.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🔔</div>
+            <strong style="color:#e2e8f0;">Estado de tu reclamo</strong>
+            <p style="color:#64748b; font-size:0.875rem; margin:8px 0 0;">Seguí el estado de tus reportes y recibí notificaciones de avances.</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Disponibilidad futura -->
+      <section style="text-align:center; padding:32px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; margin-bottom:48px;">
+        <p style="color:#64748b; font-size:0.875rem; margin:0 0 8px;">Próximamente disponible en</p>
+        <div style="display:flex; gap:24px; justify-content:center; align-items:center;">
+          <span style="color:#475569; font-size:0.9rem; font-weight:600;">Google Play Store</span>
+          <span style="color:#334155;">·</span>
+          <span style="color:#475569; font-size:0.9rem; font-weight:600;">Apple App Store</span>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer style="text-align:center; color:#334155; font-size:0.8rem;">
+        <p>ConDi es un producto de <a href="../index.html" style="color:#475569;">Consultora Diagonales</a></p>
+        <p style="margin-top:4px;"><a href="mailto:info.consultoradiagonales@gmail.com" style="color:#475569;">info.consultoradiagonales@gmail.com</a></p>
+      </footer>
+
+    </main>
+
+  </body>
+</html>
