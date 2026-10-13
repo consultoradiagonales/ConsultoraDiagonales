@@ -103,6 +103,12 @@
         </div>
       </article>`).join("");
     container.dataset.items = JSON.stringify(items);
+    container.querySelectorAll("[data-news-delete], [data-news-publish], [data-news-edit]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        container.dispatchEvent(new CustomEvent("news-action", { detail: { button } }));
+      });
+    });
   }
 
   function storedItems() {
@@ -188,10 +194,11 @@
     });
 
     form.querySelector("[data-news-cancel]").addEventListener("click", resetForm);
-    list.addEventListener("click", async (event) => {
-      const edit = event.target.closest("[data-news-edit]");
-      const publish = event.target.closest("[data-news-publish]");
-      const remove = event.target.closest("[data-news-delete]");
+    list.addEventListener("news-action", async (event) => {
+      const button = event.detail?.button;
+      const edit = button?.matches("[data-news-edit]") ? button : null;
+      const publish = button?.matches("[data-news-publish]") ? button : null;
+      const remove = button?.matches("[data-news-delete]") ? button : null;
       if (edit) {
         const item = storedItems().find((entry) => entry.id === edit.dataset.newsEdit);
         if (item) fillForm(item);
