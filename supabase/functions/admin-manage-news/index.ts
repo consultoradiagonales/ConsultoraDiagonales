@@ -117,12 +117,11 @@ Deno.serve(async (req) => {
         const bucketIndex = remainder.indexOf(bucketMarker);
         return bucketIndex === -1 ? "" : decodeURIComponent(remainder.slice(bucketIndex + bucketMarker.length));
       })();
-      if (storagePath) {
-        const { error: storageError } = await supabase.storage.from("noticias").remove([storagePath]);
-        if (storageError && !String(storageError.message || "").toLowerCase().includes("not found")) throw storageError;
-      }
       const { error } = await supabase.from("noticias").delete().eq("id", id);
       if (error) throw error;
+      if (storagePath) {
+        void supabase.storage.from("noticias").remove([storagePath]).catch(() => null);
+      }
       return Response.json({ ok: true }, { headers });
     }
 
