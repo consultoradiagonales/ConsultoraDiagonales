@@ -644,6 +644,14 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
 
+  window.addEventListener("storage", (event) => {
+    if (event.key === "cd:news_updated") boot();
+  });
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) boot();
+  });
+  window.addEventListener("focus", boot);
+
   let headlineResizeTimer;
   window.addEventListener("resize", () => {
     window.clearTimeout(headlineResizeTimer);
