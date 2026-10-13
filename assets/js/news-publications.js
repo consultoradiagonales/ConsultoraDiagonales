@@ -414,6 +414,33 @@
       window.location.href = link.href;
     });
     bar.append(label, link);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "Eliminar nota";
+    remove.addEventListener("click", async () => {
+      if (!window.confirm("¿Eliminar esta nota definitivamente? También se quitará su PDF.")) return;
+      remove.disabled = true;
+      try {
+        const config = window.CD_SUPABASE || {};
+        const response = await fetch(`${config.url}/functions/v1/admin-manage-news`, {
+          method: "POST",
+          headers: {
+            apikey: config.anonKey || "",
+            Authorization: `Bearer ${config.anonKey || ""}`,
+            "x-admin-key": sessionStorage.getItem("cd:admin_upload_key") || "",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ action: "delete", id: item.id }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        window.location.href = "../admin/index.html";
+      } catch (error) {
+        remove.disabled = false;
+        window.alert(error.message || "No se pudo eliminar la nota.");
+      }
+    });
+    bar.append(remove);
     return bar;
   }
 
