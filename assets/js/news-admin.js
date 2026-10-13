@@ -553,6 +553,19 @@
     form.querySelector("[data-news-refresh-preview]").addEventListener("click", updatePreview);
 
     list.addEventListener("click", async (event) => {
+      const cancel = event.target.closest("[data-news-delete-cancel]");
+      if (cancel) {
+        event.preventDefault();
+        event.stopPropagation();
+        const card = cancel.closest(".admin-news-item");
+        const button = card.querySelector("[data-news-delete]");
+        delete button.dataset.confirmDelete;
+        button.textContent = "Eliminar";
+        card.querySelector("[data-news-delete-warning]")?.remove();
+        cancel.remove();
+        status("");
+        return;
+      }
       const edit = event.target.closest("[data-news-edit]");
       const publish = event.target.closest("[data-news-publish]");
       const remove = event.target.closest("[data-news-delete]");
@@ -567,7 +580,20 @@
         fillForm(item);
         return;
       }
-      if (remove && !window.confirm(`¿Eliminar definitivamente esta nota de la portada y de Noticias?\n\n${item?.titulo || "Nota"}\nURL: ${item?.slug || id}`)) return;
+      if (remove && remove.dataset.confirmDelete !== "true") {
+        remove.dataset.confirmDelete = "true";
+        remove.textContent = "Confirmar eliminación";
+        const cancelButton = document.createElement("button");
+        cancelButton.type = "button";
+        cancelButton.className = "secondary-link";
+        cancelButton.dataset.newsDeleteCancel = id;
+        cancelButton.textContent = "Cancelar";
+        const warning = document.createElement("small");
+        warning.dataset.newsDeleteWarning = "";
+        warning.textContent = "Esta nota se quitará definitivamente de la portada y de Noticias.";
+        remove.after(cancelButton, warning);
+        return;
+      }
       selected.disabled = true;
       if (remove) status("Eliminando nota…");
       try {
