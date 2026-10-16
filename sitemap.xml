@@ -17,6 +17,10 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://consultoradiagonales.com.ar/perspectivas/</loc>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://consultoradiagonales.com.ar/analisis/</loc>
     <priority>0.7</priority>
   </url>
@@ -27,5 +31,9 @@
   <url>
     <loc>https://consultoradiagonales.com.ar/contacto/</loc>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://consultoradiagonales.com.ar/privacidad/</loc>
+    <priority>0.5</priority>
   </url>
 </urlset>
