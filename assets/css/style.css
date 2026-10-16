@@ -2909,6 +2909,49 @@ body.cd-page-leaving {
 .news-complete-report a { display: inline-flex; flex: none; align-items: center; gap: 0.7rem; padding: 0.9rem 1rem; border: 1px solid rgba(207, 253, 255, 0.72); border-radius: 9px; color: #073553; background: #eafcff; font-size: 0.74rem; font-weight: 900; letter-spacing: 0.1em; text-decoration: none; }
 .news-complete-report.is-locked { display: none; }
 
+/* Nota periodística: superficie clara y contraste uniforme de lectura. */
+body.has-news-article,
+body.has-news-article .subpage,
+body.has-news-article .site-footer {
+  background: #e8ffff;
+  color: #052d46;
+}
+
+body.has-news-article .subpage { min-height: 100vh; }
+
+body.has-news-article .site-footer {
+  border-top-color: rgba(5, 45, 70, .18);
+  color: #052d46;
+}
+
+body.has-news-article .news-article,
+body.has-news-article .news-article__body,
+body.has-news-article .news-article__header > p,
+body.has-news-article .news-article__meta time,
+body.has-news-article .news-article__meta span,
+body.has-news-article .news-source-link,
+body.has-news-article .news-article__empty {
+  color: #052d46;
+}
+
+body.has-news-article .news-article__header h1,
+body.has-news-article .news-article__title-word {
+  color: #052d46;
+}
+
+body.has-news-article .news-pdf-reader,
+body.has-news-article .news-complete-report {
+  border-color: rgba(5, 45, 70, .3);
+  background: #d6fbff;
+  box-shadow: none;
+}
+
+body.has-news-article .news-pdf-reader > div { border-bottom-color: rgba(5, 45, 70, .2); }
+body.has-news-article .news-pdf-reader > div span,
+body.has-news-article .news-pdf-reader > div a,
+body.has-news-article .news-complete-report p { color: #052d46; }
+body.has-news-article .news-complete-report a { border-color: #052d46; color: #e8ffff; background: #052d46; }
+
 .report-detail-shell { display: grid; min-height: calc(100vh - 145px); place-items: center; padding: 9.5rem 1.5rem 5rem; }
 .report-detail-card { width: min(100%, 720px); padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid rgba(148, 231, 247, 0.52); border-radius: 18px; background: linear-gradient(135deg, rgba(9, 87, 111, 0.88), rgba(4, 30, 51, 0.94)); box-shadow: 0 26px 70px rgba(0, 16, 30, 0.4); }
 .report-detail-card h1 { margin: 0.7rem 0 0; color: #fff; font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 900; line-height: 1; letter-spacing: -0.05em; }

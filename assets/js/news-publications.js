@@ -446,9 +446,11 @@
 
   function renderArticle(item, container, options = {}) {
     if (!item) {
+      if (!options.preview) document.body.classList.remove("has-news-article");
       container.innerHTML = '<div class="empty-state">Esta nota no está disponible.</div>';
       return null;
     }
+    if (!options.preview) document.body.classList.add("has-news-article");
     const article = document.createElement("article");
     article.className = "news-article";
     if (options.preview) article.classList.add("news-article--preview");
