@@ -35,6 +35,7 @@ initFooterText();
 initLoginModal();
 initTracking();
 initLeadForms();
+initWhatsappContactForms();
 initHtmlReportViewer();
 initHtmlVoiceBridgeMessages();
 initMotionSystem();
@@ -754,6 +755,19 @@ function initLeadForms() {
       } finally {
         submit.disabled = false;
       }
+    });
+  });
+}
+
+function initWhatsappContactForms() {
+  document.querySelectorAll("[data-whatsapp-contact-form]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const firstName = getFormValue(form, "first_name");
+      const lastName = getFormValue(form, "last_name");
+      const service = getFormValue(form, "service");
+      const message = `Hola, soy ${[firstName, lastName].filter(Boolean).join(" ")}. Me interesa solicitar: ${service}.`;
+      window.open(`https://wa.me/5492216765720?text=${encodeURIComponent(message)}`, "_blank", "noopener");
     });
   });
 }

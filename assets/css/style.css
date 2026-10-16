@@ -3330,25 +3330,31 @@ body[data-page="solicitudes"] .subpage {
   }
 }
 
-.whatsapp-contact-link {
-  display: grid;
-  place-items: center;
-  gap: .8rem;
-  min-height: 270px;
-  margin-top: 1rem;
-  border: 1px solid rgba(110, 213, 255, .36);
-  border-radius: 12px;
-  color: #fff;
-  background: rgba(255, 255, 255, .07);
-  text-decoration: none;
-  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+.contact-panel { width: min(100%, 520px); }
+
+.contact-panel > h3 {
+  margin: 0;
+  color: var(--blue);
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
-.whatsapp-contact-link:hover { transform: translateY(-3px); border-color: #6ed5ff; background: rgba(110, 213, 255, .14); }
+.whatsapp-contact-link {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  margin: .8rem 0;
+  text-decoration: none;
+  transition: transform 180ms ease;
+}
 
-.whatsapp-contact-link svg { width: 106px; height: 106px; fill: #25d366; filter: drop-shadow(0 12px 22px rgba(0,0,0,.28)); }
+.whatsapp-contact-link:hover { transform: scale(1.08); }
 
-.whatsapp-contact-link span { font-size: .82rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.whatsapp-contact-link svg { width: 46px; height: 46px; fill: #25d366; filter: drop-shadow(0 7px 12px rgba(0,0,0,.28)); }
 
 @media (max-width: 640px) {
   body[data-page="solicitudes"] .request-layout {
