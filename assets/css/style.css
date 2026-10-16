@@ -2981,7 +2981,7 @@ body.has-news-article .news-complete-report a { border-color: #052d46; color: #e
 .admin-danger-link { min-height: 34px; padding: 0.48rem 0.7rem; font-size: 0.68rem; }
 .admin-danger-link { border: 1px solid rgba(255, 177, 184, 0.42); border-radius: 8px; color: #ffc1c7; background: transparent; font-weight: 800; }
 
-@media (max-width: 1120px) {
+@media (max-width: 1800px) {
   .featured-news-slot { position: relative; right: auto; bottom: auto; width: min(100% - 3rem, 620px); margin: -0.75rem auto 2.2rem; }
   .featured-news-card__link { grid-template-columns: minmax(0, 1.18fr) minmax(130px, 0.72fr); }
   .hero-shell .relative.z-10 { min-height: 82vh; }
