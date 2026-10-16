@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="canonical" href="https://consultoradiagonales.com.ar/solicitudes/" />
-    <meta name="description" content="Solicitud de radiografias, informes y evaluaciones estrategicas de Consultora Diagonales." />
-    <title>Solicitudes | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260919-news-pdf" />
+    <meta name="description" content="Relevamiento detallado para acordar el alcance de una radiografía, análisis estratégico o monitoreo." />
+    <title>Relevamiento de trabajo | Consultora Diagonales</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20261016-audit" />
+    <link rel="stylesheet" href="../assets/css/editorial-2026.css?v=20261016-b" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -18,7 +19,9 @@
       </a>
       <nav class="desktop-nav" aria-label="Navegacion principal">
         <a href="../index.html" data-nav="inicio">Inicio</a>
-        <a href="../repositorio/index.html" data-nav="radiografias">Radiograf&iacute;as</a><a href="../noticias/index.html" data-nav="noticias">Noticias</a>
+        <a href="../servicios/index.html" data-nav="servicios">Servicios</a>
+        <a href="../repositorio/index.html" data-nav="radiografias">Radiograf&iacute;as</a>
+        <a href="../perspectivas/index.html" data-nav="perspectivas">Perspectivas</a>
         <a href="../contacto/index.html" data-nav="contacto">Contacto</a>
       </nav>
       <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" data-menu-toggle>
@@ -30,83 +33,70 @@
 
     <div class="mobile-menu" data-mobile-menu aria-hidden="true">
       <a href="../index.html">Inicio</a>
-      <a href="../repositorio/index.html">Radiograf&iacute;as</a><a href="../noticias/index.html">Noticias</a>
+      <a href="../servicios/index.html">Servicios</a>
+      <a href="../repositorio/index.html">Radiograf&iacute;as</a>
+      <a href="../perspectivas/index.html">Perspectivas</a>
       <a href="../contacto/index.html">Contacto</a>
     </div>
 
     <main class="subpage request-page">
       <section class="request-layout mx-auto grid min-h-screen max-w-7xl gap-8 px-6 pb-20 pt-36 md:px-10 lg:grid-cols-[.9fr_1.1fr] lg:px-12">
         <div class="request-intro">
-          <p class="eyebrow">Solicitudes</p>
-          <h1 class="page-title">Radiograf&iacute;as, informes y evaluaciones para decidir con informaci&oacute;n.</h1>
+          <p class="eyebrow">Relevamiento de trabajo</p>
+          <h1 class="page-title">Definamos el alcance con la información necesaria.</h1>
           <p class="request-lede">
-            Empresas, territorios pol&iacute;ticos, humor social, dirigentes y proyecciones en un brief operativo.
+            Esta ficha es un segundo paso para quienes ya cuentan con contexto sobre su necesidad. Si todavía estás explorando una decisión, empezá por una <a href="../contacto/index.html">consulta breve</a>.
           </p>
           <div class="request-modules" aria-label="Tipos de analisis">
             <article>
               <span>01</span>
-              <strong>Radiograf&iacute;a territorial</strong>
-              <p>Mapa de actores, intereses, conflictos, riesgos y oportunidades.</p>
+              <strong>Necesidad</strong>
+              <p>Definí el problema, la decisión y el territorio o ámbito de trabajo.</p>
             </article>
             <article>
               <span>02</span>
-              <strong>Informe estrat&eacute;gico</strong>
-              <p>Lectura ejecutiva para una decisi&oacute;n, negociaci&oacute;n o campa&ntilde;a.</p>
+              <strong>Contexto</strong>
+              <p>Sumá los antecedentes, restricciones y fuentes que sea útil considerar.</p>
             </article>
             <article>
               <span>03</span>
-              <strong>Evaluaci&oacute;n empresarial</strong>
-              <p>Reputaci&oacute;n, entorno, mercado, se&ntilde;ales p&uacute;blicas y viabilidad.</p>
+              <strong>Alcance</strong>
+              <p>Indicá el horizonte, la prioridad y el formato que necesitás evaluar.</p>
             </article>
             <article>
               <span>04</span>
-              <strong>Perspectivas</strong>
-              <p>Escenarios, alertas tempranas y proyecciones de corto o mediano plazo.</p>
+              <strong>Contacto</strong>
+              <p>Prepará un brief para continuar la conversación por el canal que elijas.</p>
             </article>
           </div>
         </div>
 
         <form class="request-form" data-request-form>
-          <div class="request-block">
-            <span class="request-block-title">Tipo de trabajo</span>
+          <fieldset class="request-block">
+            <legend class="request-block-title">¿Qué tipo de apoyo necesitás?</legend>
             <div class="request-type-grid">
               <label class="request-option">
-                <input type="checkbox" name="request_type" value="Radiografia territorial" checked />
+                <input type="radio" name="request_type" value="Radiografia territorial" checked />
                 <span>Radiograf&iacute;a territorial</span>
                 <small>Territorio, poder local y actores.</small>
               </label>
               <label class="request-option">
-                <input type="checkbox" name="request_type" value="Informe estrategico" />
+                <input type="radio" name="request_type" value="Analisis estrategico" />
                 <span>Informe estrat&eacute;gico</span>
                 <small>Decisiones, riesgos y cursos de acci&oacute;n.</small>
               </label>
               <label class="request-option">
-                <input type="checkbox" name="request_type" value="Evaluacion de empresa" />
-                <span>Evaluaci&oacute;n de empresa</span>
-                <small>Negocio, reputaci&oacute;n y contexto.</small>
-              </label>
-              <label class="request-option">
-                <input type="checkbox" name="request_type" value="Territorio politico" />
-                <span>Territorio pol&iacute;tico</span>
-                <small>Coaliciones, conflictos y estructura.</small>
-              </label>
-              <label class="request-option">
-                <input type="checkbox" name="request_type" value="Humor social" />
-                <span>Humor social</span>
-                <small>Clima, percepciones y agenda p&uacute;blica.</small>
-              </label>
-              <label class="request-option">
-                <input type="checkbox" name="request_type" value="Politico o dirigente" />
-                <span>Pol&iacute;tico o dirigente</span>
-                <small>Imagen, trayectoria y proyecci&oacute;n.</small>
+                <input type="radio" name="request_type" value="Monitoreo territorial" />
+                <span>Monitoreo</span>
+                <small>Señales, agenda y cambios de contexto.</small>
               </label>
               <label class="request-option request-option-wide">
-                <input type="checkbox" name="request_type" value="Perspectiva o proyeccion" />
-                <span>Perspectiva o proyecci&oacute;n</span>
-                <small>Escenarios futuros, hip&oacute;tesis y alertas.</small>
+                <input type="radio" name="request_type" value="Otro o a definir" />
+                <span>Otro o a definir</span>
+                <small>Explicanos la necesidad en tus propios términos.</small>
               </label>
             </div>
-          </div>
+          </fieldset>
 
           <div class="grid gap-4 md:grid-cols-2">
             <label>
@@ -187,15 +177,15 @@
 
           <label class="checkbox-field request-consent">
             <input name="terms" type="checkbox" required />
-            <span>Acepto que Consultora Diagonales use estos datos para responder la solicitud.</span>
+            <span>Autorizo el uso de estos datos para responder este relevamiento y evaluar un posible alcance de trabajo.</span>
           </label>
           <label class="checkbox-field request-consent">
             <input name="publish_authorization" type="checkbox" />
-            <span>Autorizo que Consultora Diagonales publique, dicho an&aacute;lisis, en su repositorio de Radiograf&iacute;as.</span>
+            <span>Quiero conversar por separado una eventual autorización para publicar material relacionado. Esta elección no es necesaria para enviar la consulta.</span>
           </label>
 
           <div class="request-actions">
-            <button class="primary-link justify-center" type="submit">Generar solicitud</button>
+            <button class="primary-link justify-center" type="submit">Preparar relevamiento</button>
             <button class="secondary-link justify-center" type="reset" data-request-reset>Limpiar</button>
           </div>
           <p class="form-status" data-request-status role="status"></p>
@@ -206,36 +196,23 @@
         <div class="mx-auto grid max-w-7xl gap-8 px-6 py-16 md:px-10 lg:grid-cols-[.8fr_1.2fr] lg:px-12">
           <div>
             <p class="eyebrow">Brief generado</p>
-            <h2 class="section-title">Solicitud lista para enviar.</h2>
+            <h2 class="section-title">Relevamiento listo para continuar.</h2>
           </div>
           <div class="request-output-card">
             <pre data-request-brief></pre>
             <div class="request-output-actions">
-              <a class="primary-link justify-center" data-request-whatsapp target="_blank" rel="noopener">Enviar por WhatsApp</a>
+              <a class="primary-link justify-center" data-request-whatsapp target="_blank" rel="noopener">Abrir WhatsApp</a>
               <button class="secondary-link justify-center" type="button" data-request-copy>Copiar brief</button>
             </div>
           </div>
         </div>
       </section>
 
-      <div class="request-cost-modal" data-request-cost-modal hidden aria-hidden="true">
-        <div class="request-cost-dialog" role="dialog" aria-modal="true" aria-labelledby="request-cost-title">
-          <p class="eyebrow" id="request-cost-title">Aviso importante</p>
-          <p>
-            Consultora Diagonales ofrece un servicio de an&aacute;lisis b&aacute;sico y gratuito. De necesitar mas de una
-            Radiograf&iacute;a o An&aacute;lisis, ello conlleva un costo, el cual le ser&aacute; comunicado previamente a generar el
-            informe para que Ud. pueda confirmar.
-          </p>
-          <button class="primary-link justify-center" type="button" data-request-cost-close>Entendido</button>
-        </div>
-      </div>
     </main>
 
-    <footer class="site-footer">
-      <span>&copy; CONSULTORA DIAGONALES | Data Analytics.</span>
-    </footer>
+    <footer class="site-footer" data-footer></footer>
 
     <script src="../assets/js/supabase-config.js?v=20260527"></script>
-    <script src="../assets/js/main.js?v=20260919-news-pdf"></script>
+    <script src="../assets/js/main.js?v=20261016-perspectivas"></script>
   </body>
 </html>

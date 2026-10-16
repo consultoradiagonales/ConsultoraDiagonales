@@ -3,11 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Consultora Diagonales: inteligencia territorial, analisis electoral y empresarial, opinion publica y radiografias estrategicas para gobiernos, campanas e instituciones." />
+    <meta name="description" content="Radiografías, monitoreo y análisis estratégico para comprender actores, evaluar escenarios y orientar decisiones territoriales." />
     <link rel="canonical" href="https://consultoradiagonales.com.ar/" />
-    <title>Consultora Diagonales | Inteligencia territorial</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Consultora Diagonales" />
+    <meta property="og:title" content="Consultora Diagonales | Inteligencia territorial" />
+    <meta property="og:description" content="Radiografías, monitoreo y análisis estratégico para decisiones territoriales." />
+    <meta property="og:url" content="https://consultoradiagonales.com.ar/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>Consultora Diagonales | Inteligencia territorial para decidir</title>
     <link rel="preconnect" href="https://cdn.tailwindcss.com" />
-    <link rel="stylesheet" href="assets/css/style.css?v=20261016-responsive" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20261016-audit" />
+    <link rel="stylesheet" href="assets/css/editorial-2026.css?v=20261016-b" />
     <style>
       .media-mentions-list{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:.9rem!important}.media-logo{min-height:148px!important;justify-content:space-between!important;padding:1.15rem 1rem .85rem!important;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(3,27,45,.26)),rgba(3,27,45,.22)!important}.media-logo img,.media-logo svg{display:block;width:100%!important;height:94px!important;object-fit:contain!important;object-position:center!important;filter:drop-shadow(0 10px 18px rgba(0,0,0,.34))!important}.media-logo--radio-buenos-aires img{width:92px!important;height:92px!important}.media-logo--la-sintesis svg{height:96px!important}@media(max-width:900px){.media-mentions-list{grid-template-columns:repeat(3,minmax(0,1fr))!important}}@media(max-width:640px){.media-mentions-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}.media-logo{min-height:124px!important;padding:.9rem .75rem .75rem!important}.media-logo img,.media-logo svg{height:74px!important}.media-logo--radio-buenos-aires img{width:76px!important;height:76px!important}}
     </style>
@@ -34,8 +41,9 @@
       </a>
       <nav class="desktop-nav" aria-label="Navegación principal">
         <a href="index.html" data-nav="inicio">Inicio</a>
+        <a href="servicios/index.html" data-nav="servicios">Servicios</a>
         <a href="repositorio/index.html" data-nav="radiografias">Radiografías</a>
-        <a href="noticias/index.html" data-nav="noticias">Noticias</a>
+        <a href="perspectivas/index.html" data-nav="perspectivas">Perspectivas</a>
         <a href="contacto/index.html" data-nav="contacto">Contacto</a>
       </nav>
       <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" data-menu-toggle>
@@ -47,8 +55,9 @@
 
     <div class="mobile-menu" data-mobile-menu aria-hidden="true">
       <a href="index.html">Inicio</a>
+      <a href="servicios/index.html">Servicios</a>
       <a href="repositorio/index.html">Radiografías</a>
-      <a href="noticias/index.html">Noticias</a>
+      <a href="perspectivas/index.html">Perspectivas</a>
       <a href="contacto/index.html">Contacto</a>
     </div>
 
@@ -58,75 +67,84 @@
         <div class="hero-overlay" aria-hidden="true"></div>
         <div class="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-end px-6 pb-16 pt-32 md:px-10 lg:px-12">
           <div class="max-w-4xl pb-8 md:pb-10">
+            <p class="eyebrow hero-eyebrow">Consultora Diagonales</p>
             <h1 class="hero-title">
               Inteligencia territorial<br />
-              aplicada a la toma<br />
-              de decisiones.
+              para decidir<br />
+              con evidencia.
             </h1>
             <p class="hero-copy">
-              "Analizamos el presente para anticipar el futuro. Brindamos herramientas estratégicas que transforman
-              la información en decisiones..."
+              Radiografías, monitoreo y análisis estratégico para comprender actores, evaluar escenarios y orientar decisiones políticas, institucionales y empresariales.
             </p>
             <div class="hero-actions hero-request-cta">
-              <span>Armamos una propuesta según territorio, plazo y decisión a tomar.</span>
-              <a class="primary-link" href="solicitudes/index.html">Generar solicitud</a>
+              <a class="primary-link" href="contacto/index.html">Solicitar un diagnóstico</a>
+              <a class="secondary-link" href="repositorio/index.html">Ver una radiografía</a>
             </div>
           </div>
         </div>
-        <aside class="featured-news-slot" data-featured-news aria-live="polite">
-          <div class="featured-news-card__empty">Cargando la última radiografía.</div>
-        </aside>
+      </section>
+
+      <section class="home-report-band" aria-labelledby="muestra-title">
+        <div class="mx-auto grid max-w-7xl gap-8 px-6 py-14 md:px-10 lg:grid-cols-[.72fr_1.28fr] lg:px-12">
+          <div class="home-section-intro">
+            <p class="eyebrow">Muestra de trabajo</p>
+            <h2 id="muestra-title" class="section-title">Una radiografía publicada, con fecha y alcance verificables.</h2>
+            <p>La muestra se carga desde el repositorio público. Los informes con acceso restringido mantienen sus condiciones de consulta.</p>
+            <a class="text-link" href="repositorio/index.html">Explorar radiografías publicadas</a>
+          </div>
+          <aside class="featured-report" data-featured-report aria-live="polite" aria-busy="true">
+            <p class="featured-report__status">Buscando una radiografía publicada.</p>
+          </aside>
+        </div>
       </section>
 
       <section class="home-services-band" id="servicios">
         <div class="mx-auto max-w-7xl px-6 py-20 md:px-10 lg:px-12">
           <p class="eyebrow">Servicios</p>
-          <h2 class="section-title max-w-5xl">Informes, monitoreo y estrategia para decidir con lectura territorial.</h2>
-          <p class="services-lede">Convertimos preguntas políticas, institucionales y empresariales en entregables claros: radiografías, tableros de seguimiento, escenarios y recomendaciones accionables.</p>
-          <div class="service-flow" aria-label="Flujo de trabajo de servicios">
-            <article><span>Entrada</span><h3>Pregunta territorial</h3><p>Partimos de una necesidad concreta: entender un distrito, evaluar un actor, leer una encuesta o anticipar un escenario.</p><ul><li>Problema a resolver</li><li>Territorio o audiencia</li><li>Decisión a tomar</li></ul><small>Punto de partida</small></article>
-            <article><span>01 · Diagnóstico</span><h3>Radiografía territorial</h3><p>Mapa de actores, dinámicas locales, riesgos y oportunidades para una decisión puntual.</p><ul><li>Foto del escenario</li><li>Actores y conflictos</li><li>Recomendaciones ejecutivas</li></ul><small>Entrega estimada: 2 semanas</small></article>
-            <article><span>02 · Estrategia</span><h3>Escenarios electorales y empresariales</h3><p>Análisis de hipótesis de competencia, variables críticas y cursos de acción.</p><ul><li>Escenarios posibles</li><li>Mensajes sugeridos</li><li>Movimientos recomendados</li></ul><small>Entrega estimada: 4 a 6 semanas</small></article>
-            <article><span>03 · Seguimiento</span><h3>Monitoreo territorial</h3><p>Seguimiento periódico de clima político, agenda pública, redes, alertas y evolución de escenarios.</p><ul><li>Alertas semanales o mensuales</li><li>Señales digitales</li><li>Tablero de evolución</li></ul><small>Modalidad mensual</small></article>
-            <article><span>04 · Integral</span><h3>Inteligencia integral</h3><p>Vetting multidimensional, repositorio privado, capacitación interna y acompañamiento estratégico.</p><ul><li>Evaluación de perfiles</li><li>Riesgos y oportunidades</li><li>Programa a medida</li></ul><small>Escala según necesidad</small></article>
+          <h2 class="section-title max-w-5xl">Servicios con una entrega clara y un alcance acordado.</h2>
+          <p class="services-lede">Partimos de una necesidad concreta y acordamos qué información se analiza, qué recibe cada equipo y cómo se entrega.</p>
+          <div class="service-catalog" aria-label="Servicios de Consultora Diagonales">
+            <article><span>01</span><h3>Radiografía territorial</h3><p>Lectura de actores, dinámicas, riesgos y oportunidades en un territorio o problema definido.</p><a href="servicios/index.html#radiografia">Ver alcance</a></article>
+            <article><span>02</span><h3>Análisis estratégico</h3><p>Escenarios, variables críticas y cursos de acción para una decisión institucional, política o empresarial.</p><a href="servicios/index.html#estrategia">Ver alcance</a></article>
+            <article><span>03</span><h3>Monitoreo</h3><p>Seguimiento de agenda, señales públicas y cambios relevantes para sostener una lectura actualizada.</p><a href="servicios/index.html#monitoreo">Ver alcance</a></article>
+            <article><span>04</span><h3>Trabajo a medida</h3><p>Un relevamiento acordado cuando el caso requiere otro formato, profundidad o cadencia de trabajo.</p><a href="contacto/index.html">Consultar alcance</a></article>
           </div>
+          <a class="secondary-link services-link" href="servicios/index.html">Conocer todos los servicios</a>
         </div>
       </section>
 
-      <section class="home-proof-band">
+      <section class="home-proof-band" id="metodo">
         <div class="mx-auto grid max-w-7xl gap-8 px-6 py-20 md:px-10 lg:grid-cols-[.85fr_1.15fr] lg:px-12">
           <div>
-            <p class="eyebrow">Diferencial</p>
-            <h2 class="section-title">Territorio, datos y lectura política en un solo sistema.</h2>
+            <p class="eyebrow">Método y respaldo</p>
+            <h2 class="section-title">Cada conclusión debe poder leerse junto con su alcance y sus fuentes.</h2>
+            <p class="section-copy">Distinguimos información observada, interpretación y escenarios. El alcance de cada trabajo se define antes de producir la entrega.</p>
+            <a class="text-link" href="metodologia/index.html">Conocer la metodología</a>
           </div>
           <div class="proof-grid">
-            <article><span>01</span><h3>Radiografías accionables</h3><p>Informes diseñados para decidir: actores, clima, riesgos, oportunidades y escenarios.</p></article>
-            <article><span>02</span><h3>Vetting multidimensional</h3><p>Cruce de trayectoria pública, huella digital, redes, exposición mediática y contexto territorial.</p></article>
-            <article><span>03</span><h3>Seguimiento de interés</h3><p>La web registra qué temas consultan los visitantes para alimentar difusión y seguimiento comercial.</p></article>
-            <article><span>04</span><h3>Entrega ejecutiva</h3><p>Reportes, presentaciones y repositorio digital listos para equipos políticos e institucionales.</p></article>
+            <article><span>01</span><h3>Problema</h3><p>Empezamos por la decisión, el territorio y las preguntas que necesitan respuesta.</p></article>
+            <article><span>02</span><h3>Fuentes</h3><p>Organizamos fuentes públicas y la información que el equipo autorice para el caso.</p></article>
+            <article><span>03</span><h3>Análisis</h3><p>Relacionamos actores, señales, antecedentes y variables relevantes para el objetivo.</p></article>
+            <article><span>04</span><h3>Entrega</h3><p>Presentamos una lectura ejecutiva con alcance, fecha y próximos pasos acordados.</p></article>
           </div>
         </div>
       </section>
 
-      <section class="home-process-band">
+      <section class="home-process-band home-contact-band">
         <div class="mx-auto max-w-7xl px-6 py-20 md:px-10 lg:px-12">
-          <p class="eyebrow">Método</p>
-          <div class="process-grid">
-            <article><strong>Diagnóstico</strong><span>Definimos territorio, decisión a tomar y variables críticas.</span></article>
-            <article><strong>Modelado</strong><span>Cruzamos datos públicos, señales territoriales, actores y opinión.</span></article>
-            <article><strong>Escenarios</strong><span>Construimos hipótesis, alertas y recomendaciones de acción.</span></article>
-            <article><strong>Seguimiento</strong><span>Medimos lectura, interés y oportunidades de continuidad.</span></article>
+          <p class="eyebrow">Consulta inicial</p>
+          <div class="home-contact-callout">
+            <div><h2 class="section-title">Contanos qué necesitás decidir.</h2><p>Con una breve consulta evaluamos el alcance y proponemos una forma de trabajo. Si ya contás con el contexto del caso, también podés completar un relevamiento detallado.</p></div>
+            <div class="home-contact-callout__actions"><a class="primary-link" href="contacto/index.html">Iniciar una consulta</a><a class="secondary-link" href="solicitudes/index.html">Completar relevamiento</a></div>
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="site-footer">
-      <span>&copy; CONSULTORA DIAGONALES | Data Analytics.</span>
-    </footer>
+    <footer class="site-footer" data-footer></footer>
 
     <script src="assets/js/supabase-config.js?v=20260527"></script>
-    <script src="assets/js/main.js?v=20260919-news-pdf"></script>
+    <script src="assets/js/main.js?v=20261016-perspectivas"></script>
     <script src="assets/js/news-publications.js?v=20260919-news-pdf"></script>
   </body>
 </html>

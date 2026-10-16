@@ -5,18 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="canonical" href="https://consultoradiagonales.com.ar/repositorio/" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="description" content="Repositorio de radiograf&iacute;as territoriales de Consultora Diagonales." />
+    <meta name="description" content="Radiografías territoriales publicadas por Consultora Diagonales: título, fecha, territorio y modalidades de acceso." />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Consultora Diagonales" />
     <meta property="og:title" content="Radiograf&iacute;as | Consultora Diagonales" />
-    <meta property="og:description" content="Data Analytics aplicado al territorio, opini&oacute;n p&uacute;blica y escenarios de poder." />
+    <meta property="og:description" content="Radiografías territoriales publicadas, con fecha, territorio y modalidades de acceso." />
     <meta property="og:image" content="https://consultoradiagonales.com.ar/assets/img/Fondo_Radigrafias_Registr_Contacto.png" />
-    <meta property="og:url" content="https://consultoradiagonales.com.ar/repositorio/index.html" />
+    <meta property="og:url" content="https://consultoradiagonales.com.ar/repositorio/" />
     <meta name="twitter:card" content="summary_large_image" />
     <title>Radiograf&iacute;as | Consultora Diagonales</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260919-news-pdf" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20261016-audit" />
     <link rel="stylesheet" href="../assets/css/pdf-viewer.css?v=20260704-repo-entities-fix" />
     <link rel="stylesheet" href="../assets/css/share-radiografias.css?v=20260701-privacy-sync" />
+    <link rel="stylesheet" href="../assets/css/editorial-2026.css?v=20261016-b" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -28,7 +29,9 @@
       </a>
       <nav class="desktop-nav" aria-label="Navegaci&oacute;n principal">
         <a href="../index.html" data-nav="inicio">Inicio</a>
-        <a href="index.html" data-nav="radiografias">Radiograf&iacute;as</a><a href="../noticias/index.html" data-nav="noticias">Noticias</a>
+        <a href="../servicios/index.html" data-nav="servicios">Servicios</a>
+        <a href="index.html" data-nav="radiografias">Radiograf&iacute;as</a>
+        <a href="../perspectivas/index.html" data-nav="perspectivas">Perspectivas</a>
         <a href="../contacto/index.html" data-nav="contacto">Contacto</a>
       </nav>
       <button class="menu-toggle" type="button" aria-label="Abrir men&uacute;" aria-expanded="false" data-menu-toggle><span></span><span></span><span></span></button>
@@ -36,8 +39,9 @@
 
     <div class="mobile-menu" data-mobile-menu aria-hidden="true">
       <a href="../index.html">Inicio</a>
+      <a href="../servicios/index.html">Servicios</a>
       <a href="index.html">Radiograf&iacute;as</a>
-      <a href="../noticias/index.html">Noticias</a>
+      <a href="../perspectivas/index.html">Perspectivas</a>
       <a href="../contacto/index.html">Contacto</a>
     </div>
 
@@ -46,7 +50,8 @@
         <div class="mx-auto max-w-7xl px-6 pb-14 pt-36 md:px-10 lg:px-12">
           <p class="eyebrow">Repositorio estrat&eacute;gico</p>
           <div class="mt-5 grid gap-8 lg:grid-cols-[1.05fr_.95fr] lg:items-end">
-            <h1 class="page-title">Radiograf&iacute;as territoriales para leer el poder en movimiento.</h1>
+            <h1 class="page-title">Radiografías territoriales publicadas.</h1>
+            <p class="page-lede">Cada publicación identifica fecha, territorio y modalidades de acceso. Las piezas restringidas conservan sus condiciones de consulta.</p>
           </div>
         </div>
       </section>
@@ -54,21 +59,19 @@
       <section class="mx-auto max-w-7xl px-6 pb-24 md:px-10 lg:px-12">
         <div class="repo-toolbar mt-14">
           <span>&Uacute;ltimos an&aacute;lisis <strong>radiogr&aacute;ficos</strong></span>
-          <small data-count>Total: 0</small>
+          <small data-count aria-live="polite">Actualizando catálogo…</small>
           <a class="secondary-link" href="../analisis/index.html">Ver todos</a>
         </div>
-        <div class="latest-list" data-reports>
+        <div class="latest-list" data-reports aria-live="polite" aria-busy="true">
           <div class="empty-state">Cargando radiograf&iacute;as publicadas.</div>
         </div>
       </section>
     </main>
 
-    <footer class="site-footer">
-      <span>&copy; CONSULTORA DIAGONALES | Data Analytics.</span>
-    </footer>
+    <footer class="site-footer" data-footer></footer>
 
     <script src="../assets/js/supabase-config.js?v=20260531-gmail-access"></script>
-    <script src="../assets/js/main.js?v=20260919-news-pdf"></script>
+    <script src="../assets/js/main.js?v=20261016-perspectivas"></script>
     <script src="../assets/js/public-report-access.js?v=20260919-news-pdf"></script>
     <script src="../assets/js/share-radiografias.js?v=20260722-audience-intelligence"></script>
     <script src="../assets/js/pdf-viewer.js?v=20260704-repo-entities-fix"></script>

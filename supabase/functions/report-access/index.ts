@@ -102,12 +102,16 @@ Deno.serve(async (req) => {
 
     const { data: report, error: reportError } = await supabase
       .from("radiografias")
-      .select("id, titulo, is_private, pdf_url, html_url, storage_path")
+      .select("id, titulo, is_private, publication_state, pdf_url, html_url, storage_path")
       .eq("id", reportId)
       .maybeSingle();
 
     if (reportError) throw reportError;
     if (!report) return Response.json({ error: "radiografia no encontrada" }, { status: 404, headers: corsHeaders });
+
+    if (String(report.publication_state || "").toLowerCase() === "draft") {
+      return Response.json({ error: "radiografia no disponible" }, { status: 404, headers: corsHeaders });
+    }
 
     if (isPrivateReport(report) && !(await hasRegisteredAccess(supabase, visitorId))) {
       return Response.json({ error: "registration_required" }, { status: 403, headers: corsHeaders });
@@ -118,12 +122,34 @@ Deno.serve(async (req) => {
       return Response.json({ error: "archivo no disponible" }, { status: 404, headers: corsHeaders });
     }
 
+    // Storage entrega los .html como text/plain con nosniff: el navegador mostraria
+    // el codigo fuente. Por eso los servimos desde aca con el tipo correcto.
+    if (target === "html") {
+      const { data: file, error: downloadError } = await supabase.storage
+        .from("radiografias")
+        .download(storagePath);
+      if (downloadError || !file) throw downloadError || new Error("informe no disponible");
+      return new Response(await file.arrayBuffer(), {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/html; charset=utf-8",
+          "Content-Disposition": "inline",
+          "Cache-Control": "private, max-age=60",
+        },
+      });
+    }
+
     const { data: signed, error: signedError } = await supabase.storage
       .from("radiografias")
-      .createSignedUrl(storagePath, 90);
+      .createSignedUrl(storagePath, 600);
 
     if (signedError) throw signedError;
-    return Response.redirect(signed.signedUrl, 302);
+    // Response.redirect() no deja adjuntar cabeceras CORS y rompe los fetch del sitio.
+    return new Response(null, {
+      status: 302,
+      headers: { ...corsHeaders, Location: signed.signedUrl },
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500, headers: corsHeaders });
   }
