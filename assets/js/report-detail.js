@@ -37,7 +37,7 @@
     const report = params.get("report");
     const title = estatico(report)?.titulo || params.get("title") || "Informe completo";
     if (!report) {
-      container.innerHTML = '<div class="empty-state">No encontramos el informe solicitado.</div>';
+      container.innerHTML = '<section class="empty-state"><h1>Radiografía no encontrada</h1><p>El enlace puede estar incompleto o el informe ya no está disponible.</p><a class="secondary-link" href="../repositorio/index.html">Volver al repositorio</a></section>';
       return;
     }
     container.innerHTML = `

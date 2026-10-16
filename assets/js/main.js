@@ -39,6 +39,7 @@ initWhatsappContactForms();
 initHtmlReportViewer();
 initHtmlVoiceBridgeMessages();
 initMotionSystem();
+initHomeReportSample();
 
 if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
@@ -126,14 +127,80 @@ function initLogoFallbacks() {
 }
 
 function initActiveNavigation() {
-  const key = page === "repo" || page === "report-detail" ? "radiografias" : page === "home" ? "inicio" : page === "solicitudes" ? "servicios" : page;
+  const key = page === "repo" || page === "report-detail"
+    ? "radiografias"
+    : page === "home"
+      ? "inicio"
+      : page === "solicitudes"
+        ? "servicios"
+        : page === "noticias" || page === "metodologia"
+          ? "perspectivas"
+          : page;
   document.querySelectorAll(`[data-nav="${key}"]`).forEach((link) => link.classList.add("is-active"));
 }
 
 function initFooterText() {
   document.querySelectorAll(".site-footer").forEach((footer) => {
-    footer.textContent = "\u00a9 CONSULTORA DIAGONALES | Data Analytics.";
+    const pathSegments = location.pathname.split("/").filter(Boolean);
+    const depth = pathSegments.length && /\.html$/i.test(pathSegments[pathSegments.length - 1])
+      ? pathSegments.length - 1
+      : pathSegments.length;
+    const root = "../".repeat(depth);
+    footer.innerHTML = `<div class="site-footer__inner">
+      <div><strong>Consultora Diagonales</strong><span>Inteligencia territorial para decidir con evidencia.</span></div>
+      <nav aria-label="Enlaces del pie"><a href="${root}servicios/index.html">Servicios</a><a href="${root}repositorio/index.html">Radiografías</a><a href="${root}perspectivas/index.html">Perspectivas</a><a href="${root}contacto/index.html">Contacto</a><a href="${root}privacidad/index.html">Privacidad</a></nav>
+      <small>© ${new Date().getFullYear()} Consultora Diagonales</small>
+    </div>`;
   });
+}
+
+async function initHomeReportSample() {
+  const container = document.querySelector("[data-featured-report]");
+  if (!container) return;
+
+  const fallback = () => {
+    container.setAttribute("aria-busy", "false");
+    container.innerHTML = `<div class="featured-report__empty"><p>Las radiografías publicadas aparecerán aquí con su fecha, territorio y modalidad de acceso.</p><a class="secondary-link" href="repositorio/index.html">Ver el repositorio</a></div>`;
+  };
+
+  if (!supabaseClient) {
+    fallback();
+    return;
+  }
+
+  try {
+    let { data, error } = await supabaseClient
+      .from("radiografias")
+      .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, is_private, publication_state, created_at")
+      .order("fecha", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (isMissingColumnError(error, "is_private") || isMissingColumnError(error, "publication_state")) {
+      ({ data, error } = await supabaseClient
+        .from("radiografias")
+        .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, created_at")
+        .order("fecha", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(8));
+    }
+
+    if (error) throw error;
+    const report = (data || []).map(normalizeReportRecord).find(isPubliclyListedReport);
+    if (!report) {
+      fallback();
+      return;
+    }
+
+    const place = cleanLegacyPrivateMarker(report.localidad || report.provincia || "Territorio");
+    const access = isPrivateReport(report) ? "Acceso con registro" : "Acceso público";
+    const detailUrl = `radiografias/informe.html?report=${encodeURIComponent(report.id)}&title=${encodeURIComponent(report.titulo || "Radiografía territorial")}`;
+    container.setAttribute("aria-busy", "false");
+    container.innerHTML = `<article class="featured-report__card"><div class="featured-report__meta"><span>${escapeHtml(place)}</span><time datetime="${escapeAttribute(String(report.fecha || ""))}">${escapeHtml(formatDate(report.fecha))}</time></div><h3>${escapeHtml(report.titulo || "Radiografía territorial")}</h3><p>${access}. Consultá la ficha para ver los formatos disponibles.</p><a class="primary-link" href="${escapeAttribute(detailUrl)}">Ver radiografía</a></article>`;
+  } catch (error) {
+    console.warn("No se pudo cargar la muestra de radiografía", error);
+    fallback();
+  }
 }
 
 function initRequestGenerator() {
@@ -221,7 +288,6 @@ function initRequestGenerator() {
 
   const publishBrief = async () => {
     const request = buildBrief();
-    const subject = `Solicitud - ${request.type} - ${request.target || "Consultora Diagonales"}`;
     const encodedBrief = encodeURIComponent(request.brief);
 
     briefTarget.textContent = request.brief;
@@ -229,7 +295,7 @@ function initRequestGenerator() {
 
     output.hidden = false;
     output.scrollIntoView({ behavior: "smooth", block: "start" });
-    if (status) status.textContent = "Solicitud generada.";
+    if (status) status.textContent = "Relevamiento preparado. Podés abrir WhatsApp para continuar la consulta.";
 
     try {
       await saveLead({
@@ -751,13 +817,42 @@ function initLeadForms() {
 
 function initWhatsappContactForms() {
   document.querySelectorAll("[data-whatsapp-contact-form]").forEach((form) => {
-    form.addEventListener("submit", (event) => {
+    let submitting = false;
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const firstName = getFormValue(form, "first_name");
-      const lastName = getFormValue(form, "last_name");
+      if (submitting) return;
+      const status = form.querySelector("[data-contact-status]");
+      const fullName = getFormValue(form, "full_name") || [getFormValue(form, "first_name"), getFormValue(form, "last_name")].filter(Boolean).join(" ");
+      const replyTo = getFormValue(form, "reply_to");
+      const organization = getFormValue(form, "organization");
+      const need = getFormValue(form, "need");
       const service = getFormValue(form, "service");
-      const message = `Hola, soy ${[firstName, lastName].filter(Boolean).join(" ")}. Me interesa solicitar: ${service}.`;
-      window.open(`https://wa.me/5492216765720?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+      if (!form.reportValidity()) {
+        if (status) status.textContent = "Revisá los campos requeridos para continuar.";
+        return;
+      }
+      const replyLabel = replyTo ? `Mi medio de respuesta es: ${replyTo}.` : "";
+      const organizationLabel = organization ? `Organización: ${organization}.` : "";
+      const serviceLabel = service ? `Servicio de interés: ${service}.` : "";
+      const message = `Hola, soy ${fullName}. ${replyLabel} ${organizationLabel} ${serviceLabel} Necesito decidir: ${need}`.replace(/\s+/g, " ").trim();
+      submitting = true;
+      const submit = form.querySelector('button[type="submit"]');
+      if (submit) submit.disabled = true;
+      if (status) status.textContent = "Abriendo WhatsApp con tu consulta preparada.";
+      try {
+        window.open(`https://wa.me/5492216765720?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+        const email = replyTo.includes("@") ? replyTo : "";
+        const phone = email ? "" : replyTo;
+        await saveLead({ email, phone, fullName, organization, interest: service || "Consulta inicial" });
+        trackEvent("initial_contact_started", { service: service || "a_definir" });
+      } catch (error) {
+        console.warn("No se pudo registrar la consulta inicial", error);
+      } finally {
+        window.setTimeout(() => {
+          submitting = false;
+          if (submit) submit.disabled = false;
+        }, 800);
+      }
     });
   });
 }
@@ -1093,6 +1188,8 @@ async function loadReports() {
   const container = document.querySelector("[data-reports]");
   const count = document.querySelector("[data-count]");
   if (!container) return;
+  container.setAttribute("aria-busy", "true");
+  if (count) count.textContent = "Actualizando catálogo…";
 
   try {
     let reports = [];
@@ -1118,7 +1215,11 @@ async function loadReports() {
 
     renderReports(reports, container, count);
   } catch (error) {
-    container.innerHTML = `<div class="empty-state">No pudimos cargar las radiografías. ${escapeHtml(error.message)}</div>`;
+    if (count) count.textContent = "Catálogo no disponible";
+    container.innerHTML = `<div class="empty-state"><p>No pudimos cargar las radiografías en este momento.</p><button class="secondary-link" type="button" data-reports-retry>Reintentar</button></div>`;
+    container.querySelector("[data-reports-retry]")?.addEventListener("click", () => loadReports());
+  } finally {
+    container.setAttribute("aria-busy", "false");
   }
 }
 
@@ -1137,9 +1238,10 @@ function renderReports(reports, container, count) {
     .map((report, index) => {
       const date = formatDate(report.fecha);
       const title = escapeHtml(report.titulo || "Radiografía sin título");
-      const place = escapeHtml(cleanLegacyPrivateMarker(report.localidad || report.provincia || "Territorio"));
+      const place = escapeHtml(cleanLegacyPrivateMarker(report.localidad || report.provincia || ""));
       const graphsUrl = getReportGraphsUrl(report);
       const isPrivate = isPrivateReport(report);
+      const accessLabel = isPrivate ? "Acceso con registro" : "Acceso público";
       const needsRegistration = isPrivate && !hasPdfAccess();
       const graphsHref = escapeAttribute(getReportResourceHref(report, "html", graphsUrl));
       const pdfHref = escapeAttribute(getReportResourceHref(report, "pdf", report.pdf_url));
@@ -1149,10 +1251,11 @@ function renderReports(reports, container, count) {
       const graphsAttribute = graphsUrl ? ` data-graphs-url="${graphsHref}"` : "";
 
       if (isCompactList) {
+        const reportInfo = [place, accessLabel].filter(Boolean).join(" · ");
         return `
           <article class="repo-list-item">
             <time datetime="${escapeAttribute(report.fecha || "")}">${date}</time>
-            <span>${title}${privacyBadge}</span>
+            <span class="repo-list-copy"><strong>${title}${privacyBadge}</strong><small>${reportInfo}</small></span>
             <div class="repo-list-actions">
               ${graphsUrl ? `<a href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">Gráficos</a>` : ""}
               ${report.pdf_url ? `<a href="${pdfHref}"${reportIndexAttribute}${graphsAttribute} data-pdf-download data-track="request_pdf">${pdfLabel}</a>` : ""}
