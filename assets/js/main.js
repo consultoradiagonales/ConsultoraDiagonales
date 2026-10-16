@@ -1,4 +1,4 @@
-﻿const SUPABASE_URL = window.CD_SUPABASE?.url || "https://TU-PROYECTO.supabase.co";
+const SUPABASE_URL = window.CD_SUPABASE?.url || "https://TU-PROYECTO.supabase.co";
 const SUPABASE_ANON_KEY = window.CD_SUPABASE?.anonKey || "TU_SUPABASE_ANON_KEY";
 const page = document.body.dataset.page;
 const isConfigured = !SUPABASE_URL.includes("TU-PROYECTO") && !SUPABASE_ANON_KEY.includes("TU_SUPABASE");
@@ -37,6 +37,7 @@ initTracking();
 initLeadForms();
 initHtmlReportViewer();
 initHtmlVoiceBridgeMessages();
+initMotionSystem();
 
 if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
@@ -67,22 +68,62 @@ function initNavigation() {
 
   if (!toggle || !menu) return;
 
-  toggle.addEventListener("click", () => {
-    const open = !menu.classList.contains("is-open");
+  const setMenuOpen = (open) => {
     menu.classList.toggle("is-open", open);
     toggle.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", String(open));
     menu.setAttribute("aria-hidden", String(!open));
     document.body.style.overflow = open ? "hidden" : "";
+  };
+
+  setMenuOpen(false);
+
+  toggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    setMenuOpen(!menu.classList.contains("is-open"));
   });
 
   menu.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      menu.classList.remove("is-open");
-      toggle.classList.remove("is-open");
-      toggle.setAttribute("aria-expanded", "false");
-      menu.setAttribute("aria-hidden", "true");
-      document.body.style.overflow = "";
+    link.addEventListener("click", () => setMenuOpen(false));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menu.classList.contains("is-open")) setMenuOpen(false);
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.matchMedia("(min-width: 901px)").matches) setMenuOpen(false);
+  });
+}
+
+function initMotionSystem() {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const revealTargets = document.querySelectorAll("main > section, main > section > div > *, .institutional-card, .proof-grid article, .process-grid article, .media-logo");
+  revealTargets.forEach((element, index) => {
+    if (!element.hasAttribute("data-reveal")) element.setAttribute("data-reveal", "");
+    if (index % 4) element.style.transitionDelay = `${Math.min(index % 4, 3) * 55}ms`;
+  });
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    revealTargets.forEach((element) => element.classList.add("is-visible"));
+  } else {
+    const observer = new IntersectionObserver((entries, instance) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        instance.unobserve(entry.target);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8%" });
+    revealTargets.forEach((element) => observer.observe(element));
+  }
+
+  document.querySelectorAll('a[href]').forEach((link) => {
+    const href = link.getAttribute("href");
+    if (reduceMotion || !href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:") || link.target === "_blank") return;
+    link.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      document.body.classList.add("cd-page-leaving");
+      window.setTimeout(() => { window.location.href = link.href; }, 220);
     });
   });
 }
@@ -94,7 +135,7 @@ function initLogoFallbacks() {
 }
 
 function initActiveNavigation() {
-  const key = ["repo", "report-detail"].includes(page) ? "radiografias" : page === "home" ? "inicio" : page === "solicitudes" ? "servicios" : page;
+  const key = page === "repo" || page === "report-detail" ? "radiografias" : page === "home" ? "inicio" : page === "solicitudes" ? "servicios" : page;
   document.querySelectorAll(`[data-nav="${key}"]`).forEach((link) => link.classList.add("is-active"));
 }
 
@@ -109,7 +150,6 @@ function initRequestGenerator() {
   const output = document.querySelector("[data-request-output]");
   const briefTarget = document.querySelector("[data-request-brief]");
   const whatsapp = document.querySelector("[data-request-whatsapp]");
-  const email = document.querySelector("[data-request-email]");
   const copy = document.querySelector("[data-request-copy]");
   const status = document.querySelector("[data-request-status]");
   const costModal = document.querySelector("[data-request-cost-modal]");
@@ -145,7 +185,6 @@ function initRequestGenerator() {
     const fullName = getValue("full_name");
     const organization = getValue("organization");
     const phone = getValue("phone");
-    const emailValue = getValue("email");
     const target = getValue("target");
     const territory = getValue("territory");
     const horizon = getValue("time_horizon");
@@ -163,7 +202,6 @@ function initRequestGenerator() {
       fullName,
       organization,
       phone,
-      email: emailValue,
       horizon,
       urgency,
       deliverable,
@@ -186,7 +224,6 @@ function initRequestGenerator() {
         line("Solicitante", fullName),
         line("Organizacion", organization),
         line("Celular", phone),
-        line("Email", emailValue),
       ].join("\n"),
     };
   };
@@ -198,9 +235,6 @@ function initRequestGenerator() {
 
     briefTarget.textContent = request.brief;
     if (whatsapp) whatsapp.href = `https://wa.me/5492216765720?text=${encodedBrief}`;
-    if (email) {
-      email.href = `https://mail.google.com/mail/?view=cm&fs=1&to=info.consultoradiagonales@gmail.com&su=${encodeURIComponent(subject)}&body=${encodedBrief}`;
-    }
 
     output.hidden = false;
     output.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -208,7 +242,7 @@ function initRequestGenerator() {
 
     try {
       await saveLead({
-        email: request.email.toLowerCase(),
+        email: "",
         phone: request.phone,
         fullName: request.fullName,
         organization: request.organization,
@@ -1076,15 +1110,6 @@ async function loadReports() {
 
       if (error) throw error;
       reports = (data || []).map(normalizeReportRecord).filter(isPubliclyListedReport);
-      const { data: featuredNews } = await supabaseClient
-        .from("noticias")
-        .select("radiografia_id")
-        .eq("estado", "featured")
-        .limit(1)
-        .maybeSingle();
-      if (featuredNews?.radiografia_id) {
-        reports = reports.filter((report) => report.id !== featuredNews.radiografia_id);
-      }
     }
 
     renderReports(reports, container, count);
@@ -1111,23 +1136,24 @@ function renderReports(reports, container, count) {
       const place = escapeHtml(cleanLegacyPrivateMarker(report.localidad || report.provincia || "Territorio"));
       const graphsUrl = getReportGraphsUrl(report);
       const isPrivate = isPrivateReport(report);
+      const needsRegistration = isPrivate && !hasPdfAccess();
       const graphsHref = escapeAttribute(getReportResourceHref(report, "html", graphsUrl));
       const pdfHref = escapeAttribute(getReportResourceHref(report, "pdf", report.pdf_url));
       const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Privado</em>' : "";
-      const pdfLabel = isPrivate ? "Solicitar acceso" : (report.pdf_url ? "Abrir PDF" : "PDF no disponible");
+      const pdfLabel = needsRegistration ? "Registrar datos y abrir PDF" : "Abrir PDF";
       const reportIndexAttribute = ` data-report-index="${index}"`;
-      const privateAttribute = isPrivate
-        ? ` data-private-report="true" data-report-id="${escapeAttribute(report.id || "")}" data-private-title="${escapeAttribute(report.titulo || "")}"${report.pdf_url ? "" : ' data-pdf-unavailable="true"'}`
-        : "";
       const graphsAttribute = graphsUrl ? ` data-graphs-url="${graphsHref}"` : "";
 
       if (isCompactList) {
         return `
-          <a href="${pdfHref}"${reportIndexAttribute}${graphsAttribute}${privateAttribute} data-pdf-download data-track="request_pdf">
+          <article class="repo-list-item">
             <time datetime="${escapeAttribute(report.fecha || "")}">${date}</time>
             <span>${title}${privacyBadge}</span>
-            <strong>${pdfLabel}</strong>
-          </a>
+            <div class="repo-list-actions">
+              ${graphsUrl ? `<a href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">Gráficos</a>` : ""}
+              ${report.pdf_url ? `<a href="${pdfHref}"${reportIndexAttribute}${graphsAttribute} data-pdf-download data-track="request_pdf">${pdfLabel}</a>` : ""}
+            </div>
+          </article>
         `;
       }
 
@@ -1142,8 +1168,8 @@ function renderReports(reports, container, count) {
             ${privacyBadge}
           </div>
           <div class="report-actions">
-            ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}"${privateAttribute} data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">GrÃ¡ficos</a>` : ""}
-            <a class="request-link" href="${pdfHref}"${privateAttribute} data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>
+            ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">Gráficos</a>` : ""}
+            ${report.pdf_url ? `<a class="request-link" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>` : ""}
           </div>
         </article>
       `;
@@ -1187,29 +1213,10 @@ function openUrlViewer(url, title, label = "Contenido") {
 
   viewer.querySelector("[data-url-viewer-label]").textContent = label;
   viewer.querySelector("[data-url-viewer-title]").textContent = title;
-  setUrlViewerSource(viewer.querySelector("[data-url-viewer-frame]"), url);
+  viewer.querySelector("[data-url-viewer-frame]").src = url;
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
   document.body.classList.add("html-viewer-open");
-}
-
-// Storage devuelve los HTML como text/plain: sin esto el visor muestra el codigo.
-async function setUrlViewerSource(frame, url) {
-  if (!frame) return;
-  const needsBlob = /\/functions\/v1\/report-access/.test(String(url || "")) && /target=html/.test(String(url || ""));
-  if (!needsBlob) {
-    frame.src = url;
-    return;
-  }
-  frame.src = "about:blank";
-  try {
-    const response = await fetch(url, { credentials: "omit", redirect: "follow" });
-    if (!response.ok) throw new Error(String(response.status));
-    const markup = await response.text();
-    frame.src = URL.createObjectURL(new Blob([markup], { type: "text/html; charset=utf-8" }));
-  } catch (_) {
-    frame.src = url;
-  }
 }
 
 function closeUrlViewer() {
@@ -1318,22 +1325,6 @@ function rememberPrivateReport(report, target = "pdf") {
   sessionStorage.setItem(PRIVATE_REPORT_REGISTRATION_TARGET_KEY, target);
 }
 
-async function requestPrivateReportAccess(report, target = "pdf") {
-  // Flujo unico para radiografias privadas: registrar la solicitud (base de datos)
-  // sin abrir jamas el contenido. El acceso lo habilita el administrador.
-  rememberPrivateReport(report, target);
-  try {
-    await logReportInterest(report, "report_access_requested", buildRegistrationLink(report, target));
-  } catch (_) {
-    // La solicitud no depende del registro analitico.
-  }
-  if (typeof window.openPrivateReportModal === "function") {
-    window.openPrivateReportModal(report, target);
-    return;
-  }
-  window.location.href = buildRegistrationLink(report, target);
-}
-
 function openPendingPrivateReport(reports) {
   if (!hasPdfAccess()) return;
   const params = new URLSearchParams(window.location.search);
@@ -1357,7 +1348,9 @@ function openPendingPrivateReport(reports) {
   }
 
   if (!report.pdf_url) return;
-  logPdfDownload(report).catch(() => {}).finally(() => { window.location.href = buildReportAccessLink(report, "pdf"); });
+  logPdfDownload(report).catch(() => {}).finally(() => {
+    window.location.href = buildReportAccessLink(report, "pdf");
+  });
 }
 
 function bindPdfDownloadLinks(container, reports) {
@@ -1373,7 +1366,10 @@ function bindPdfDownloadLinks(container, reports) {
       }
 
       if (isPrivateReport(report) && !hasPdfAccess()) {
-        await requestPrivateReportAccess(report, "pdf");
+        const registrationLink = buildRegistrationLink(report, "pdf");
+        rememberPrivateReport(report, "pdf");
+        await logReportInterest(report, "report_access_requested", registrationLink);
+        window.location.href = registrationLink;
         return;
       }
 
@@ -1386,7 +1382,7 @@ function bindPdfDownloadLinks(container, reports) {
 function openPdfViewer(report) {
   if (!report?.pdf_url) return;
   if (isPrivateReport(report) && !hasPdfAccess()) {
-    requestPrivateReportAccess(report, "pdf");
+    window.location.href = buildRegistrationLink(report, "pdf");
     return;
   }
 
@@ -1443,8 +1439,6 @@ function openPdfViewer(report) {
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
   document.body.classList.add("pdf-viewer-open");
-
-  if (isMobileViewport()) renderMobilePdf(viewer, pdfUrl);
 }
 
 function closePdfViewer() {
@@ -1478,9 +1472,9 @@ async function renderMobilePdf(viewer, pdfUrl) {
     const pdfjs = await loadPdfJs();
     const pdfData = await fetchPdfArrayBuffer(pdfUrl);
     const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
-    pages.replaceChildren();
-    pages.classList.remove("is-loading");
-    viewer.classList.add("has-rendered-pages");
+      pages.replaceChildren();
+      pages.classList.remove("is-loading");
+      viewer.classList.add("has-rendered-pages");
 
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
       const page = await pdf.getPage(pageNumber);
@@ -1500,8 +1494,8 @@ async function renderMobilePdf(viewer, pdfUrl) {
     }
   } catch (error) {
     pages.classList.remove("is-loading");
-    viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
-    pages.replaceChildren();
+    viewer.classList.remove("has-rendered-pages");
+    pages.innerHTML = `<div class="pdf-viewer__fallback"><p>No se pudo previsualizar el PDF en este navegador.</p><a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir PDF</a></div>`;
     console.warn("No se pudo renderizar el PDF movil", error);
   }
 }
@@ -1702,7 +1696,7 @@ function bindReportOpenLinks(container, reports) {
     link.addEventListener("click", async (event) => {
       const report = reports[Number(link.dataset.reportIndex)];
       if (!report) return;
-      if (isPrivateReport(report)) return;
+      if (isPrivateReport(report) && !hasPdfAccess()) return;
 
       await logReportInterest(report, "report_open", report.html_url || link.href);
     });
@@ -1715,14 +1709,17 @@ function initHtmlReportViewer() {
     if (!link) return;
 
     const report = getReportFromLink(link);
-    const linkLooksPrivate = link.dataset.privateReport === "true";
-    if ((report && isPrivateReport(report) && !hasPdfAccess()) || (!report && linkLooksPrivate)) {
+    if (report && isPrivateReport(report) && !hasPdfAccess()) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      await requestPrivateReportAccess(
-        report || { id: link.dataset.reportId || null, titulo: link.dataset.privateTitle || getHtmlViewerTitle(link) },
-        "html"
-      );
+      const registrationLink = buildRegistrationLink(report, "html");
+      rememberPrivateReport(report, "html");
+      try {
+        await logReportInterest(report, "report_access_requested", registrationLink);
+      } catch (_) {
+        // La validacion de acceso no debe depender del registro analitico.
+      }
+      window.location.href = registrationLink;
       return;
     }
 
@@ -1735,7 +1732,7 @@ function initHtmlReportViewer() {
 
     event.preventDefault();
     const accessUrl = report ? buildReportAccessLink(report, "html") : link.href;
-    openHtmlReportViewer(accessUrl, getHtmlViewerTitle(link));
+    openHtmlReportViewer(accessUrl, getHtmlViewerTitle(link), report?.html_url || link.href);
   });
 }
 
@@ -1767,7 +1764,7 @@ function getReportFromLink(link) {
   return Array.isArray(window.CD_REPORTS) ? window.CD_REPORTS[index] : null;
 }
 
-async function openHtmlReportViewer(url, title) {
+async function openHtmlReportViewer(url, title, sourceHint = "") {
   if (String(url || "").includes("/registro/")) {
     window.location.href = url;
     return;
@@ -1820,7 +1817,7 @@ async function openHtmlReportViewer(url, title) {
   document.body.classList.add("html-viewer-open");
 
   try {
-    const result = await fetchHtmlForViewer(url);
+      const result = await fetchHtmlForViewer(url, sourceHint);
     viewer.cdHtmlVoiceText = extractReadableTextFromHtml(result.html);
     frame.srcdoc = normalizeHtmlForViewer(result.html, result.sourceUrl);
   } catch (error) {
@@ -1855,7 +1852,7 @@ function getHtmlViewerTitle(link) {
   return rowTitle || cardTitle || "Graficos";
 }
 
-async function fetchHtmlForViewer(url) {
+async function fetchHtmlForViewer(url, sourceHint = "") {
   const response = await fetch(url, { credentials: "omit" });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -1866,7 +1863,7 @@ async function fetchHtmlForViewer(url) {
   }
   return {
     html: await response.text(),
-    sourceUrl: response.url || url,
+    sourceUrl: sourceHint || response.url || url,
   };
 }
 
@@ -1947,7 +1944,8 @@ function buildHtmlViewerResponsivePatch() {
   const style = `<style id="cd-html-viewer-responsive-patch">
     html{width:100%;-webkit-text-size-adjust:100%}
     body{width:100%;max-width:100%;overflow-x:hidden}
-    img,video,canvas{max-width:100%;height:auto}
+    img,video,audio,canvas{max-width:100%;height:auto}
+    audio{display:block;width:100%;min-height:44px}
     #tts-btn,
     [data-cd-voice-widget],
     .cd-voice-widget,
@@ -1982,6 +1980,18 @@ function buildHtmlViewerResponsivePatch() {
         wrap.appendChild(svg);
       }
       function tuneCharts(){
+        document.querySelectorAll("audio").forEach(function(audio){
+          audio.controls = true;
+          audio.preload = audio.getAttribute("preload") || "metadata";
+          audio.style.width = "100%";
+          audio.querySelectorAll("source[src]").forEach(function(source){
+            try { source.src = new URL(source.getAttribute("src"), document.baseURI).href; } catch (_) {}
+          });
+          if (audio.getAttribute("src")) {
+            try { audio.src = new URL(audio.getAttribute("src"), document.baseURI).href; } catch (_) {}
+          }
+          try { audio.load(); } catch (_) {}
+        });
         document.querySelectorAll("svg").forEach(wrapSvg);
         document.querySelectorAll("canvas").forEach(function(canvas){
           canvas.style.maxWidth = "100%";
@@ -2015,7 +2025,7 @@ function buildHtmlViewerResponsivePatch() {
       }
       window.addEventListener("resize", function(){ setTimeout(tuneCharts, 80); });
     })();
-  <\\/script>`;
+  </scr` + `ipt>`;
   return { style, script };
 }
 
@@ -2046,38 +2056,48 @@ function buildHtmlViewerAnchorBridge() {
         else if (!id) window.scrollTo({ top: 0, behavior: "smooth" });
       }, true);
     })();
-  <\\/script>`;
+  </scr` + `ipt>`;
+}
+
+function buildHtmlViewerExternalLinkBridge() {
+  return `<script>
+    (function () {
+      document.addEventListener("click", function (event) {
+        var link = event.target && event.target.closest ? event.target.closest("a[href]") : null;
+        if (!link) return;
+        var href = link.getAttribute("href") || "";
+        var isExternalAction = /^(https?:\\/\\/(api\\.whatsapp\\.com|wa\\.me)\\/|tel:)/i.test(href);
+        if (!isExternalAction) return;
+        event.preventDefault();
+        window.open(link.href, "_blank", "noopener");
+      });
+    })();
+  </scr` + `ipt>`;
 }
 
 function buildHtmlViewerInteractionPatch() {
   return `<script>
     (function () {
-      var panelSelector = ".panel, section.panel, [role='tabpanel'], .tab-panel";
+      function safeSelector(value) {
+        if (window.CSS && CSS.escape) return CSS.escape(value);
+        return String(value).replace(/[^a-zA-Z0-9_-]/g, "\\\\$&");
+      }
       function activatePanel(id, trigger) {
         if (!id) return false;
-        try { id = decodeURIComponent(id); } catch (_) {}
         var panel = document.getElementById(id);
         if (!panel) return false;
-        var group = [];
-        if (panel.parentElement) {
-          group = Array.prototype.filter.call(panel.parentElement.children, function (item) {
-            return item.matches && item.matches(panelSelector) && item.id;
-          });
-        }
-        if (group.length < 2) group = [panel];
-        group.forEach(function (item) {
+        var panelSelector = ".panel, section.panel, [role='tabpanel'], .tab-panel";
+        document.querySelectorAll(panelSelector).forEach(function (item) {
           item.classList.remove("active", "is-active", "open");
-          if (item !== panel) item.style.display = "none";
+          if (item.matches(".panel, section.panel, [role='tabpanel'], .tab-panel")) item.style.display = "none";
         });
         panel.classList.add("active", "is-active");
         panel.style.display = "";
         if (getComputedStyle(panel).display === "none") panel.style.display = "block";
-        var tabScope = trigger && trigger.closest ? trigger.closest(".tabs, nav, [role='tablist']") : null;
-        (tabScope || document).querySelectorAll(".tab, nav a, [data-t], [data-tab]").forEach(function (item) {
+        document.querySelectorAll(".tab, nav a, [data-t], [data-tab]").forEach(function (item) {
           item.classList.remove("active", "is-active");
           item.removeAttribute("aria-current");
-          var itemHref = item.getAttribute("href") || "";
-          if (item.getAttribute("data-t") === id || item.getAttribute("data-tab") === id || itemHref === "#" + id || item === trigger) {
+          if (item.getAttribute("data-t") === id || item.getAttribute("data-tab") === id || item === trigger) {
             item.classList.add("active", "is-active");
             item.setAttribute("aria-current", "page");
           }
@@ -2095,35 +2115,21 @@ function buildHtmlViewerInteractionPatch() {
         var href = trigger.getAttribute("href") || "";
         var id = trigger.getAttribute("data-t") || trigger.getAttribute("data-tab") || idFromShowCall(trigger.getAttribute("onclick"));
         if (!id && href.charAt(0) === "#") id = href.slice(1);
-        if (id && activatePanel(id, trigger)) {
+        if (href === "#" || href === "" || id) {
           event.preventDefault();
           event.stopPropagation();
+          if (id) activatePanel(id, trigger);
         }
       }, true);
-      window.show = function (id, el) { return !activatePanel(id, el || null); };
+      window.show = function (id, el) { activatePanel(id, el || null); return false; };
       document.querySelectorAll(".tab[data-t], [data-tab]").forEach(function (tab) {
         tab.addEventListener("click", function (event) {
-          if (activatePanel(tab.getAttribute("data-t") || tab.getAttribute("data-tab"), tab)) event.preventDefault();
+          event.preventDefault();
+          activatePanel(tab.getAttribute("data-t") || tab.getAttribute("data-tab"), tab);
         });
       });
     })();
-  <\\/script>`;
-}
-
-function buildHtmlViewerExternalLinkBridge() {
-  return `<script>
-    (function () {
-      document.addEventListener("click", function (event) {
-        var link = event.target && event.target.closest ? event.target.closest("a[href]") : null;
-        if (!link) return;
-        var href = link.getAttribute("href") || "";
-        var isExternalAction = /^(https?:\\/\\/(api\\.whatsapp\\.com|wa\\.me)\\/|tel:)/i.test(href);
-        if (!isExternalAction) return;
-        event.preventDefault();
-        window.open(link.href, "_blank", "noopener");
-      });
-    })();
-  <\\/script>`;
+  </scr` + `ipt>`;
 }
 
 function buildHtmlViewerVoiceBridge() {
@@ -2214,7 +2220,7 @@ function buildHtmlViewerVoiceBridge() {
       button && button.addEventListener("click", toggle);
       window.addEventListener("beforeunload", stop);
     })();
-  <\\/script>`;
+  </scr` + `ipt>`;
 }
 
 function buildHtmlViewerLoading() {
@@ -2380,32 +2386,25 @@ function initAdmin() {
 
     submit.disabled = true;
     if (hasUploadFile(htmlFile) && !isHtmlFile(htmlFile)) {
-      status.textContent = "El archivo HTML de grÃ¡ficos debe ser .html o .htm.";
+      status.textContent = "El archivo HTML de gráficos debe ser .html o .htm.";
       return;
     }
 
     submit.textContent = id ? "Actualizando..." : "Guardando...";
-    status.textContent = id ? "Actualizando radiografía." : "Subiendo archivos y guardando el borrador.";
+    status.textContent = id ? "Actualizando radiografía." : "Subiendo archivo al borrador editorial.";
 
     try {
       const data = await saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate });
-      const links = [
-        data.pdf_url ? `<a href="${escapeAttribute(data.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : "",
-        data.html_url ? `<a href="${escapeAttribute(data.html_url)}" target="_blank" rel="noopener">Abrir HTML</a>` : "",
-      ].filter(Boolean).join(" | ");
-      const publicUrl = data.pdf_url || data.html_url;
-      const fileLabel = data.html_url && !data.pdf_url ? "HTML" : "archivo";
-
       resetAdminForm();
       status.innerHTML = id
-        ? `Radiografía actualizada. ${publicUrl ? `<a href="${escapeAttribute(publicUrl)}" target="_blank" rel="noopener">Abrir ${fileLabel}</a>` : ""}`
-        : `Borrador guardado. <a href="${escapeAttribute(publicUrl)}" target="_blank" rel="noopener">Abrir ${fileLabel}</a>`;
+        ? "Radiografía actualizada."
+        : "Borrador guardado. Vinculalo a una nota para publicarlo.";
       loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
       submit.disabled = false;
-      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar radiografía en borrador";
+      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar borrador";
     }
   });
 
@@ -2488,7 +2487,7 @@ function resetAdminForm() {
   form.elements.id.value = "";
   form.querySelector('[name="pdf_archivo"]')?.removeAttribute("required");
   form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
-  if (submit) submit.textContent = "Guardar radiografía en borrador";
+  if (submit) submit.textContent = "Guardar borrador";
   const status = document.querySelector("[data-form-status]");
   if (status) status.textContent = "";
   cancelEdit?.classList.add("is-hidden");
@@ -2511,10 +2510,10 @@ function fillAdminEditForm(report, mode = "full") {
   if (submit) submit.textContent = "Actualizar radiografía";
   if (status) status.textContent = "Editando radiografía: podés cambiar el título/datos o seleccionar otro PDF para reemplazar el archivo actual.";
   if (mode === "html") {
-    if (submit) submit.textContent = "Guardar HTML de grÃ¡ficos";
-    if (status) status.textContent = "CargÃ¡ el HTML de grÃ¡ficos para esta radiografÃ­a. El PDF existente se conserva.";
+    if (submit) submit.textContent = "Guardar HTML de gráficos";
+    if (status) status.textContent = "Cargá el HTML de gráficos para esta radiografía. El PDF existente se conserva.";
   } else if (status) {
-    status.textContent = "Editando radiografÃ­a: podÃ©s cambiar datos, reemplazar el PDF o agregar/reemplazar el HTML de grÃ¡ficos.";
+    status.textContent = "Editando radiografía: podés cambiar datos, reemplazar el PDF o agregar/reemplazar el HTML de gráficos.";
   }
   cancelEdit?.classList.remove("is-hidden");
   form.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -2540,7 +2539,6 @@ async function loadAdminDashboard() {
     downloads: document.querySelector("[data-admin-downloads]"),
     contacts: document.querySelector("[data-admin-contacts]"),
     events: document.querySelector("[data-admin-events]"),
-    alerts: document.querySelector("[data-admin-alerts]"),
   };
 
   setAdminDashboardStatus("Cargando radiografías/PDF.");
@@ -2555,7 +2553,6 @@ async function loadAdminDashboard() {
     renderAdminList(containers.downloads, JSON.parse(localStorage.getItem("cd:pdf_downloads") || "[]").slice(-8).reverse(), "Sin consumos locales.");
     renderAdminList(containers.contacts, [JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}")].filter((item) => item.phone || item.email), "Sin contactos locales.");
     renderAdminList(containers.events, JSON.parse(localStorage.getItem("cd:events") || "[]").slice(-12).reverse(), "Sin eventos locales.");
-    renderAdminList(containers.alerts, [], "Sin alertas locales.");
     return;
   }
 
@@ -2589,7 +2586,6 @@ async function loadAdminDashboard() {
     renderAdminList(containers.downloads, data.downloads || [], "Todavía no hay descargas registradas.", window.renderAdminDownloadItemEnhanced || renderAdminDownloadItem);
     renderAdminList(containers.contacts, data.audience || data.contacts || [], "Todavía no hay contactos o intereses registrados.", window.renderAdminAudienceItemEnhanced || renderAdminAudienceItem);
     renderAdminList(containers.events, data.events || [], "Todavía no hay eventos.", window.renderAdminEventItemEnhanced || renderAdminEventItem);
-    renderAdminList(containers.alerts, getAdminRequestAlerts(data.events || []), "No hay solicitudes privadas pendientes.", renderAdminRequestAlertItem);
     window.configureAdminDashboardFilters?.(data);
   } catch (error) {
     setAdminDashboardStatus(`No se pudo cargar el listado: ${error.message}`);
@@ -2650,7 +2646,7 @@ function renderAdminReportItem(item) {
       <div class="admin-list-actions">
         ${item.html_url ? `<a class="admin-action-button" href="${escapeAttribute(item.html_url)}" target="_blank" rel="noopener">Abrir HTML</a>` : ""}
         ${item.pdf_url ? `<a class="admin-action-button" href="${escapeAttribute(item.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : ""}
-        ${item.pdf_url ? `<button class="admin-action-button" type="button" data-admin-add-html="${escapeAttribute(item.id || "")}">${item.html_url ? "Reemplazar HTML de grÃ¡ficos" : "Agregar HTML de grÃ¡ficos"}</button>` : ""}
+        ${item.pdf_url ? `<button class="admin-action-button" type="button" data-admin-add-html="${escapeAttribute(item.id || "")}">${item.html_url ? "Reemplazar HTML de gráficos" : "Agregar HTML de gráficos"}</button>` : ""}
         <button class="admin-action-button" type="button" data-admin-privacy="${escapeAttribute(item.id || "")}" data-private-next="${isPrivate ? "false" : "true"}">${privacyButtonLabel}</button>
         <button class="admin-action-button" type="button" data-admin-edit="${escapeAttribute(item.id || "")}">Modificar datos / reemplazar archivo</button>
         <button class="admin-action-button is-danger" type="button" data-admin-delete="${escapeAttribute(item.id || "")}">Borrar archivo</button>
@@ -2832,53 +2828,6 @@ function renderAdminEventItem(item) {
   `;
 }
 
-function getAdminRequestAlerts(events = []) {
-  return events
-    .filter((item) => ["private_report_access_requested", "private_report_registration_submitted", "report_access_requested"].includes(String(item.event_type || "")))
-    .slice(0, 12);
-}
-
-function renderAdminRequestAlertItem(item) {
-  const metadata = item.metadata || {};
-  const contact = metadata.contact || {};
-  const title = item.radiografia_title || metadata.title || metadata.radiografia_title || metadata.report_title || "Radiografía privada";
-  const channels = metadata.delivery_channels || [];
-  const person = contact.full_name || contact.phone || contact.email || "Visitante sin nombre";
-  const phone = contact.phone || "";
-  const email = contact.email || "";
-  const message = buildAdminReplyMessage({ title, person, phone, email, event: item });
-  const whatsappHref = phone ? `https://wa.me/${normalizeWhatsappPhone(phone)}?text=${encodeURIComponent(message)}` : "";
-  const emailHref = email ? `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(`Radiografía solicitada: ${title}`)}&body=${encodeURIComponent(message)}` : "";
-  return `
-    <div class="admin-list-item" data-event-has-ip="${item.ip_address ? "true" : "false"}">
-      <strong>Alerta: solicitud privada</strong>
-      <span>${escapeHtml(title)}</span>
-      <span>${escapeHtml(person)}${channels.length ? ` · Canal pedido: ${escapeHtml(channels.map((c) => c === "email" ? "Email" : "WhatsApp").join(" y "))}` : ""}</span>
-      <small>${escapeHtml(formatAdminDateTime(item.created_at))}</small>
-      <div class="admin-list-actions">
-        ${whatsappHref ? `<a class="admin-action-button" href="${escapeAttribute(whatsappHref)}" target="_blank" rel="noopener">Responder WhatsApp</a>` : ""}
-        ${emailHref ? `<a class="admin-action-button" href="${escapeAttribute(emailHref)}">Responder Email</a>` : ""}
-      </div>
-    </div>
-  `;
-}
-
-function buildAdminReplyMessage({ title, person }) {
-  return [
-    `Hola ${person || ""}`.trim() + ".",
-    `Gracias por solicitar la radiografía "${title}".`,
-    "Te respondemos desde Consultora Diagonales para coordinar el envío.",
-  ].join("\n");
-}
-
-function normalizeWhatsappPhone(value) {
-  const digits = String(value || "").replace(/\D/g, "");
-  if (!digits) return "";
-  if (digits.startsWith("549")) return digits;
-  if (digits.startsWith("54")) return `549${digits.slice(2)}`;
-  return digits;
-}
-
 function formatAdminDateTime(value) {
   if (!value) return "Fecha no disponible";
   const date = new Date(value);
@@ -2965,16 +2914,16 @@ function renderAdminHtmlPicker(reports) {
 
   const candidates = (reports || []).filter((item) => item.pdf_url || item.html_url);
   if (!candidates.length) {
-    select.innerHTML = '<option value="">TodavÃ­a no hay radiografÃ­as cargadas</option>';
+    select.innerHTML = '<option value="">Todavía no hay radiografías cargadas</option>';
     if (action) action.disabled = true;
     return;
   }
 
   select.innerHTML = [
-    '<option value="">Seleccionar radiografÃ­a</option>',
+    '<option value="">Seleccionar radiografía</option>',
     ...candidates.map((item) => {
       const status = item.html_url ? "HTML cargado" : "sin HTML";
-      const label = `${item.titulo || "RadiografÃ­a sin tÃ­tulo"} - ${item.fecha || "sin fecha"} - ${status}`;
+      const label = `${item.titulo || "Radiografía sin título"} - ${item.fecha || "sin fecha"} - ${status}`;
       return `<option value="${escapeAttribute(item.id || "")}">${escapeHtml(label)}</option>`;
     }),
   ].join("");
