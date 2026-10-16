@@ -3336,21 +3336,22 @@ body[data-page="solicitudes"] .subpage {
 
 .whatsapp-submit {
   display: inline-flex;
-  width: 100%;
-  min-height: 58px;
+  width: 64px;
+  min-height: 64px;
+  height: 64px;
   align-items: center;
   justify-content: center;
-  margin-top: .15rem;
+  margin: .45rem auto .1rem;
   border: 0;
-  border-radius: 8px;
+  border-radius: 50%;
   background: #25d366;
   color: #fff;
-  box-shadow: 0 10px 24px rgba(17, 115, 63, .3);
+  box-shadow: 0 10px 24px rgba(17, 115, 63, .36);
   cursor: pointer;
   transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
-.whatsapp-submit:hover { background: #1ebe5d; box-shadow: 0 14px 28px rgba(17, 115, 63, .42); transform: translateY(-2px); }
+.whatsapp-submit:hover { background: #1ebe5d; box-shadow: 0 14px 28px rgba(17, 115, 63, .46); transform: translateY(-2px) scale(1.04); }
 .whatsapp-submit:focus-visible { outline: 3px solid rgba(255,255,255,.82); outline-offset: 3px; }
 .whatsapp-submit svg { width: 48px; height: 48px; fill: currentColor; }
 
