@@ -14,87 +14,49 @@
 
     const status = document.querySelector("[data-registration-status]");
     const submit = document.querySelector("[data-registration-submit]");
-    const data = new FormData(form);
-    const hasChannelInputs = form.querySelector("[data-channel]") != null;
-    const phone = String(data.get("phone") || "").trim();
-    const fullName = String(data.get("full_name") || "").trim();
-    const email = String(data.get("email") || "").trim().toLowerCase();
-    const organization = String(data.get("organization") || "").trim();
-    const requestContext = getPrivateRequestContext();
+    const phone = String(new FormData(form).get("phone") || "").trim();
+    const fullName = String(new FormData(form).get("full_name") || "").trim();
+    const organization = String(new FormData(form).get("organization") || "").trim();
 
-    const channels = [];
-    if (hasChannelInputs) {
-      if (data.get("canal_email") != null) channels.push("email");
-      if (data.get("canal_whatsapp") != null) channels.push("whatsapp");
-
-      if (!channels.length) {
-        if (status) status.textContent = "Elegí al menos un canal: Email o WhatsApp.";
-        return;
-      }
-      if (channels.includes("email") && !email) {
-        if (status) status.textContent = "Marcaste Email: ingresá tu correo.";
-        return;
-      }
-      if (channels.includes("whatsapp") && !phone) {
-        if (status) status.textContent = "Marcaste WhatsApp: ingresá tu celular.";
-        return;
-      }
-    } else if (!phone && !email) {
-      if (status) status.textContent = "Dejanos un email o un celular para enviarte la radiografía.";
+    if (!phone) {
+      if (status) status.textContent = "Dejanos un celular para habilitar la lectura.";
       return;
     }
 
     if (submit) {
       submit.disabled = true;
-      submit.textContent = "Enviando solicitud...";
+      submit.textContent = "Guardando celular...";
     }
     if (status) status.textContent = "Guardando contacto.";
 
     const contact = {
       visitor_id: getVisitorId(),
       phone,
-      email,
       full_name: fullName,
       organization,
-      access_reason: requestContext ? "solicitud_radiografia_privada" : "pdf_download",
-      phone_validation_status: phone ? "phone_verified" : "pending",
+      access_reason: "pdf_download",
+      phone_validation_status: "phone_verified",
       consent_terms: true,
       last_seen_at: new Date().toISOString(),
-      tags: Array.from(
-        new Set([
-          requestContext ? "solicitud_radiografia" : "descarga_pdf",
-          channels.includes("email") || email ? "canal_email" : "",
-          channels.includes("whatsapp") || (!channels.length && phone) ? "canal_whatsapp" : "",
-          phone ? "celular_validado" : "",
-        ].filter(Boolean)),
-      ),
+      tags: ["descarga_pdf", "celular_validado"],
     };
-
-    localStorage.setItem(CONTACT_STORAGE_KEY, JSON.stringify({ ...getStoredContact(), ...contact }));
-    if (phone) localStorage.setItem(PHONE_VERIFIED_KEY, phone);
 
     try {
       await saveContact(contact);
-      await saveVisitorEvent(contact, requestContext, channels);
     } catch (error) {
       console.warn("No se pudo guardar el contacto remoto", error);
-    }
-
-    const channelNames = (channels.length ? channels : [phone ? "whatsapp" : "", email ? "email" : ""].filter(Boolean))
-      .map((c) => (c === "email" ? "Email" : "WhatsApp"))
-      .join(" y ");
-    if (status) {
-      status.textContent = requestContext
-        ? `Listo. Solicitud registrada: te enviaremos la radiografía por ${channelNames || "el canal indicado"}.`
-        : "Listo. Te llevamos a las radiografias.";
-    }
-    if (requestContext) {
-      if (submit) submit.textContent = "Solicitud enviada ✓";
-      window.setTimeout(() => {
-        window.location.href = getRedirectTarget();
-      }, 2200);
+      if (status) status.textContent = "No pudimos guardar el registro. Revisá el celular e intentá de nuevo.";
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = "Abrir radiografía";
+      }
       return;
     }
+
+    localStorage.setItem(CONTACT_STORAGE_KEY, JSON.stringify({ ...getStoredContact(), ...contact }));
+    localStorage.setItem(PHONE_VERIFIED_KEY, phone);
+
+    if (status) status.textContent = "Listo. Te llevamos a las radiografias.";
     window.location.href = getRedirectTarget();
   }
 
@@ -108,51 +70,12 @@
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`,
         "content-type": "application/json",
-        Prefer: "resolution=merge-duplicates,return=minimal",
+        Prefer: "return=minimal",
       },
       body: JSON.stringify(contact),
     });
 
-    if (!response.ok) throw new Error(`contactos ${response.status}`);
-  }
-
-  async function saveVisitorEvent(contact, requestContext, channels = []) {
-    const config = window.CD_SUPABASE || {};
-    if (!config.url || !config.anonKey) return;
-
-    const event = {
-      visitor_id: contact.visitor_id,
-      event_type: requestContext ? "private_report_registration_submitted" : "reader_registration_submitted",
-      page: "registro",
-      path: window.location.pathname,
-      metadata: {
-        radiografia_id: requestContext?.reportId || null,
-        title: requestContext?.reportTitle || null,
-        target_type: requestContext?.targetType || "pdf",
-        delivery_channels: channels,
-        contact: {
-          email: contact.email || null,
-          phone: contact.phone || null,
-          full_name: contact.full_name || null,
-          organization: contact.organization || null,
-          phone_validation_status: contact.phone_validation_status || null,
-        },
-      },
-      user_agent: navigator.userAgent,
-    };
-
-    // Edge function: el backend captura y persiste IP + geolocalización del solicitante.
-    const response = await fetch(`${config.url}/functions/v1/track-visitor-event`, {
-      method: "POST",
-      headers: {
-        apikey: config.anonKey,
-        Authorization: `Bearer ${config.anonKey}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(event),
-    });
-
-    if (!response.ok) throw new Error(`track-visitor-event ${response.status}`);
+    if (!response.ok && response.status !== 409) throw new Error(`contactos ${response.status}`);
   }
 
   function getRedirectTarget() {
@@ -168,16 +91,6 @@
     } catch (_) {
       return "../repositorio/index.html?v=phone-access";
     }
-  }
-
-  function getPrivateRequestContext() {
-    const params = new URLSearchParams(window.location.search);
-    const reportId = params.get("report") || sessionStorage.getItem("cd:private_report_after_registration") || "";
-    const targetType = params.get("target") || params.get("private_target") || sessionStorage.getItem("cd:private_report_after_registration_target") || "pdf";
-    const reportTitle = params.get("pdf") || params.get("titulo") || params.get("title") || "";
-
-    if (!reportId && !reportTitle && !params.get("next")) return null;
-    return { reportId, targetType, reportTitle };
   }
 
   function getStoredContact() {
