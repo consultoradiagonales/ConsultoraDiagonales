@@ -3336,24 +3336,24 @@ body[data-page="solicitudes"] .subpage {
 
 .whatsapp-submit {
   display: inline-flex;
-  width: 64px;
-  min-height: 64px;
-  height: 64px;
+  width: 72px;
+  min-height: 72px;
+  height: 72px;
   align-items: center;
   justify-content: center;
   margin: .45rem auto .1rem;
   border: 0;
-  border-radius: 50%;
-  background: #25d366;
+  border-radius: 0;
+  background: transparent;
   color: #fff;
-  box-shadow: 0 10px 24px rgba(17, 115, 63, .36);
+  box-shadow: none;
   cursor: pointer;
   transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
-.whatsapp-submit:hover { background: #1ebe5d; box-shadow: 0 14px 28px rgba(17, 115, 63, .46); transform: translateY(-2px) scale(1.04); }
+.whatsapp-submit:hover { background: transparent; box-shadow: none; transform: translateY(-2px) scale(1.04); }
 .whatsapp-submit:focus-visible { outline: 3px solid rgba(255,255,255,.82); outline-offset: 3px; }
-.whatsapp-submit svg { width: 48px; height: 48px; fill: currentColor; }
+.whatsapp-submit svg { width: 72px; height: 72px; }
 
 @media (max-width: 640px) {
   body[data-page="solicitudes"] .request-layout {
