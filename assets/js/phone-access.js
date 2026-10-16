@@ -16,7 +16,6 @@
     const submit = document.querySelector("[data-registration-submit]");
     const phone = String(new FormData(form).get("phone") || "").trim();
     const fullName = String(new FormData(form).get("full_name") || "").trim();
-    const email = String(new FormData(form).get("email") || "").trim().toLowerCase();
     const organization = String(new FormData(form).get("organization") || "").trim();
 
     if (!phone) {
@@ -33,7 +32,6 @@
     const contact = {
       visitor_id: getVisitorId(),
       phone,
-      email,
       full_name: fullName,
       organization,
       access_reason: "pdf_download",

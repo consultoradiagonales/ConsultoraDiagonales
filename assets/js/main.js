@@ -37,6 +37,7 @@ initTracking();
 initLeadForms();
 initHtmlReportViewer();
 initHtmlVoiceBridgeMessages();
+initMotionSystem();
 
 if (page === "repo" || page === "analisis") initRepository();
 if (page === "admin") initAdmin();
@@ -95,6 +96,38 @@ function initNavigation() {
   });
 }
 
+function initMotionSystem() {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const revealTargets = document.querySelectorAll("main > section, main > section > div > *, .institutional-card, .proof-grid article, .process-grid article, .media-logo");
+  revealTargets.forEach((element, index) => {
+    if (!element.hasAttribute("data-reveal")) element.setAttribute("data-reveal", "");
+    if (index % 4) element.style.transitionDelay = `${Math.min(index % 4, 3) * 55}ms`;
+  });
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    revealTargets.forEach((element) => element.classList.add("is-visible"));
+  } else {
+    const observer = new IntersectionObserver((entries, instance) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        instance.unobserve(entry.target);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8%" });
+    revealTargets.forEach((element) => observer.observe(element));
+  }
+
+  document.querySelectorAll('a[href]').forEach((link) => {
+    const href = link.getAttribute("href");
+    if (reduceMotion || !href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:") || link.target === "_blank") return;
+    link.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      document.body.classList.add("cd-page-leaving");
+      window.setTimeout(() => { window.location.href = link.href; }, 220);
+    });
+  });
+}
+
 function initLogoFallbacks() {
   document.querySelectorAll("[data-logo]").forEach((image) => {
     image.addEventListener("error", () => image.classList.add("is-missing"), { once: true });
@@ -102,7 +135,7 @@ function initLogoFallbacks() {
 }
 
 function initActiveNavigation() {
-  const key = page === "repo" ? "radiografias" : page === "home" ? "inicio" : page === "solicitudes" ? "servicios" : page;
+  const key = page === "repo" || page === "report-detail" ? "radiografias" : page === "home" ? "inicio" : page === "solicitudes" ? "servicios" : page;
   document.querySelectorAll(`[data-nav="${key}"]`).forEach((link) => link.classList.add("is-active"));
 }
 
@@ -117,7 +150,6 @@ function initRequestGenerator() {
   const output = document.querySelector("[data-request-output]");
   const briefTarget = document.querySelector("[data-request-brief]");
   const whatsapp = document.querySelector("[data-request-whatsapp]");
-  const email = document.querySelector("[data-request-email]");
   const copy = document.querySelector("[data-request-copy]");
   const status = document.querySelector("[data-request-status]");
   const costModal = document.querySelector("[data-request-cost-modal]");
@@ -153,7 +185,6 @@ function initRequestGenerator() {
     const fullName = getValue("full_name");
     const organization = getValue("organization");
     const phone = getValue("phone");
-    const emailValue = getValue("email");
     const target = getValue("target");
     const territory = getValue("territory");
     const horizon = getValue("time_horizon");
@@ -171,7 +202,6 @@ function initRequestGenerator() {
       fullName,
       organization,
       phone,
-      email: emailValue,
       horizon,
       urgency,
       deliverable,
@@ -194,7 +224,6 @@ function initRequestGenerator() {
         line("Solicitante", fullName),
         line("Organizacion", organization),
         line("Celular", phone),
-        line("Email", emailValue),
       ].join("\n"),
     };
   };
@@ -206,9 +235,6 @@ function initRequestGenerator() {
 
     briefTarget.textContent = request.brief;
     if (whatsapp) whatsapp.href = `https://wa.me/5492216765720?text=${encodedBrief}`;
-    if (email) {
-      email.href = `https://mail.google.com/mail/?view=cm&fs=1&to=info.consultoradiagonales@gmail.com&su=${encodeURIComponent(subject)}&body=${encodedBrief}`;
-    }
 
     output.hidden = false;
     output.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -216,7 +242,7 @@ function initRequestGenerator() {
 
     try {
       await saveLead({
-        email: request.email.toLowerCase(),
+        email: "",
         phone: request.phone,
         fullName: request.fullName,
         organization: request.organization,
@@ -1070,11 +1096,11 @@ async function loadReports() {
     if (supabaseClient) {
       let { data, error } = await supabaseClient
         .from("radiografias")
-        .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, is_private, created_at")
+        .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, is_private, publication_state, created_at")
         .order("fecha", { ascending: false })
         .order("created_at", { ascending: false });
 
-      if (isMissingColumnError(error, "is_private")) {
+      if (isMissingColumnError(error, "is_private") || isMissingColumnError(error, "publication_state")) {
         ({ data, error } = await supabaseClient
           .from("radiografias")
           .select("id, titulo, provincia, localidad, fecha, html_url, pdf_url, created_at")
@@ -1083,7 +1109,7 @@ async function loadReports() {
       }
 
       if (error) throw error;
-      reports = (data || []).map(normalizeReportRecord);
+      reports = (data || []).map(normalizeReportRecord).filter(isPubliclyListedReport);
     }
 
     renderReports(reports, container, count);
@@ -1093,7 +1119,7 @@ async function loadReports() {
 }
 
 function renderReports(reports, container, count) {
-  if (count) count.textContent = `Total cargadas: ${reports.length}`;
+  if (count) count.textContent = `Total publicadas: ${reports.length}`;
   window.CD_REPORTS = reports;
 
   if (!reports.length) {
@@ -1114,17 +1140,20 @@ function renderReports(reports, container, count) {
       const graphsHref = escapeAttribute(getReportResourceHref(report, "html", graphsUrl));
       const pdfHref = escapeAttribute(getReportResourceHref(report, "pdf", report.pdf_url));
       const privacyBadge = isPrivate ? '<em class="report-privacy-badge">Privado</em>' : "";
-      const pdfLabel = report.pdf_url ? (needsRegistration ? "Registrar datos y abrir PDF" : "Abrir PDF") : "PDF no disponible";
+      const pdfLabel = needsRegistration ? "Registrar datos y abrir PDF" : "Abrir PDF";
       const reportIndexAttribute = ` data-report-index="${index}"`;
       const graphsAttribute = graphsUrl ? ` data-graphs-url="${graphsHref}"` : "";
 
       if (isCompactList) {
         return `
-          <a href="${pdfHref}"${reportIndexAttribute}${graphsAttribute} data-pdf-download data-track="request_pdf">
+          <article class="repo-list-item">
             <time datetime="${escapeAttribute(report.fecha || "")}">${date}</time>
             <span>${title}${privacyBadge}</span>
-            <strong>${pdfLabel}</strong>
-          </a>
+            <div class="repo-list-actions">
+              ${graphsUrl ? `<a href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">Gráficos</a>` : ""}
+              ${report.pdf_url ? `<a href="${pdfHref}"${reportIndexAttribute}${graphsAttribute} data-pdf-download data-track="request_pdf">${pdfLabel}</a>` : ""}
+            </div>
+          </article>
         `;
       }
 
@@ -1140,7 +1169,7 @@ function renderReports(reports, container, count) {
           </div>
           <div class="report-actions">
             ${graphsUrl ? `<a class="download-link graph-link" href="${graphsHref}" data-html-viewer-open data-report-open data-report-index="${index}" data-track="open_graph">Gráficos</a>` : ""}
-            <a class="request-link" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>
+            ${report.pdf_url ? `<a class="request-link" href="${pdfHref}" data-pdf-download data-report-index="${index}" data-track="request_pdf">${pdfLabel}</a>` : ""}
           </div>
         </article>
       `;
@@ -1241,6 +1270,11 @@ function isPrivateReport(report) {
   return report?.is_private === true || String(report?.is_private || "").toLowerCase() === "true";
 }
 
+function isPubliclyListedReport(report) {
+  const state = String(report?.publication_state || "").toLowerCase();
+  return !state || state === "public";
+}
+
 function hasPdfAccess() {
   const contact = JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "{}");
   const gmailValidated = Boolean(contact.visitor_id) && localStorage.getItem(GMAIL_VERIFIED_KEY) === contact.visitor_id;
@@ -1314,7 +1348,9 @@ function openPendingPrivateReport(reports) {
   }
 
   if (!report.pdf_url) return;
-  logPdfDownload(report).catch(() => {}).finally(() => openPdfViewer(report));
+  logPdfDownload(report).catch(() => {}).finally(() => {
+    window.location.href = buildReportAccessLink(report, "pdf");
+  });
 }
 
 function bindPdfDownloadLinks(container, reports) {
@@ -1338,7 +1374,7 @@ function bindPdfDownloadLinks(container, reports) {
       }
 
       await logPdfDownload(report);
-      openPdfViewer(report);
+      window.location.href = buildReportAccessLink(report, "pdf");
     });
   });
 }
@@ -2355,27 +2391,20 @@ function initAdmin() {
     }
 
     submit.textContent = id ? "Actualizando..." : "Guardando...";
-    status.textContent = id ? "Actualizando radiografía." : "Subiendo archivo y publicando metadata.";
+    status.textContent = id ? "Actualizando radiografía." : "Subiendo archivo al borrador editorial.";
 
     try {
       const data = await saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate });
-      const links = [
-        data.pdf_url ? `<a href="${escapeAttribute(data.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : "",
-        data.html_url ? `<a href="${escapeAttribute(data.html_url)}" target="_blank" rel="noopener">Abrir HTML</a>` : "",
-      ].filter(Boolean).join(" | ");
-      const publicUrl = data.pdf_url || data.html_url;
-      const fileLabel = data.html_url && !data.pdf_url ? "HTML" : "archivo";
-
       resetAdminForm();
       status.innerHTML = id
-        ? `Radiografía actualizada. ${publicUrl ? `<a href="${escapeAttribute(publicUrl)}" target="_blank" rel="noopener">Abrir ${fileLabel}</a>` : ""}`
-        : `Archivo publicado. <a href="${escapeAttribute(publicUrl)}" target="_blank" rel="noopener">Abrir ${fileLabel}</a>`;
+        ? "Radiografía actualizada."
+        : "Borrador guardado. Vinculalo a una nota para publicarlo.";
       loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
       submit.disabled = false;
-      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar archivo";
+      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar borrador";
     }
   });
 
@@ -2458,7 +2487,7 @@ function resetAdminForm() {
   form.elements.id.value = "";
   form.querySelector('[name="pdf_archivo"]')?.removeAttribute("required");
   form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
-  if (submit) submit.textContent = "Guardar PDF";
+  if (submit) submit.textContent = "Guardar borrador";
   const status = document.querySelector("[data-form-status]");
   if (status) status.textContent = "";
   cancelEdit?.classList.add("is-hidden");
