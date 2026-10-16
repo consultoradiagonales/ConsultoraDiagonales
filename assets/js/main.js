@@ -117,16 +117,6 @@ function initMotionSystem() {
     revealTargets.forEach((element) => observer.observe(element));
   }
 
-  document.querySelectorAll('a[href]').forEach((link) => {
-    const href = link.getAttribute("href");
-    if (reduceMotion || !href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:") || link.target === "_blank") return;
-    link.addEventListener("click", (event) => {
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      event.preventDefault();
-      document.body.classList.add("cd-page-leaving");
-      window.setTimeout(() => { window.location.href = link.href; }, 220);
-    });
-  });
 }
 
 function initLogoFallbacks() {
