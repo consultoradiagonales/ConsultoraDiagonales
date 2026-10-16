@@ -3332,29 +3332,27 @@ body[data-page="solicitudes"] .subpage {
 
 .contact-panel { width: min(100%, 520px); }
 
-.contact-panel > h3 {
-  margin: 0;
-  color: var(--blue);
-  font-size: .82rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
+.contact-card h3 { margin: 0 0 1rem; text-align: center; }
 
-.whatsapp-contact-link {
+.whatsapp-submit {
   display: inline-flex;
-  width: 56px;
-  height: 56px;
+  width: 100%;
+  min-height: 58px;
   align-items: center;
   justify-content: center;
-  margin: .8rem 0;
-  text-decoration: none;
-  transition: transform 180ms ease;
+  margin-top: .15rem;
+  border: 0;
+  border-radius: 8px;
+  background: #25d366;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(17, 115, 63, .3);
+  cursor: pointer;
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
-.whatsapp-contact-link:hover { transform: scale(1.08); }
-
-.whatsapp-contact-link svg { width: 46px; height: 46px; fill: #25d366; filter: drop-shadow(0 7px 12px rgba(0,0,0,.28)); }
+.whatsapp-submit:hover { background: #1ebe5d; box-shadow: 0 14px 28px rgba(17, 115, 63, .42); transform: translateY(-2px); }
+.whatsapp-submit:focus-visible { outline: 3px solid rgba(255,255,255,.82); outline-offset: 3px; }
+.whatsapp-submit svg { width: 48px; height: 48px; fill: currentColor; }
 
 @media (max-width: 640px) {
   body[data-page="solicitudes"] .request-layout {
