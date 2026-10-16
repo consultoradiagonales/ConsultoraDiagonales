@@ -9,6 +9,7 @@
     const url = new URL("/functions/v1/report-access", config.url);
     url.searchParams.set("report", reportId);
     url.searchParams.set("target", target);
+    if (target === "html") url.searchParams.set("embed", "1");
     return url.href;
   }
 

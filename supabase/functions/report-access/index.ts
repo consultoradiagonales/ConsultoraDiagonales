@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const reportId = String(url.searchParams.get("report") || url.searchParams.get("id") || "").trim();
     const target = String(url.searchParams.get("target") || "pdf").trim().toLowerCase();
+    const embed = String(url.searchParams.get("embed") || "").trim() === "1";
     const visitorId = String(url.searchParams.get("visitor_id") || "").trim();
     if (!reportId || !["pdf", "html"].includes(target)) {
       return Response.json({ error: "report y target son requeridos" }, { status: 400, headers: corsHeaders });
@@ -122,18 +123,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: "archivo no disponible" }, { status: 404, headers: corsHeaders });
     }
 
-    // Storage entrega los .html como text/plain con nosniff: el navegador mostraria
-    // el codigo fuente. Por eso los servimos desde aca con el tipo correcto.
+    // La pasarela de Edge Functions fuerza text/plain para respuestas HTML. La URL
+    // publica abre el visor del sitio; el visor solicita embed=1 y crea un Blob HTML.
     if (target === "html") {
+      if (!embed) {
+        const viewer = new URL("https://consultoradiagonales.com.ar/radiografias/ver.html");
+        viewer.searchParams.set("report", reportId);
+        if (report.titulo) viewer.searchParams.set("title", String(report.titulo));
+        return new Response(null, {
+          status: 302,
+          headers: { ...corsHeaders, Location: viewer.href },
+        });
+      }
+
       const { data: file, error: downloadError } = await supabase.storage
         .from("radiografias")
         .download(storagePath);
       if (downloadError || !file) throw downloadError || new Error("informe no disponible");
-      return new Response(await file.arrayBuffer(), {
+      return new Response(await file.text(), {
         status: 200,
         headers: {
           ...corsHeaders,
-          "Content-Type": "text/html; charset=utf-8",
+          "Content-Type": "text/plain; charset=utf-8",
           "Content-Disposition": "inline",
           "Cache-Control": "private, max-age=60",
         },
