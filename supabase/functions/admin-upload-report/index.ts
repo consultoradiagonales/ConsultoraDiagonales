@@ -72,7 +72,7 @@ async function hasPrivateColumn(supabase: Awaited<ReturnType<typeof getSupabaseC
 }
 
 function reportSelect(includePrivacy: boolean) {
-  const columns = "id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type";
+  const columns = "id, titulo, provincia, localidad, fecha, html_url, pdf_url, storage_path, file_name, file_size, mime_type, publication_state";
   return includePrivacy ? `${columns}, is_private` : columns;
 }
 
@@ -236,6 +236,9 @@ Deno.serve(async (req) => {
     const localidad = cleanLegacyPrivateMarker(String(formData.get("localidad") || "").trim());
     const fecha = String(formData.get("fecha") || "").trim();
     const rawIsPrivate = formData.get("is_private");
+    const rawPublicationState = String(formData.get("publication_state") || "").trim().toLowerCase();
+    const hasPublicationStateUpdate = rawPublicationState.length > 0;
+    const publicationState = rawPublicationState === "public" ? "public" : "draft";
     const hasPrivacyUpdate = rawIsPrivate !== null;
     const isPrivate = ["true", "1", "si", "sí", "yes"].includes(String(rawIsPrivate || "").trim().toLowerCase());
     const hasReportFile = file instanceof File && file.size > 0;
@@ -248,6 +251,29 @@ Deno.serve(async (req) => {
         { error: "La base de datos todavia no tiene la columna is_private. Ejecuta la migracion antes de marcar radiografias privadas." },
         { status: 409, headers: corsHeaders },
       );
+    }
+
+    if (req.method === "PATCH" && id && hasPublicationStateUpdate && !titulo && !provincia && !fecha && !hasReportFile) {
+      const { data: report, error: updateError } = await supabase
+        .from("radiografias")
+        .update({ publication_state: publicationState })
+        .eq("id", id)
+        .select(reportSelect(privateColumnExists))
+        .single();
+      if (updateError) throw updateError;
+      await supabase.from("admin_upload_events").insert({
+        titulo: report?.titulo || null,
+        provincia: report?.provincia || null,
+        localidad: report?.localidad || null,
+        pdf_url: report?.pdf_url || null,
+        radiografia_id: id,
+        action: publicationState === "public" ? "publish_pdf" : "unpublish_pdf",
+        storage_path: report?.storage_path || null,
+        file_name: report?.file_name || null,
+        uploaded_by: "edge_admin",
+        user_agent: req.headers.get("user-agent"),
+      });
+      return Response.json({ report }, { headers: corsHeaders });
     }
 
     if (req.method === "PATCH" && id && hasPrivacyUpdate && !titulo && !provincia && !fecha && !hasReportFile) {
@@ -336,6 +362,7 @@ Deno.serve(async (req) => {
         file_name: reportFile.name,
         file_size: reportFile.size,
         mime_type: uploaded.contentType,
+        publication_state: publicationState,
       };
       if (privateColumnExists) insertPayload.is_private = isPrivate;
 
