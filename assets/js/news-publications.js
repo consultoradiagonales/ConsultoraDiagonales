@@ -454,10 +454,16 @@
     const article = document.createElement("article");
     article.className = "news-article";
     if (options.preview) article.classList.add("news-article--preview");
+    const rawCoverUrl = String(item.imagen_url || "");
+    const coverUrl = options.preview && rawCoverUrl.startsWith("blob:") ? rawCoverUrl : safeHttpsUrl(rawCoverUrl);
     const adminBar = createAdminBar(item, options);
     if (adminBar) article.append(adminBar);
     const header = document.createElement("header");
     header.className = "news-article__header";
+    if (coverUrl) {
+      header.classList.add("news-article__header--with-cover");
+      header.style.setProperty("--news-cover-image", `url("${coverUrl.replace(/"/g, "%22")}")`);
+    }
     const meta = document.createElement("div");
     meta.className = "news-article__meta";
     const section = document.createElement("span");
@@ -479,8 +485,6 @@
     header.append(meta, headline, deck);
     article.append(header);
 
-    const rawCoverUrl = String(item.imagen_url || "");
-    const coverUrl = options.preview && rawCoverUrl.startsWith("blob:") ? rawCoverUrl : safeHttpsUrl(rawCoverUrl);
     if (coverUrl) {
       const cover = document.createElement("figure");
       cover.className = "news-article__image";
