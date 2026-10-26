@@ -850,3 +850,12 @@ body.has-news-article .site-footer {
   .secondary-link,
   .news-archive-card__image img { transition: none; }
 }
+
+/* Sistema editorial transversal: escala 12/16/20/24 y lectura cómoda. */
+body.has-news-article .news-article__header h1,
+body.has-news-article .news-article__title-word { font-size: clamp(2rem, 4vw, 3rem); line-height: .94; }
+body.has-news-article .news-article__header > p { font-size: 1.25rem; line-height: 1.55; max-width: 68ch; }
+body.has-news-article .news-article__body { max-width: 68ch; }
+body.has-news-article .news-article__body p { font-size: 1rem; line-height: 1.72; max-width: 68ch; }
+body.has-news-article .news-article__body h2 { font-size: 1.5rem; line-height: 1.08; margin-top: 2.5rem; }
+body.has-news-article .news-article__meta { font-size: .75rem; line-height: 1.5; }
