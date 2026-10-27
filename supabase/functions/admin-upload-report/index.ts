@@ -51,6 +51,13 @@ function getStoragePathFromPublicUrl(pdfUrl?: string | null) {
   return decodeURIComponent(pdfUrl.slice(index + marker.length));
 }
 
+function getStoragePathsFromReport(report: { pdf_url?: string | null; html_url?: string | null }) {
+  return [...new Set([
+    getStoragePathFromPublicUrl(report.pdf_url),
+    getStoragePathFromPublicUrl(report.html_url),
+  ].filter(Boolean) as string[])];
+}
+
 function cleanLegacyPrivateMarker(value: string) {
   return String(value || "")
     .replaceAll("[[CD_PRIVATE]]", "")
@@ -207,9 +214,10 @@ Deno.serve(async (req) => {
       const { error: deleteError } = await supabase.from("radiografias").delete().eq("id", id);
       if (deleteError) throw deleteError;
 
-      const storagePath = current?.storage_path || getStoragePathFromPublicUrl(current?.pdf_url);
-      if (storagePath) {
-        await supabase.storage.from("radiografias").remove([storagePath]);
+      const storagePaths = getStoragePathsFromReport(current || {});
+      if (current?.storage_path && !storagePaths.includes(current.storage_path)) storagePaths.push(current.storage_path);
+      if (storagePaths.length) {
+        await supabase.storage.from("radiografias").remove(storagePaths);
       }
 
       await supabase.from("admin_upload_events").insert({
@@ -219,7 +227,7 @@ Deno.serve(async (req) => {
         pdf_url: current?.pdf_url,
         radiografia_id: current?.id,
         action: "delete",
-        storage_path: storagePath,
+        storage_path: current?.storage_path || null,
         file_name: current?.file_name,
         uploaded_by: "edge_admin_delete",
         user_agent: req.headers.get("user-agent"),
@@ -414,8 +422,7 @@ Deno.serve(async (req) => {
     let mime_type: string | undefined;
     let oldStoragePath: string | null = null;
     if (reportFile && fileKind) {
-      const currentKind = String(current?.mime_type || "").includes("html") ? "html" : String(current?.mime_type || "").includes("pdf") ? "pdf" : null;
-      oldStoragePath = currentKind === fileKind.kind ? storage_path || getStoragePathFromPublicUrl(fileKind.kind === "pdf" ? pdf_url : html_url) : null;
+      oldStoragePath = getStoragePathFromPublicUrl(fileKind.kind === "pdf" ? pdf_url : html_url);
       const uploaded = await uploadReportFile(supabase, reportFile, fecha, titulo);
       if (uploaded.kind === "html") html_url = uploaded.public_url;
       if (uploaded.kind === "pdf") pdf_url = uploaded.public_url;

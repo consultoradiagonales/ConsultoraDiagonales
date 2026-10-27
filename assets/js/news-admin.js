@@ -101,7 +101,7 @@
   }
 
   function reportOptions(selected = "") {
-    const completeReports = reports.filter((report) => report.pdf_url && report.html_url);
+    const completeReports = reports.filter((report) => report.pdf_url || report.html_url);
     const options = ['<option value="">Sin radiografía vinculada</option>'];
     completeReports.forEach((report) => {
       const state = report.publication_state === "draft" ? "Borrador" : report.publication_state === "unlisted" ? "Vigente" : "Repositorio";

@@ -2505,7 +2505,7 @@ function initAdmin() {
       resetAdminForm();
       status.innerHTML = id
         ? "Radiografía actualizada."
-        : "Borrador guardado. Vinculalo a una nota para publicarlo.";
+        : "Borrador guardado. Podés agregar el PDF o el HTML restante más adelante.";
       loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
