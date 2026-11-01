@@ -2395,6 +2395,7 @@ function initAdmin() {
   const loginStatus = document.querySelector("[data-admin-login-status]");
   const status = document.querySelector("[data-form-status]");
   const submit = document.querySelector("[data-submit]");
+  const submitPublic = document.querySelector("[data-submit-public]");
   const dashboard = document.querySelector("[data-admin-dashboard]");
   const refresh = document.querySelector("[data-admin-refresh]");
   const range = document.querySelector("[data-admin-range]");
@@ -2480,6 +2481,8 @@ function initAdmin() {
     const localidad = String(formData.get("localidad") || "").trim();
     const fecha = String(formData.get("fecha") || "").trim();
     const isPrivate = form.elements.is_private?.checked === true;
+    const publicationState = event.submitter?.dataset.publicationState === "public" ? "public" : "draft";
+    const activeSubmit = event.submitter?.matches?.("button[type=submit]") ? event.submitter : submit;
 
     if (!id && !hasUploadFile(pdfFile) && !hasUploadFile(htmlFile)) {
       status.textContent = "Selecciona un archivo PDF o HTML válido.";
@@ -2492,26 +2495,33 @@ function initAdmin() {
     }
 
     submit.disabled = true;
+    if (submitPublic) submitPublic.disabled = true;
     if (hasUploadFile(htmlFile) && !isHtmlFile(htmlFile)) {
       status.textContent = "El archivo HTML de gráficos debe ser .html o .htm.";
+      submit.disabled = false;
+      if (submitPublic) submitPublic.disabled = false;
       return;
     }
 
-    submit.textContent = id ? "Actualizando..." : "Guardando...";
-    status.textContent = id ? "Actualizando radiografía." : "Subiendo archivo al borrador editorial.";
+    activeSubmit.textContent = id ? "Actualizando..." : publicationState === "public" ? "Publicando..." : "Guardando...";
+    status.textContent = id
+      ? "Actualizando radiografía."
+      : publicationState === "public" ? "Subiendo y publicando radiografía." : "Subiendo archivo al borrador editorial.";
 
     try {
-      const data = await saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate });
+      await saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate, publicationState });
       resetAdminForm();
-      status.innerHTML = id
-        ? "Radiografía actualizada."
-        : "Borrador guardado. Podés agregar el PDF o el HTML restante más adelante.";
+      status.textContent = publicationState === "public"
+        ? "Radiografía publicada en el repositorio."
+        : id ? "Radiografía actualizada como borrador." : "Borrador guardado. Podés agregar el PDF o el HTML restante más adelante.";
       loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
       submit.disabled = false;
-      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar borrador";
+      if (submitPublic) submitPublic.disabled = false;
+      submit.textContent = "Guardar borrador";
+      if (submitPublic) submitPublic.textContent = "Publicar en repositorio";
     }
   });
 
@@ -2595,6 +2605,8 @@ function resetAdminForm() {
   form.querySelector('[name="pdf_archivo"]')?.removeAttribute("required");
   form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
   if (submit) submit.textContent = "Guardar borrador";
+  const submitPublic = document.querySelector("[data-submit-public]");
+  if (submitPublic) submitPublic.textContent = "Publicar en repositorio";
   const status = document.querySelector("[data-form-status]");
   if (status) status.textContent = "";
   cancelEdit?.classList.add("is-hidden");
@@ -2615,6 +2627,8 @@ function fillAdminEditForm(report, mode = "full") {
   form.querySelector('[name="pdf_archivo"]')?.removeAttribute("required");
   form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
   if (submit) submit.textContent = "Actualizar radiografía";
+  const submitPublic = document.querySelector("[data-submit-public]");
+  if (submitPublic) submitPublic.textContent = "Publicar en repositorio";
   if (status) status.textContent = "Editando radiografía: podés cambiar el título/datos o seleccionar otro PDF para reemplazar el archivo actual.";
   if (mode === "html") {
     if (submit) submit.textContent = "Guardar HTML de gráficos";
@@ -2994,23 +3008,27 @@ function formatAdminPage(pageValue, pathValue) {
   return labels[pageValue] || pathValue || "Página no identificada";
 }
 
-async function saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate }) {
+async function saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate, publicationState = "draft" }) {
   const uploads = [
     hasUploadFile(pdfFile) ? pdfFile : null,
     hasUploadFile(htmlFile) ? htmlFile : null,
   ].filter(Boolean);
 
-  if (!uploads.length && id) return updateRadiografiaReport({ id, titulo, provincia, localidad, fecha, isPrivate });
+  if (!uploads.length && id) {
+    await updateRadiografiaReport({ id, titulo, provincia, localidad, fecha, isPrivate });
+    return publicationState === "public" ? setRadiografiaPublication(id, "public") : adminReports.find((report) => report.id === id) || {};
+  }
 
   let currentId = id;
   let result = null;
   for (const file of uploads.length ? uploads : [null]) {
     result = currentId
       ? await updateRadiografiaReport({ id: currentId, file, titulo, provincia, localidad, fecha, isPrivate })
-      : await uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha, isPrivate });
+      : await uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha, isPrivate, publicationState });
     currentId = result.report?.id || currentId;
   }
 
+  if (publicationState === "public" && currentId) return setRadiografiaPublication(currentId, "public");
   return result?.report || result || {};
 }
 
@@ -3063,6 +3081,27 @@ async function updateRadiografiaReport({ id, file, titulo, provincia, localidad,
   return data;
 }
 
+async function setRadiografiaPublication(id, publicationState = "public") {
+  const adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "";
+  const formData = new FormData();
+  formData.append("id", id);
+  formData.append("publication_state", publicationState);
+
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-report`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+      "x-admin-key": adminKey,
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "No se pudo publicar la radiografía.");
+  return data.report || data;
+}
+
 async function setRadiografiaPrivacy(report, isPrivate) {
   const adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "";
   const formData = new FormData();
@@ -3101,7 +3140,7 @@ async function deleteRadiografiaReport(id) {
   return data;
 }
 
-async function uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha, isPrivate }) {
+async function uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha, isPrivate, publicationState = "draft" }) {
   if (window.CD_ADMIN?.useEdgeUpload === false) {
     throw new Error("La carga directa desde el navegador está deshabilitada. Usá la Edge Function admin-upload-report.");
   }
@@ -3114,6 +3153,7 @@ async function uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha
     formData.append("localidad", cleanLegacyPrivateMarker(localidad));
     formData.append("fecha", fecha);
     formData.append("is_private", isPrivate ? "true" : "false");
+    formData.append("publication_state", publicationState);
 
     const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-report`, {
       method: "POST",
