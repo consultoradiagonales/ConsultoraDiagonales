@@ -4,6 +4,27 @@
   const PDFJS_WORKER_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
   let pdfJsPromise;
   let twitterScriptPromise;
+  let fileNotesPromise;
+  let fileNotes = [];
+
+  function publishedFileNotes() {
+    if (!fileNotesPromise) {
+      fileNotesPromise = fetch('/assets/data/editorial-notes.json?v=20261101')
+        .then((response) => response.ok ? response.json() : [])
+        .then((items) => {
+          fileNotes = Array.isArray(items) ? items.filter((item) => ['featured', 'archived'].includes(item.estado)) : [];
+          return fileNotes;
+        }).catch(() => []);
+    }
+    return fileNotesPromise;
+  }
+
+  function mergePublications(remote, local) {
+    const bySlug = new Map((remote || []).map((item) => [item.slug, item]));
+    local.forEach((item) => bySlug.set(item.slug, item));
+    return [...bySlug.values()].sort((a, b) =>
+      String(b.published_at || b.fecha || '').localeCompare(String(a.published_at || a.fecha || '')));
+  }
 
   function client() {
     const config = window.CD_SUPABASE || {};
@@ -41,6 +62,8 @@
   }
 
   function articleUrl(slug) {
+    const fileNote = fileNotes.find((item) => item.slug === slug);
+    if (fileNote?.canonical_path) return new URL(fileNote.canonical_path, window.location.origin).href;
     const url = new URL("/noticias/nota.html", window.location.origin);
     if (slug) url.searchParams.set("slug", slug);
     return url.href;
@@ -154,19 +177,32 @@
     let cursor = 0;
     let match;
     while ((match = pattern.exec(value))) {
-      target.append(document.createTextNode(value.slice(cursor, match.index)));
+      appendBoldText(target, value.slice(cursor, match.index));
       const href = safeHttpsUrl(match[2]);
       if (href) {
         const link = document.createElement("a");
         link.href = href;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.textContent = match[1];
+        appendBoldText(link, match[1]);
         target.append(link);
       } else {
         target.append(document.createTextNode(match[0]));
       }
       cursor = pattern.lastIndex;
+    }
+    appendBoldText(target, value.slice(cursor));
+  }
+
+  function appendBoldText(target, value) {
+    const pattern = /\*\*([^*\n]+)\*\*/g;
+    let cursor = 0;
+    for (const match of String(value || '').matchAll(pattern)) {
+      target.append(document.createTextNode(value.slice(cursor, match.index)));
+      const strong = document.createElement('strong');
+      strong.textContent = match[1];
+      target.append(strong);
+      cursor = match.index + match[0].length;
     }
     target.append(document.createTextNode(value.slice(cursor)));
   }
@@ -250,10 +286,26 @@
         image.alt = String(block.alt || "");
         image.loading = "lazy";
         image.decoding = "async";
-        figure.append(image);
+        const mobileUrl = safeHttpsUrl(block.mobile_url);
+        if (block.mobile_url && mobileUrl) {
+          const picture = document.createElement('picture');
+          const source = document.createElement('source');
+          source.media = '(max-width: 600px)';
+          source.srcset = mobileUrl;
+          picture.append(source, image);
+          const expand = document.createElement('a');
+          expand.href = url;
+          expand.target = '_blank';
+          expand.rel = 'noopener noreferrer';
+          expand.setAttribute('aria-label', 'Ampliar gráfico');
+          expand.append(picture);
+          figure.append(expand);
+        } else {
+          figure.append(image);
+        }
         if (block.caption) {
           const caption = document.createElement("figcaption");
-          caption.textContent = String(block.caption);
+          caption.textContent = String(block.caption) + (block.mobile_url ? ' Tocá el gráfico para ampliarlo.' : '');
           figure.append(caption);
         }
         target.append(figure);
@@ -398,6 +450,7 @@
   }
 
   function createAdminBar(item, options) {
+    if (item.source_file) return null;
     if (options.preview) return null;
     const adminKey = sessionStorage.getItem("cd:admin_unlocked");
     if (adminKey !== "true") return null;
@@ -548,33 +601,32 @@
   }
 
   async function featuredNews() {
-    const supabase = client();
-    if (!supabase) return null;
-    const { data, error } = await supabase
-      .from("noticias")
-      .select(fields)
-      .eq("estado", "featured")
-      .order("published_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw error;
-    return data;
+    return (await archivedNews()).find((item) => item.estado === 'featured') || null;
   }
 
   async function archivedNews() {
+    const local = await publishedFileNotes();
     const supabase = client();
-    if (!supabase) return [];
-    const { data, error } = await supabase
+    if (!supabase) return local;
+    try {
+      const { data, error } = await supabase
       .from("noticias")
       .select(fields)
       .in("estado", ["featured", "archived"])
       .order("published_at", { ascending: false })
       .order("fecha", { ascending: false });
-    if (error) throw error;
-    return data || [];
+      if (error) throw error;
+      return mergePublications(data, local);
+    } catch (error) {
+      if (local.length) return local;
+      throw error;
+    }
   }
 
   async function articleBySlug(slug) {
+    const local = await publishedFileNotes();
+    const fileNote = local.find((item) => item.slug === slug);
+    if (fileNote) return fileNote;
     const supabase = client();
     if (!supabase || !slug) return null;
     const { data, error } = await supabase
