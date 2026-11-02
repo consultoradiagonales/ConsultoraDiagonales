@@ -9,7 +9,7 @@
 
   function publishedFileNotes() {
     if (!fileNotesPromise) {
-      fileNotesPromise = fetch('/assets/data/editorial-notes.json?v=20261101-home-featured')
+      fileNotesPromise = fetch('/assets/data/editorial-notes.json?v=20261101-home-latest')
         .then((response) => response.ok ? response.json() : [])
         .then((items) => {
           fileNotes = Array.isArray(items) ? items.filter((item) => ['featured', 'archived'].includes(item.estado)) : [];
@@ -601,7 +601,7 @@
   }
 
   async function featuredNews() {
-    return (await archivedNews()).find((item) => item.estado === 'featured') || null;
+    return (await archivedNews())[0] || null;
   }
 
   async function archivedNews() {
