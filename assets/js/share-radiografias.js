@@ -19,7 +19,7 @@
 
   function addShareLinks() {
     removeLegacyShareLinks();
-    document.querySelectorAll(".report-card").forEach(addCardShareLink);
+    document.querySelectorAll(".report-card, .repo-list-item").forEach(addCardShareLink);
     document.querySelectorAll(`.latest-list > a:not(.${SHARE_CLASS})`).forEach(addListShareLink);
   }
 
@@ -33,8 +33,8 @@
   function addCardShareLink(card) {
     if (card.querySelector(`.${SHARE_CLASS}`)) return;
 
-    const title = card.querySelector("h2")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
-    const actions = card.querySelector(".report-actions");
+    const title = card.querySelector("h2, .repo-list-copy strong")?.textContent?.trim() || "Radiografia de Consultora Diagonales";
+    const actions = card.querySelector(".report-actions, .repo-list-actions");
     if (!actions) return;
 
     actions.insertAdjacentHTML("beforeend", buildShareAnchor(title, `${SHARE_CLASS}--card`));

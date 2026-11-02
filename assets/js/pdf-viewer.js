@@ -3,6 +3,11 @@
   const PDFJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
   const PDFJS_WORKER_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
   const speechState = { chunks: [], index: 0, button: null, reading: false };
+  let restoreFocus;
+  let renderSession = 0;
+  let pdfDocument;
+  let pageObserver;
+  let speechOperation = 0;
 
   document.addEventListener(
     "click",
@@ -11,57 +16,28 @@
 
       const link = event.target.closest("[data-pdf-download]");
       if (!link) return;
-
-      const indexedReport = getIndexedReport(link);
-      const isPrivateLink =
-        link.dataset.privateReport === "true" ||
-        (indexedReport && (indexedReport.is_private === true || String(indexedReport.is_private || "").toLowerCase() === "true"));
-
-      if (isPrivateLink) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        const report = indexedReport || {
-          id: link.dataset.reportId || null,
-          titulo: link.dataset.privateTitle || getPdfTitle(link),
-          pdf_url: link.dataset.pdfUnavailable === "true" ? null : link.href || null,
-        };
-        if (typeof window.rememberPrivateReport === "function") window.rememberPrivateReport(report, "pdf");
-        if (typeof window.openPrivateReportModal === "function") {
-          window.openPrivateReportModal(report, "pdf");
-        } else {
-          const registration = new URL("/registro/", window.location.origin);
-          if (report?.id) registration.searchParams.set("report", report.id);
-          if (report?.titulo) registration.searchParams.set("pdf", report.titulo);
-          registration.searchParams.set("target", "pdf");
-          window.location.href = registration.href;
-        }
-        return;
-      }
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
       const url = new URL(link.href, window.location.href);
-      if (link.dataset.pdfUnavailable === "true") {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        const report = {
-          id: link.dataset.reportId || null,
-          titulo: link.dataset.privateTitle || getPdfTitle(link),
-          pdf_url: null,
-        };
-        if (typeof window.rememberPrivateReport === "function") window.rememberPrivateReport(report, "pdf");
-        if (typeof window.openPrivateReportModal === "function") window.openPrivateReportModal(report, "pdf");
-        return;
-      }
-
       if (url.pathname.includes(REGISTRATION_PATH)) return;
 
       event.preventDefault();
       event.stopImmediatePropagation();
       openPdfViewer(url.href, getPdfTitle(link));
+      if (typeof getReportFromLink === "function" && typeof logPdfDownload === "function") {
+        const report = getReportFromLink(link);
+        if (report) logPdfDownload(report).catch(() => {});
+      }
     },
     true,
   );
 
   function openPdfViewer(pdfUrl, title) {
+    restoreFocus = document.activeElement;
+    renderSession += 1;
+    pageObserver?.disconnect();
+    pdfDocument?.destroy();
+    pdfDocument = null;
     let viewer = document.querySelector("[data-pdf-viewer]");
     if (!viewer) {
       viewer = document.createElement("div");
@@ -108,36 +84,29 @@
       voice.onclick = () => togglePdfSpeech(pdfUrl, title, voice);
     }
     viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
-    viewer.querySelector("[data-pdf-viewer-frame]").src = pdfUrl;
+    const frame = viewer.querySelector("[data-pdf-viewer-frame]");
+    frame.src = isMobileViewport() ? "about:blank" : pdfUrl;
     viewer.classList.add("is-open");
     viewer.setAttribute("aria-hidden", "false");
     document.body.classList.add("pdf-viewer-open");
-
-    if (isMobileViewport()) renderMobilePdf(viewer, pdfUrl);
-  }
-
-  function getIndexedReport(link) {
-    const rawIndex = link?.dataset?.reportIndex;
-    if (rawIndex === undefined || rawIndex === "") return null;
-    const index = Number(rawIndex);
-    if (!Number.isInteger(index)) return null;
-    return Array.isArray(window.CD_REPORTS) ? window.CD_REPORTS[index] || null : null;
+    viewer.querySelector('[data-pdf-viewer-close]').focus();
+    if (isMobileViewport()) renderMobilePdf(viewer, pdfUrl, renderSession);
   }
 
   function getPdfTitle(link) {
     const cardTitle = link.closest(".report-card")?.querySelector("h2")?.textContent?.trim();
-    const listTitle = link.closest(".latest-list a")?.querySelector("span")?.textContent?.trim();
+    const listTitle = link.closest(".latest-report-row, .repo-list-item")?.querySelector("span")?.textContent?.trim();
     return cardTitle || listTitle || "Radiografia";
-  }
-
-  function hasPrivateReportAccess() {
-    if (typeof window.hasPrivateReportAccess === "function") return window.hasPrivateReportAccess();
-    return false;
   }
 
   function closePdfViewer() {
     const viewer = document.querySelector("[data-pdf-viewer]");
     if (!viewer) return;
+    renderSession += 1;
+    speechOperation += 1;
+    pageObserver?.disconnect();
+    pdfDocument?.destroy();
+    pdfDocument = null;
 
     const frame = viewer.querySelector("[data-pdf-viewer-frame]");
     viewer.classList.remove("is-open");
@@ -147,13 +116,14 @@
     document.body.classList.remove("pdf-viewer-open");
     if (frame) frame.src = "about:blank";
     viewer.querySelector("[data-pdf-viewer-pages]")?.replaceChildren();
+    restoreFocus?.focus?.();
   }
 
   function isMobileViewport() {
     return window.matchMedia("(max-width: 760px), (pointer: coarse)").matches;
   }
 
-  async function renderMobilePdf(viewer, pdfUrl) {
+  async function renderMobilePdf(viewer, pdfUrl, session) {
     const pages = viewer.querySelector("[data-pdf-viewer-pages]");
     if (!pages) return;
 
@@ -165,36 +135,75 @@
     try {
       const pdfjs = await loadPdfJs();
       const pdfData = await fetchPdfArrayBuffer(pdfUrl);
+      if (session !== renderSession) return;
       const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
+      if (session !== renderSession) { await pdf.destroy(); return; }
+      pdfDocument = pdf;
       pages.replaceChildren();
       pages.classList.remove("is-loading");
       viewer.classList.add("has-rendered-pages");
 
-      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const renderPage = async (shell, pageNumber) => {
+        if (session !== renderSession || shell.dataset.rendered) return;
+        shell.dataset.rendered = 'true';
         const page = await pdf.getPage(pageNumber);
+        if (session !== renderSession) return;
         const viewport = page.getViewport({ scale: 1 });
-        const width = Math.max(280, pages.clientWidth - 24);
-        const scale = width / viewport.width;
-        const scaledViewport = page.getViewport({ scale });
+        const width = Math.max(1, pages.clientWidth - 24);
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        const scaledViewport = page.getViewport({ scale: width / viewport.width * ratio });
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
-
         canvas.width = Math.floor(scaledViewport.width);
         canvas.height = Math.floor(scaledViewport.height);
         canvas.style.width = "100%";
         canvas.style.height = "auto";
-        pages.appendChild(canvas);
+        canvas.setAttribute('aria-label', `Página ${pageNumber} de ${pdf.numPages}`);
+        shell.style.minHeight = '';
+        shell.replaceChildren(canvas);
         await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
+        if (session !== renderSession) return;
+        const details = document.createElement('details');
+        details.innerHTML = '<summary>Leer texto de esta página</summary>';
+        details.addEventListener('toggle', async () => {
+          if (!details.open || details.querySelector('p')) return;
+          const content = await page.getTextContent();
+          if (session !== renderSession) return;
+          const text = document.createElement('p');
+          text.className = 'pdf-viewer__page-text';
+          text.textContent = content.items.map(item => item.str + (item.hasEOL ? '\n' : ' ')).join('') || 'Esta página contiene una imagen sin texto extraíble.';
+          details.append(text);
+        });
+        shell.append(details);
+      };
+      pageObserver = new IntersectionObserver(entries => {
+        for (const entry of entries) if (entry.isIntersecting) {
+          pageObserver?.unobserve(entry.target);
+          renderPage(entry.target, Number(entry.target.dataset.page)).catch(error => {
+            if (session === renderSession) entry.target.textContent = 'No se pudo cargar esta página. Usá Abrir PDF para ver el documento.';
+          });
+        }
+      }, { root: pages, rootMargin: '400px' });
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const shell = document.createElement('section');
+        shell.className = 'pdf-viewer__page';
+        shell.dataset.page = pageNumber;
+        shell.style.minHeight = Math.max(300, pages.clientWidth * 1.4) + 'px';
+        shell.setAttribute('aria-label', `Página ${pageNumber}`);
+        pages.append(shell);
+        pageObserver.observe(shell);
       }
     } catch (error) {
+      if (session !== renderSession) return;
       pages.classList.remove("is-loading");
-      viewer.classList.remove("has-rendered-pages", "is-mobile-rendering");
-      pages.replaceChildren();
+      viewer.classList.remove("has-rendered-pages");
+      pages.innerHTML = `<div class="pdf-viewer__fallback"><p>No se pudo previsualizar el PDF en este navegador.</p><a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir PDF</a></div>`;
       console.warn("No se pudo renderizar el PDF movil", error);
     }
   }
 
   async function togglePdfSpeech(pdfUrl, title, button) {
+    const operation = ++speechOperation;
     if (speechState.reading && speechState.button === button) {
       stopSpeech();
       return;
@@ -207,8 +216,10 @@
     beginPrimedSpeech(button);
     try {
       const text = await extractPdfText(pdfUrl);
+      if (operation !== speechOperation) return;
       replaceSpeechQueue(text || title || "Informe de Consultora Diagonales", button);
     } catch (error) {
+      if (operation !== speechOperation) return;
       console.warn("No se pudo preparar la lectura del PDF", error);
       replaceSpeechQueue(title || "Informe de Consultora Diagonales", button);
     }
@@ -343,6 +354,12 @@
   }
 
   async function loadPdfJs() {
+    // PDF.js also runs on Safari versions predating Promise.withResolvers.
+    if (!Promise.withResolvers) Promise.withResolvers = function () {
+      let resolve, reject;
+      const promise = new this((res, rej) => { resolve = res; reject = rej; });
+      return { promise, resolve, reject };
+    };
     if (!window.CD_PDFJS_PROMISE) {
       window.CD_PDFJS_PROMISE = import(PDFJS_URL).then((pdfjs) => {
         pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
@@ -361,4 +378,5 @@
       .replaceAll("'", "&#039;")
       .replaceAll("`", "&#096;");
   }
+  window.CDPdfViewer = { open: openPdfViewer, close: closePdfViewer };
 })();

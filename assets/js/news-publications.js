@@ -9,7 +9,7 @@
 
   function publishedFileNotes() {
     if (!fileNotesPromise) {
-      fileNotesPromise = fetch('/assets/data/editorial-notes.json?v=20261101-home-latest')
+      fileNotesPromise = fetch('/assets/data/editorial-notes.json?v=20261101')
         .then((response) => response.ok ? response.json() : [])
         .then((items) => {
           fileNotes = Array.isArray(items) ? items.filter((item) => ['featured', 'archived'].includes(item.estado)) : [];
@@ -48,6 +48,7 @@
   function safeHttpsUrl(value) {
     try {
       const url = new URL(String(value || ""), window.location.origin);
+      if (url.pathname === '/assets/img/noticias/patricia-bullrich-senado.avif') url.pathname = '/assets/img/noticias/patricia-bullrich-senado.jpg';
       return ["https:", "http:"].includes(url.protocol) ? url.href : "";
     } catch (_) {
       return "";
@@ -79,7 +80,7 @@
   }
 
   function absoluteImageUrl(item) {
-    return safeHttpsUrl(item?.imagen_url);
+    return safeHttpsUrl(item?.imagen_url)?.replace('/assets/img/noticias/patricia-bullrich-senado.avif', '/assets/img/noticias/patricia-bullrich-senado.jpg');
   }
 
   function reportUrl(item) {
@@ -601,7 +602,7 @@
   }
 
   async function featuredNews() {
-    return (await archivedNews())[0] || null;
+    return (await archivedNews()).find((item) => item.estado === 'featured') || null;
   }
 
   async function archivedNews() {
@@ -647,7 +648,7 @@
     }
     container.hidden = false;
     const image = item.imagen_url
-      ? `<img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.imagen_alt || item.titulo)}" loading="eager" decoding="async" />`
+      ? `<img src="${escapeAttribute(absoluteImageUrl(item))}" alt="${escapeAttribute(item.imagen_alt || item.titulo)}" loading="eager" decoding="async" />`
       : "";
     container.innerHTML = `
       <article class="featured-news-card__inner">
@@ -671,7 +672,7 @@
     container.innerHTML = items.map((item) => `
       <article class="news-archive-card">
         <a class="news-archive-card__image${item.imagen_url ? "" : " is-empty"}" href="${escapeAttribute(articleUrl(item.slug))}">
-          ${item.imagen_url ? `<img src="${escapeAttribute(item.imagen_url)}" alt="${escapeAttribute(item.imagen_alt || item.titulo)}" loading="lazy" decoding="async" />` : "<span>Diagonales</span>"}
+          ${item.imagen_url ? `<img src="${escapeAttribute(absoluteImageUrl(item))}" alt="${escapeAttribute(item.imagen_alt || item.titulo)}" loading="lazy" decoding="async" />` : "<span>Diagonales</span>"}
         </a>
         <div class="news-archive-card__copy">
           <div><span>${escapeHtml(item.seccion || "Actualidad")}</span><time>${escapeHtml(dateLabel(item.published_at || item.fecha))}</time></div>

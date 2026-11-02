@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Repositorio de notas y coberturas de Consultora Diagonales en medios de comunicación." />
     <title>Nuestro trabajo en los medios | Consultora Diagonales</title>
     <link rel="stylesheet" href="../assets/css/style.css?v=20260702-medios" />
@@ -33,7 +33,8 @@
       @media(max-width:640px){.medios-shell{padding:7.5rem 1rem 4rem}.notas-grid{grid-template-columns:1fr}.medios-head h1{font-size:2.5rem}.medio-header .medio-count{margin-left:0}}
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
-  </head>
+  <link rel="stylesheet" href="../assets/css/responsive.css?v=20261102">
+</head>
   <body class="bg-[#080d14] text-white antialiased" data-page="medios">
     <header class="site-header is-solid" data-header>
       <a class="brand" href="../index.html" aria-label="Consultora Diagonales"><img class="brand-full" src="../assets/img/logo-completo.png" alt="Consultora Diagonales" data-logo /><img class="brand-mark" src="../assets/img/isotipo.png" alt="" aria-hidden="true" data-logo /></a>
@@ -59,7 +60,8 @@
     <footer class="site-footer"><span>&copy; CONSULTORA DIAGONALES | Data Analytics.</span></footer>
 
     <script src="../assets/js/supabase-config.js?v=20260531-gmail-access"></script>
-    <script src="../assets/js/main.js?v=20260702-medios"></script>
+    <script src="../assets/js/report-html-view.js?v=20261102-mobile"></script>
+    <script src="../assets/js/main.js?v=20261102-mobile"></script>
     <script src="../assets/js/medios-data.js?v=20260702-medios"></script>
     <script>
       (async function () {
@@ -184,5 +186,6 @@
         if (initial && medios.some((m) => m.slug === initial)) applyFilter(initial);
       })();
     </script>
-  </body>
+  <script src="../assets/js/mobile-ui.js?v=20261102" defer></script>
+</body>
 </html>

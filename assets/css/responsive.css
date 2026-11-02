@@ -1,0 +1,81 @@
+/* Shared mobile rules, loaded after each page's own styles. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+img, video, canvas, svg, iframe { max-width: 100%; }
+button, input, select, textarea { font: inherit; }
+input, select, textarea, fieldset { min-width: 0; max-width: 100%; }
+:where(main, section, article, aside, form, .grid) > * { min-width: 0; }
+:where(h1, h2, h3, h4, p, li, a, label) { overflow-wrap: break-word; }
+:where(.section-copy, .page-lede, .hero-copy, .privacy-copy p, .news-article__body p) { max-width: 70ch; }
+:where(a, button, input, textarea, select, [tabindex]):focus-visible { outline: 3px solid #08768b; outline-offset: 3px; }
+.mobile-menu { overflow-y: auto; overscroll-behavior: contain; padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+.mobile-menu { transform: translateY(-12px); }
+.mobile-menu.is-open { transform: none; }
+.mobile-menu[aria-hidden="true"], :is(.pdf-viewer, .html-viewer)[aria-hidden="true"] { visibility: hidden; }
+.mobile-menu.is-open, :is(.pdf-viewer, .html-viewer).is-open { visibility: visible; }
+.cd-table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+.cd-table-scroll table { width: 100%; }
+:is(.pdf-viewer, .html-viewer) { height: 100%; height: 100dvh; padding-top: max(.75rem, env(safe-area-inset-top)); padding-bottom: max(.75rem, env(safe-area-inset-bottom)); }
+:is(.pdf-viewer__dialog, .html-viewer__dialog) { min-width: 0; max-height: 100%; }
+.pdf-viewer__dialog { grid-template-rows: auto auto minmax(0, 1fr); }
+.pdf-viewer__bar > div:first-child, .html-viewer__bar > div:first-child { min-width: 0; }
+.pdf-viewer__pages { touch-action: pan-x pan-y pinch-zoom; }
+.pdf-viewer__page { margin-bottom: 1rem; background: #fff; color: #071f2f; }
+.pdf-viewer__page canvas { margin-bottom: 0; }
+.pdf-viewer__page summary { padding: .75rem; cursor: pointer; font-size: 12pt; }
+.pdf-viewer__page-text { padding: 1rem; font-size: 12pt; line-height: 1.65; white-space: pre-line; }
+.pdf-viewer.is-mobile-rendering iframe, .pdf-viewer.has-rendered-pages iframe { display: none; }
+.pdf-viewer.is-mobile-rendering .pdf-viewer__pages, .pdf-viewer.has-rendered-pages .pdf-viewer__pages { display: block; }
+.pdf-viewer__mobile-note { display: block; }
+.report-view { height: 100vh; height: 100dvh; }
+.report-view__frame { min-height: 0; }
+.report-view__bar { padding-top: max(.85rem, env(safe-area-inset-top)); }
+.contact-form-note { color: #365866 !important; font-size: 12pt; line-height: 1.6; }
+.repo-list-actions .radiografia-share-link { width: 44px; min-height: 44px; padding: .5rem; color: #08768b; }
+body[data-page="condi-app"] main { padding-top: 120px !important; }
+body[data-cd-report] :where(.wrap, .container, .panel, .sec, .cp, .kpi, .card) { min-width: 0; max-width: 100%; }
+body[data-cd-report] p { max-width: 75ch; }
+html:has(body[data-cd-report]), body[data-cd-report] { overflow-x: clip; }
+body[data-cd-report] :where(.tabs, nav) { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+body[data-cd-report] :where(.tab, nav a) { min-height: 44px; }
+body[data-cd-report] nav.tabs:has(.tabsInner) { position: sticky; top: var(--cd-report-header-height, 0px); }
+body[data-cd-report] .tabsInner { min-width: max-content; }
+body[data-cd-report] .brow { flex-wrap: wrap; }
+body[data-cd-report] .brow .bl { min-width: min(140px, 100%); }
+@media (max-width: 900px) {
+  [data-reveal] { opacity: 1; transform: none; transition: none; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px; }
+  :is(.menu-toggle, .pdf-viewer__actions a, .pdf-viewer__actions button, .html-viewer__actions button, .report-view__actions a) { min-width: 44px; min-height: 44px; }
+  .site-footer nav { flex-wrap: wrap; }
+  .site-header { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+}
+@media (max-width: 640px) {
+  .brand, .site-header.is-scrolled .brand { min-width: 0; flex: 1 1 auto; }
+  .brand img { max-width: min(190px, 62vw); }
+  .menu-toggle { flex-shrink: 0; }
+  .hero-shell, .hero-shell .relative.z-10 { min-height: 100svh; }
+  .hero-title, .page-title { font-size: 24pt; line-height: 1.12; letter-spacing: -.025em; }
+  .section-title, .news-article__title { font-size: 24pt; line-height: 1.18; }
+  :is(.featured-report__card h3, .service-detail-card h2) { font-size: 20pt; line-height: 1.2; }
+  :is(.service-catalog h3, .news-archive-card h2) { font-size: 16pt; line-height: 1.3; }
+  :is(.hero-copy, .page-lede, .section-copy, .news-article__body p) { font-size: 12pt; line-height: 1.65; }
+  :is(.primary-link, .secondary-link, .repo-list-actions, .report-actions) { white-space: normal; overflow-wrap: anywhere; }
+  .latest-report-row, .repo-list-item { min-width: 0; }
+  :is(.pdf-viewer, .html-viewer) { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  :is(.pdf-viewer__bar, .html-viewer__bar) { gap: .5rem; padding: .65rem .75rem; }
+  :is(.pdf-viewer__bar h2, .html-viewer__bar h2) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
+  :is(.pdf-viewer__actions, .html-viewer__actions) { display: flex; flex-wrap: wrap; gap: .4rem; width: 100%; }
+  :is(.pdf-viewer__actions a, .pdf-viewer__actions button, .html-viewer__actions button) { width: auto; flex: 1 1 auto; font-size: 12px; letter-spacing: 0; padding: .6rem; }
+  .report-view__bar { flex-wrap: wrap; gap: .5rem; padding-inline: .75rem; }
+  .report-view__bar > div:first-child { flex: 1 1 12rem; }
+  body[data-cd-report] :is(.sec, .cp, .kpi, .card) { padding-inline: 12px; }
+  body[data-cd-report] :is(p, li) { font-size: 12pt; line-height: 1.6; }
+  body[data-cd-report] :is(h1, h2, h3) { overflow-wrap: anywhere; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  :is(.pdf-viewer__bar, .html-viewer__bar) { flex-direction: row; align-items: center; }
+  :is(.pdf-viewer__actions, .html-viewer__actions) { width: auto; }
+  .pdf-viewer__mobile-note { padding-block: .35rem; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

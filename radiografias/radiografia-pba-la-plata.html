@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>CD · Radiografía Estratégica · PBA + La Plata · 2027 · v3 OSINT</title>
 <style>
@@ -130,6 +130,7 @@ tr:nth-child(even) td{background:#fafaf6}
 footer{text-align:center;color:var(--MU);font-size:10.5px;padding:20px 12px 40px;line-height:1.7}
 footer strong{color:var(--C)}
 </style>
+<link rel="stylesheet" href="../assets/css/responsive.css?v=20261102">
 </head>
 <body>
 
@@ -140,16 +141,16 @@ footer strong{color:var(--C)}
 </header>
 
 <nav id="mainnav">
-  <a href="#" class="active" onclick="show('exec',this)">Ejecutivo</a>
-  <a href="#" onclick="show('osint',this)">OSINT</a>
-  <a href="#" onclick="show('legal',this)">Legal</a>
-  <a href="#" onclick="show('gobpba',this)">Gobernación</a>
-  <a href="#" onclick="show('laplata',this)">La Plata</a>
-  <a href="#" onclick="show('formulas',this)">Fórmulas</a>
-  <a href="#" onclick="show('mirofish',this)">MiroFish</a>
-  <a href="#" onclick="show('narrat',this)">Narrativa</a>
-  <a href="#" onclick="show('diag',this)">Diagnóstico</a>
-  <a href="#" onclick="show('fuentes',this)">Fuentes</a>
+  <a href="#exec" class="active" onclick="return show('exec',this)">Ejecutivo</a>
+  <a href="#osint" onclick="return show('osint',this)">OSINT</a>
+  <a href="#legal" onclick="return show('legal',this)">Legal</a>
+  <a href="#gobpba" onclick="return show('gobpba',this)">Gobernación</a>
+  <a href="#laplata" onclick="return show('laplata',this)">La Plata</a>
+  <a href="#formulas" onclick="return show('formulas',this)">Fórmulas</a>
+  <a href="#mirofish" onclick="return show('mirofish',this)">MiroFish</a>
+  <a href="#narrat" onclick="return show('narrat',this)">Narrativa</a>
+  <a href="#diag" onclick="return show('diag',this)">Diagnóstico</a>
+  <a href="#fuentes" onclick="return show('fuentes',this)">Fuentes</a>
 </nav>
 
 <div class="wrap">
@@ -175,7 +176,7 @@ footer strong{color:var(--C)}
     </div>
 
     <div class="alert violet">
-      <strong>📍 Hallazgos OSINT críticos verificados (mayo 2026)</strong>
+      <strong>ðŸ“ Hallazgos OSINT críticos verificados (mayo 2026)</strong>
       <ul style="margin-top:6px;padding-left:16px;font-size:12.5px">
         <li><strong>Kicillof aspira a la PRESIDENCIA 2027</strong>, no a renovar PBA. Tomó el PJ bonaerense (abr. 2026), desplazó a Máximo Kirchner. Está inhabilitado constitucionalmente para reelección como gobernador. <span class="src">La Nación 23/04/26</span> <span class="src">El Estadista 09/02/26</span></li>
         <li><strong>Julio Alak proyecta candidatura a GOBERNADOR PBA 2027.</strong> En su esquema platense, Sergio Resa queda como sucesor a intendente. Resa ya fue cabeza de lista a concejal en septiembre 2025 (ganó). <span class="src">LaPlata1 05/04/26</span> <span class="src">Letra P 08/09/25</span></li>
@@ -299,7 +300,7 @@ footer strong{color:var(--C)}
     <h2>Disputa por la Gobernación PBA 2027 <span class="mt">[OS]</span><span class="mt">[MP]</span><span class="mt">[DK]</span></h2>
 
     <div class="alert blue">
-      <strong>📰 Estado del armado (mayo 2026)</strong>
+      <strong>ðŸ“° Estado del armado (mayo 2026)</strong>
       Kicillof se autoexcluye de la gobernación (va por Casa Rosada). Se abren tres frentes: <strong>Fuerza Patria</strong> con Alak como nombre fuerte + retazos de Massa/De Pedro/Larroque; <strong>PRO+LLA</strong> con principio de acuerdo Santilli como candidato; <strong>LLA puro</strong> con Pareja, , Valenzuela y Ritondo compitiendo internamente. <span class="src">Letra P 04/09/25</span> <span class="src">Infobae 26/04/26</span>
     </div>
 
@@ -386,7 +387,7 @@ footer strong{color:var(--C)}
     <h2>Intendencia La Plata 2027 — Mapa OSINT corregido <span class="mt">[OS]</span><span class="mt">[PR]</span></h2>
 
     <div class="alert violet">
-      <strong>📍 Reconfiguración total del tablero LP</strong>
+      <strong>ðŸ“ Reconfiguración total del tablero LP</strong>
       Alak proyecta gobernación → su sucesor natural en LP es <strong>Sergio Resa</strong>. Garro está imputado → la oposición platense queda descapitalizada. Allan no mide. Bardón rechaza. Los Adorni son paracaidistas. Saintout sin candidatura ejecutiva activa. <strong>El tablero LP queda más abierto que en cualquier elección reciente.</strong> <span class="src">LaPlata1 05/04/26</span> <span class="src">Nova 08/03/26</span>
     </div>
 
@@ -677,22 +678,22 @@ footer strong{color:var(--C)}
     <h2>Diagnóstico Final CD — Síntesis estratégica <span class="mt">[CD]</span><span class="mt">[EE]</span></h2>
 
     <div class="alert violet">
-      <strong>🟣 Alerta morada — Kicillof ya no juega PBA</strong>
+      <strong>ðŸŸ£ Alerta morada — Kicillof ya no juega PBA</strong>
       La pieza más importante del análisis. El gobernador apunta a Casa Rosada, no a su sucesión bonaerense. Su decisión condiciona TODA la arquitectura del FP. Quien herede la gobernación deberá hacerlo con la bendición del nuevo presidente del PJ PBA. Esa carta hoy la tiene Alak.
     </div>
 
     <div class="alert red">
-      <strong>🔴 Alerta Roja — Causa Garro descabeza oposición LP</strong>
+      <strong>ðŸ”´ Alerta Roja — Causa Garro descabeza oposición LP</strong>
       Imputación por asociación ilícita + allanamientos + USD 1.500M en perjuicio investigado. La oposición platense pierde a su figura más reconocida. Sin Garro fuerte, LLA-Bullrich tiene a Allan que no midió. La izquierda LLA puede importar paracaidista (Adorni). Pero ninguna alternativa tiene marca instalada. <strong>El espacio FP-Alak-Resa hereda un tablero descapitalizado.</strong>
     </div>
 
     <div class="alert gold">
-      <strong>🟡 Alerta Amarilla — Tensión UCR-LLA-PRO</strong>
+      <strong>ðŸŸ¡ Alerta Amarilla — Tensión UCR-LLA-PRO</strong>
       El acuerdo nacional UCR+LLA ya opera en Chaco, Mendoza, Entre Ríos. En PBA: principio de acuerdo PRO-LLA con Santilli pero UCR-Abad demora. Macri presiona por mantener identidad PRO. Si la coalición no cierra unificada, FP gana por fragmentación opositora.
     </div>
 
     <div class="alert green">
-      <strong>🟢 Oportunidad — Alak puede capturar 2 cargos simultáneos</strong>
+      <strong>ðŸŸ¢ Oportunidad — Alak puede capturar 2 cargos simultáneos</strong>
       Si la pulseada con La Cámpora se resuelve a su favor, Alak puede ser candidato a gobernador + dejar a Resa instalado como sucesor en LP. Esto requiere que: (a) Kicillof presidente; (b) red intendentes lo respalde; (c) La Cámpora acepte Atanasof o figura interna como vice.
     </div>
 
@@ -806,52 +807,9 @@ footer strong{color:var(--C)}
 
 </div>
 
-<footer>
-  <strong>CONSULTORA DIAGONALES · ANÁLISIS MULTIDIMENSIONAL POLÍTICO-ELECTORAL Y EMPRESARIAL</strong><br>
-  La Plata, Buenos Aires, Argentina · 16 mayo 2026 · v3 OSINT validado<br>
-  Documento de uso reservado. Análisis 100% fuentes públicas. [OS][VDD][MFSH][GDA][CD][PR]
+<footer class="site-footer" style="display:flex;align-items:center;justify-content:center;min-height:34px;border-top:1px solid rgba(139,207,241,.2);padding:.45rem clamp(1rem,3vw,2rem);color:rgba(244,251,255,.72);background:rgba(3,27,45,.62);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;text-align:center;">
+  <span>&copy; CONSULTORA DIAGONALES | Data Analytics.</span>
 </footer>
-
-<!-- CONTACTO CD -->
-<div style="margin-top:40px;padding-top:30px;border-top:1px solid #ece8da;max-width:1100px;margin-left:auto;margin-right:auto;padding-left:13px;padding-right:13px;padding-bottom:40px">
-  <div style="background:linear-gradient(135deg,#2E7D32 0%,#1B5E20 100%);border-radius:14px;padding:16px;color:#fff;margin-bottom:20px;box-shadow:0 1px 3px rgba(46,125,50,.2)">
-    <h3 style="color:#E9C46A;margin-bottom:16px;font-size:14px;font-weight:700">📞 Contactar — Consultora Diagonales</h3>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-      <a href="https://wa.me/5492216765720?text=Solicito%20información%20sobre%20radiografías%20electorales%20y%20empresariales" target="_blank"
-         style="background:rgba(255,255,255,0.15);color:#fff;padding:16px;border-radius:10px;text-align:center;
-                text-decoration:none;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,0.3);
-                cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;
-                transition:background 0.2s"
-         onmouseover="this.style.background='rgba(255,255,255,0.25)'"
-         onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-        <span style="font-size:24px">💬</span><span>WhatsApp</span>
-      </a>
-      <a href="tel:+5492216765720"
-         style="background:rgba(255,255,255,0.15);color:#fff;padding:16px;border-radius:10px;text-align:center;
-                text-decoration:none;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,0.3);
-                cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;
-                transition:background 0.2s"
-         onmouseover="this.style.background='rgba(255,255,255,0.25)'"
-         onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-        <span style="font-size:24px">☎️</span><span>Llamar</span>
-      </a>
-      <a href="mailto:info.consultoradiagonales@gmail.com?subject=Solicitud%20de%20Radiografía%20Electoral%20y%20Empresarial"
-         style="background:rgba(255,255,255,0.15);color:#fff;padding:16px;border-radius:10px;text-align:center;
-                text-decoration:none;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,0.3);
-                cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;
-                transition:background 0.2s"
-         onmouseover="this.style.background='rgba(255,255,255,0.25)'"
-         onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-        <span style="font-size:24px">✉️</span><span>Email</span>
-      </a>
-    </div>
-  </div>
-  <div style="text-align:center;color:#5A6470;font-size:11px">
-    <strong>📍 La Plata, Buenos Aires, Argentina</strong><br>
-    Inteligencia Política · Estrategia Electoral y Empresarial · Vetting Multidimensional
-  </div>
-</div>
-
 <script>
 function show(id,el){
   const panel = document.getElementById(id);
@@ -864,6 +822,6 @@ function show(id,el){
   return false;
 }
 </script>
-    <script src="../assets/js/html-voice-widget.js?v=20260627-html-voice-all"></script>
-  </body>
+<script src="../assets/js/report-responsive.js?v=20261102" defer></script>
+</body>
 </html>

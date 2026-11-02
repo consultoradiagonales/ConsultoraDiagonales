@@ -75,6 +75,10 @@ function initNavigation() {
     toggle.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", String(open));
     menu.setAttribute("aria-hidden", String(!open));
+    menu.inert = !open;
+    if (!menu.id) menu.id = 'site-mobile-menu';
+    toggle.setAttribute('aria-controls', menu.id);
+    toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
     document.body.style.overflow = open ? "hidden" : "";
   };
 
@@ -90,7 +94,7 @@ function initNavigation() {
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && menu.classList.contains("is-open")) setMenuOpen(false);
+    if (event.key === "Escape" && menu.classList.contains("is-open")) { setMenuOpen(false); toggle.focus(); }
   });
 
   window.addEventListener("resize", () => {
@@ -114,7 +118,7 @@ function initMotionSystem() {
         entry.target.classList.add("is-visible");
         instance.unobserve(entry.target);
       });
-    }, { threshold: 0.12, rootMargin: "0px 0px -8%" });
+    }, { threshold: 0, rootMargin: "0px 0px -4%" });
     revealTargets.forEach((element) => observer.observe(element));
   }
 
@@ -1211,6 +1215,13 @@ async function loadReports() {
 
       if (error) throw error;
       reports = (data || []).map(normalizeReportRecord).filter(isPubliclyListedReport);
+    } else {
+      const url = new URL('/rest/v1/radiografias', SUPABASE_URL);
+      url.searchParams.set('select', 'id,titulo,provincia,localidad,fecha,html_url,pdf_url,is_private,publication_state,created_at');
+      url.searchParams.set('order', 'fecha.desc,created_at.desc');
+      const response = await fetch(url, { headers: { apikey: SUPABASE_ANON_KEY } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      reports = (await response.json()).map(normalizeReportRecord).filter(isPubliclyListedReport);
     }
 
     renderReports(reports, container, count);
@@ -1336,12 +1347,8 @@ function closeUrlViewer() {
 }
 
 function getReportGraphsUrl(report) {
-  if (report.html_url) return report.html_url;
-  const normalizedTitle = normalizeText(report.titulo || "");
-  if (normalizedTitle.includes("dia de la bandera")) {
-    return new URL("/informes/radiografia-adorni-2026.html", window.location.origin).href;
-  }
-  return "";
+  if (!report.html_url && normalizeText(report.titulo || '').includes('dia de la bandera')) return new URL('/informes/radiografia-adorni-2026.html', window.location.origin).href;
+  return report.html_url || "";
 }
 
 function normalizeText(value) {
@@ -1393,6 +1400,7 @@ function hasPdfAccess() {
 function getReportResourceHref(report, target = "pdf", url = "") {
   if (!url) return "#";
   if (isPrivateReport(report) && !hasPdfAccess()) return buildRegistrationLink(report, target);
+  if (target === 'html' && !report.html_url) return url;
   return buildReportAccessLink(report, target);
 }
 
@@ -1456,7 +1464,7 @@ function openPendingPrivateReport(reports) {
 
   if (!report.pdf_url) return;
   logPdfDownload(report).catch(() => {}).finally(() => {
-    window.location.href = buildReportAccessLink(report, "pdf");
+    openPdfViewer(report);
   });
 }
 
@@ -1480,8 +1488,8 @@ function bindPdfDownloadLinks(container, reports) {
         return;
       }
 
-      await logPdfDownload(report);
-      window.location.href = buildReportAccessLink(report, "pdf");
+      logPdfDownload(report).catch(() => {});
+      openPdfViewer(report);
     });
   });
 }
@@ -1490,6 +1498,10 @@ function openPdfViewer(report) {
   if (!report?.pdf_url) return;
   if (isPrivateReport(report) && !hasPdfAccess()) {
     window.location.href = buildRegistrationLink(report, "pdf");
+    return;
+  }
+  if (window.CDPdfViewer) {
+    window.CDPdfViewer.open(buildReportAccessLink(report, 'pdf'), report.titulo || 'Radiografía');
     return;
   }
 
@@ -1838,7 +1850,7 @@ function initHtmlReportViewer() {
     }
 
     event.preventDefault();
-    const accessUrl = report ? buildReportAccessLink(report, "html") : link.href;
+    const accessUrl = report ? getReportResourceHref(report, 'html', getReportGraphsUrl(report)) : link.href;
     openHtmlReportViewer(accessUrl, getHtmlViewerTitle(link), report?.html_url || link.href);
   });
 }
@@ -1910,6 +1922,9 @@ async function openHtmlReportViewer(url, title, sourceHint = "") {
   }
 
   viewer.querySelector("[data-html-viewer-title]").textContent = title;
+  const requestId = (viewer.cdRequestId || 0) + 1;
+  viewer.cdRequestId = requestId;
+  viewer.cdRestoreFocus = document.activeElement;
   viewer.cdHtmlVoiceText = "";
   const voice = viewer.querySelector("[data-html-voice-toggle]");
   if (voice) {
@@ -1922,12 +1937,15 @@ async function openHtmlReportViewer(url, title, sourceHint = "") {
   viewer.classList.add("is-open");
   viewer.setAttribute("aria-hidden", "false");
   document.body.classList.add("html-viewer-open");
+  viewer.querySelector('[data-html-viewer-close]').focus();
 
   try {
       const result = await fetchHtmlForViewer(url, sourceHint);
+    if (viewer.cdRequestId !== requestId) return;
     viewer.cdHtmlVoiceText = extractReadableTextFromHtml(result.html);
     frame.srcdoc = normalizeHtmlForViewer(result.html, result.sourceUrl);
   } catch (error) {
+    if (viewer.cdRequestId !== requestId) return;
     if (isRegistrationRequiredError(error)) {
       redirectToRegistrationForAccessUrl(url);
       return;
@@ -1940,6 +1958,7 @@ async function openHtmlReportViewer(url, title, sourceHint = "") {
 function closeHtmlReportViewer() {
   const viewer = document.querySelector("[data-html-viewer]");
   if (!viewer) return;
+  viewer.cdRequestId = (viewer.cdRequestId || 0) + 1;
 
   const frame = viewer.querySelector("[data-html-viewer-frame]");
   viewer.classList.remove("is-open");
@@ -1951,6 +1970,7 @@ function closeHtmlReportViewer() {
     frame.removeAttribute("src");
     frame.srcdoc = "";
   }
+  viewer.cdRestoreFocus?.focus?.();
 }
 
 function getHtmlViewerTitle(link) {
@@ -2002,9 +2022,10 @@ function redirectToRegistrationForAccessUrl(accessUrl) {
 }
 
 function normalizeHtmlForViewer(html, sourceUrl) {
-  const base = `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
+  if (window.CDReportHtml?.prepareMarkup) html = window.CDReportHtml.prepareMarkup(html, sourceUrl);
+  const base = /<base\b/i.test(html) ? '' : `<base href="${escapeAttribute(new URL(sourceUrl, window.location.href).href)}">`;
   const bridge = buildHtmlViewerExternalLinkBridge();
-  const responsivePatch = buildHtmlViewerResponsivePatch();
+  const responsivePatch = window.CDReportHtml?.prepareMarkup ? { style: '', script: '' } : buildHtmlViewerResponsivePatch();
   let output = sanitizeHtmlReportForViewer(String(html || ""), sourceUrl);
   if (/<head[^>]*>/i.test(output)) {
     output = output.replace(/<head[^>]*>/i, (match) => `${match}\n${base}\n${responsivePatch.style}`);
@@ -2395,6 +2416,7 @@ function initAdmin() {
   const loginStatus = document.querySelector("[data-admin-login-status]");
   const status = document.querySelector("[data-form-status]");
   const submit = document.querySelector("[data-submit]");
+  const submitPublic = document.querySelector("[data-submit-public]");
   const dashboard = document.querySelector("[data-admin-dashboard]");
   const refresh = document.querySelector("[data-admin-refresh]");
   const range = document.querySelector("[data-admin-range]");
@@ -2480,6 +2502,8 @@ function initAdmin() {
     const localidad = String(formData.get("localidad") || "").trim();
     const fecha = String(formData.get("fecha") || "").trim();
     const isPrivate = form.elements.is_private?.checked === true;
+    const publicationState = event.submitter?.dataset.publicationState === "public" ? "public" : "draft";
+    const activeSubmit = event.submitter?.matches?.("button[type=submit]") ? event.submitter : submit;
 
     if (!id && !hasUploadFile(pdfFile) && !hasUploadFile(htmlFile)) {
       status.textContent = "Selecciona un archivo PDF o HTML válido.";
@@ -2492,26 +2516,33 @@ function initAdmin() {
     }
 
     submit.disabled = true;
+    if (submitPublic) submitPublic.disabled = true;
     if (hasUploadFile(htmlFile) && !isHtmlFile(htmlFile)) {
       status.textContent = "El archivo HTML de gráficos debe ser .html o .htm.";
+      submit.disabled = false;
+      if (submitPublic) submitPublic.disabled = false;
       return;
     }
 
-    submit.textContent = id ? "Actualizando..." : "Guardando...";
-    status.textContent = id ? "Actualizando radiografía." : "Subiendo archivo al borrador editorial.";
+    activeSubmit.textContent = id ? "Actualizando..." : publicationState === "public" ? "Publicando..." : "Guardando...";
+    status.textContent = id
+      ? "Actualizando radiografía."
+      : publicationState === "public" ? "Subiendo y publicando radiografía." : "Subiendo archivo al borrador editorial.";
 
     try {
-      const data = await saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate });
+      await saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate, publicationState });
       resetAdminForm();
-      status.innerHTML = id
-        ? "Radiografía actualizada."
-        : "Borrador guardado. Vinculalo a una nota para publicarlo.";
+      status.textContent = publicationState === "public"
+        ? "Radiografía publicada en el repositorio."
+        : id ? "Radiografía actualizada como borrador." : "Borrador guardado. Podés agregar el PDF o el HTML restante más adelante.";
       loadAdminDashboard();
     } catch (error) {
       status.textContent = `No se pudo guardar: ${error.message}`;
     } finally {
       submit.disabled = false;
-      submit.textContent = form.elements.id.value ? "Actualizar archivo" : "Guardar borrador";
+      if (submitPublic) submitPublic.disabled = false;
+      submit.textContent = "Guardar borrador";
+      if (submitPublic) submitPublic.textContent = "Publicar en repositorio";
     }
   });
 
@@ -2595,6 +2626,8 @@ function resetAdminForm() {
   form.querySelector('[name="pdf_archivo"]')?.removeAttribute("required");
   form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
   if (submit) submit.textContent = "Guardar borrador";
+  const submitPublic = document.querySelector("[data-submit-public]");
+  if (submitPublic) submitPublic.textContent = "Publicar en repositorio";
   const status = document.querySelector("[data-form-status]");
   if (status) status.textContent = "";
   cancelEdit?.classList.add("is-hidden");
@@ -2615,6 +2648,8 @@ function fillAdminEditForm(report, mode = "full") {
   form.querySelector('[name="pdf_archivo"]')?.removeAttribute("required");
   form.querySelector('[name="html_archivo"]')?.removeAttribute("required");
   if (submit) submit.textContent = "Actualizar radiografía";
+  const submitPublic = document.querySelector("[data-submit-public]");
+  if (submitPublic) submitPublic.textContent = "Publicar en repositorio";
   if (status) status.textContent = "Editando radiografía: podés cambiar el título/datos o seleccionar otro PDF para reemplazar el archivo actual.";
   if (mode === "html") {
     if (submit) submit.textContent = "Guardar HTML de gráficos";
@@ -2994,23 +3029,27 @@ function formatAdminPage(pageValue, pathValue) {
   return labels[pageValue] || pathValue || "Página no identificada";
 }
 
-async function saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate }) {
+async function saveRadiografiaReport({ id, pdfFile, htmlFile, titulo, provincia, localidad, fecha, isPrivate, publicationState = "draft" }) {
   const uploads = [
     hasUploadFile(pdfFile) ? pdfFile : null,
     hasUploadFile(htmlFile) ? htmlFile : null,
   ].filter(Boolean);
 
-  if (!uploads.length && id) return updateRadiografiaReport({ id, titulo, provincia, localidad, fecha, isPrivate });
+  if (!uploads.length && id) {
+    await updateRadiografiaReport({ id, titulo, provincia, localidad, fecha, isPrivate });
+    return publicationState === "public" ? setRadiografiaPublication(id, "public") : adminReports.find((report) => report.id === id) || {};
+  }
 
   let currentId = id;
   let result = null;
   for (const file of uploads.length ? uploads : [null]) {
     result = currentId
       ? await updateRadiografiaReport({ id: currentId, file, titulo, provincia, localidad, fecha, isPrivate })
-      : await uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha, isPrivate });
+      : await uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha, isPrivate, publicationState });
     currentId = result.report?.id || currentId;
   }
 
+  if (publicationState === "public" && currentId) return setRadiografiaPublication(currentId, "public");
   return result?.report || result || {};
 }
 
@@ -3063,6 +3102,27 @@ async function updateRadiografiaReport({ id, file, titulo, provincia, localidad,
   return data;
 }
 
+async function setRadiografiaPublication(id, publicationState = "public") {
+  const adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "";
+  const formData = new FormData();
+  formData.append("id", id);
+  formData.append("publication_state", publicationState);
+
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-report`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+      "x-admin-key": adminKey,
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "No se pudo publicar la radiografía.");
+  return data.report || data;
+}
+
 async function setRadiografiaPrivacy(report, isPrivate) {
   const adminKey = sessionStorage.getItem(ADMIN_UPLOAD_KEY) || "";
   const formData = new FormData();
@@ -3101,7 +3161,7 @@ async function deleteRadiografiaReport(id) {
   return data;
 }
 
-async function uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha, isPrivate }) {
+async function uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha, isPrivate, publicationState = "draft" }) {
   if (window.CD_ADMIN?.useEdgeUpload === false) {
     throw new Error("La carga directa desde el navegador está deshabilitada. Usá la Edge Function admin-upload-report.");
   }
@@ -3114,6 +3174,7 @@ async function uploadRadiografiaFile({ file, titulo, provincia, localidad, fecha
     formData.append("localidad", cleanLegacyPrivateMarker(localidad));
     formData.append("fecha", fecha);
     formData.append("is_private", isPrivate ? "true" : "false");
+    formData.append("publication_state", publicationState);
 
     const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-report`, {
       method: "POST",
