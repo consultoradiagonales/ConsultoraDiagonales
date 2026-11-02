@@ -1,0 +1,14 @@
+.home-instagram-band { border-bottom: 1px solid rgba(204,239,243,.18); }
+.home-instagram-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,460px); align-items: start; gap: clamp(2rem,5vw,5rem); }
+.home-instagram-copy { padding-top: 1.5rem; }
+.home-instagram-copy h2 { margin: 1rem 0; max-width: 25ch; font-size: 24pt; font-weight: 750; line-height: 1.15; }
+.home-instagram-copy p { max-width: 60ch; font-size: 12pt; line-height: 1.75; }
+.home-instagram-copy .secondary-link { margin-top: 1.5rem; }
+.home-instagram-player { width: 100%; max-width: 460px; justify-self: end; overflow: hidden; border-radius: 12px; background: #fff; box-shadow: 0 18px 48px rgba(0,15,30,.2); }
+.home-instagram-player iframe { display: block; width: 100%; min-height: 660px; aspect-ratio: 4 / 7; border: 0; }
+@media (max-width: 800px) {
+  .home-instagram-layout { grid-template-columns: minmax(0,1fr); }
+  .home-instagram-copy { padding-top: 0; }
+  .home-instagram-copy h2 { font-size: 20pt; }
+  .home-instagram-player { justify-self: center; }
+}
