@@ -9,7 +9,7 @@
 
   function publishedFileNotes() {
     if (!fileNotesPromise) {
-      fileNotesPromise = fetch('/assets/data/editorial-notes.json?v=20261101')
+      fileNotesPromise = fetch('/assets/data/editorial-notes.json?v=20261101-home-featured')
         .then((response) => response.ok ? response.json() : [])
         .then((items) => {
           fileNotes = Array.isArray(items) ? items.filter((item) => ['featured', 'archived'].includes(item.estado)) : [];
