@@ -38,12 +38,13 @@
     return '<!doctype html>\n' + doc.documentElement.outerHTML;
   }
 
-  function accessUrl(reportId, target) {
+  function accessUrl(reportId, target, embed = false) {
     const config = window.CD_SUPABASE || {};
     if (!config.url || !reportId) return "";
     const url = new URL("/functions/v1/report-access", config.url);
     url.searchParams.set("report", reportId);
     url.searchParams.set("target", target);
+    if (embed) url.searchParams.set("embed", "1");
     return url.href;
   }
 
@@ -67,6 +68,6 @@
     accessUrl,
     prepareMarkup,
     htmlBlobUrl,
-    reportHtmlBlobUrl: (reportId, sourceHint) => htmlBlobUrl(accessUrl(reportId, "html"), sourceHint),
+    reportHtmlBlobUrl: (reportId, sourceHint) => htmlBlobUrl(accessUrl(reportId, "html", true), sourceHint),
   };
 })();
