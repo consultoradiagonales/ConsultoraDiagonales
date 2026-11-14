@@ -144,5 +144,36 @@
         "text": "Actores y medios citados: [@JMilei](https://x.com/JMilei) · [@PatoBullrich](https://x.com/PatoBullrich) · [@SenadoArgentina](https://x.com/SenadoArgentina) · [@todonoticias](https://x.com/todonoticias) · [@Letra_P](https://x.com/Letra_P) · [@LANACION](https://x.com/LANACION)."
       }
     ]
+  },
+  {
+    "id": "editorial-milei-bullrich-encuesta-20261114",
+    "slug": "milei-bullrich-encuesta-elecciones-2027",
+    "canonical_path": "/perspectivas/milei-bullrich-encuesta-elecciones-2027.html",
+    "source_file": "/assets/data/editorial-notes.json",
+    "estado": "featured",
+    "titulo": "Milei y Bullrich: qué dicen —y qué no— las encuestas sobre la carrera presidencial de 2027",
+    "subtitulo": "La encuesta ubica a Milei con 30,5% y a Bullrich con 23,7%. Diagonales analiza los datos, los límites de la medición y el tablero que todavía no define una candidatura.",
+    "seccion": "Política · Encuestas 2027",
+    "fecha": "2026-11-14",
+    "published_at": "2026-11-14T12:00:00-03:00",
+    "updated_at": "2026-11-14T12:00:00-03:00",
+    "autor": "Consultora Diagonales",
+    "lectura_minutos": 6,
+    "radiografia_id": "5e3ab81d-ec76-4b60-a30d-e964b17894e8",
+    "imagen_url": "/assets/img/noticias/milei-bullrich-encuesta-2027/portada.png",
+    "imagen_alt": "Portada de la nota sobre Javier Milei, Patricia Bullrich y las encuestas presidenciales de 2027.",
+    "imagen_epigrafe": "Portada aportada para esta publicación. La placa cita a DC Consultores y Letra P.",
+    "seo_title": "Encuesta Milei Bullrich 2027: datos y análisis",
+    "seo_description": "Encuesta presidencial 2027: Milei 30,5%, Bullrich 23,7%. Consultora Diagonales analiza los datos, sus límites y el tablero político.",
+    "seo_keywords": [
+      "encuesta Milei Bullrich 2027",
+      "elecciones presidenciales 2027",
+      "Javier Milei",
+      "Patricia Bullrich",
+      "intención de voto",
+      "La Libertad Avanza",
+      "análisis político",
+      "Consultora Diagonales"
+    ]
   }
 ]
